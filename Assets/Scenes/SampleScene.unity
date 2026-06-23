@@ -386,12 +386,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5108f29a7bf79c94fb2c85659f9b6c16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KnightsGauntlet.View.GameManager
-  theme: {fileID: 0}
+  theme: {fileID: 11400000, guid: 06e80473eb7dbdd4298b65a983bec141, type: 2}
   cam: {fileID: 0}
-  scoreLabel: {fileID: 0}
-  startMode: 0
-  startDifficulty: 1
-  autoStart: 1
 --- !u!4 &996864122
 Transform:
   m_ObjectHideFlags: 0

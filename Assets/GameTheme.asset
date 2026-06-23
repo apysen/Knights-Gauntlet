@@ -29,4 +29,4 @@ MonoBehaviour:
   hudFont: {fileID: 0}
   popupFont: {fileID: 0}
   uiFont: {fileID: 0}
-  glyphFont: {fileID: 0}
+  glyphFont: {fileID: 11400000, guid: 396b5d3725635304db506a03107c1dd9, type: 2}
