@@ -1,33 +1,30 @@
 using UnityEngine;
-using TMPro;
+using UnityEngine.EventSystems;
 using KnightsGauntlet.Core;
 
 namespace KnightsGauntlet.View
 {
-    // The one component you add to the scene. Add it to an empty GameObject,
-    // optionally assign a GameTheme, and press Play — it builds the camera,
-    // board, and renderers at runtime and starts a game.
-    //
-    // Menus, "Was I trapped?", popups, threat-tile previews and the transform
-    // timer bar come in later phases; this phase is "trap mode plays in editor".
+    // The one component you add to the scene. Builds the camera, board, renderers
+    // and UI at runtime, then runs the menu -> play -> pause -> game-over loop.
     public class GameManager : MonoBehaviour
     {
         [Header("Setup")]
-        public GameTheme theme;                 // optional; a default is made if null
-        public Camera cam;                      // optional; defaults to Camera.main
-        public TMP_Text scoreLabel;             // optional HUD label
+        public GameTheme theme;   // optional; a runtime default is made if null
+        public Camera cam;        // optional; defaults to Camera.main
 
-        [Header("Game")]
-        public GameMode startMode = GameMode.Trap;
-        public Difficulty startDifficulty = Difficulty.Medium;
-        public bool autoStart = true;
-
-        private enum State { Idle, Playing, Dead }
-        private State _state = State.Idle;
+        private enum State { Menu, Playing, Paused, Dead }
+        private State _state = State.Menu;
 
         private GameSimulation _sim;
         private BoardView _board;
         private GameView _view;
+        private UIManager _ui;
+
+        public int Score => _sim != null ? _sim.Score : 0;
+
+        private static readonly Color PopupGain = new Color32(0x9B, 0xE8, 0xA0, 0xFF);
+        private static readonly Color PopupCombo = new Color32(0xFF, 0xD0, 0x60, 0xFF);
+        private static readonly Color PopupShield = new Color32(0xFF, 0x9A, 0x5C, 0xFF);
 
         private void Start()
         {
@@ -55,20 +52,47 @@ namespace KnightsGauntlet.View
 
             _sim = new GameSimulation();
             _sim.OnFormChanged += form => _view.SetPlayerForm(form, CurrentSkin());
-            _sim.OnShielded += () => Debug.Log("[Knight's Gauntlet] Shielded!");
+            _sim.OnShielded += () => _view.SpawnPopup(_sim.PlayerCol, _sim.PlayerY - 0.3f, "shielded!", PopupShield);
+
+            var ugo = new GameObject("UI"); ugo.transform.SetParent(transform, false);
+            _ui = ugo.AddComponent<UIManager>();
+            _ui.Init(this, theme);
 
             _board.FitCamera(cam);
-
-            if (autoStart) StartGame(startMode, startDifficulty);
         }
 
+        // ── Public API (called by UIManager) ─────────────────────────────────
         public void StartGame(GameMode mode, Difficulty difficulty)
         {
             _sim.Start(mode, difficulty);
             _view.SetPlayerForm(_sim.PlayerForm, CurrentSkin());
             _state = State.Playing;
+            _ui.ShowHud();
         }
 
+        public void PauseGame()
+        {
+            if (_state != State.Playing) return;
+            _state = State.Paused;
+            _ui.ShowPause();
+        }
+
+        public void ResumeGame()
+        {
+            if (_state != State.Paused) return;
+            _state = State.Playing;
+            _ui.ShowHud();
+        }
+
+        public void RestartGame() => StartGame(_sim.Mode, _sim.Difficulty);
+
+        public void ToMenu()
+        {
+            _state = State.Menu;
+            _ui.ShowMenu();
+        }
+
+        // ── Loop ─────────────────────────────────────────────────────────────
         private void Update()
         {
             _board.FitCamera(cam);
@@ -79,27 +103,23 @@ namespace KnightsGauntlet.View
                 HandleInput();
                 if (!_sim.Alive) EnterDead();
             }
-            else
+
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                HandleInput(); // tap / R to restart while dead
+                if (_state == State.Playing) PauseGame();
+                else if (_state == State.Paused) ResumeGame();
             }
+            if (_state == State.Dead && Input.GetKeyDown(KeyCode.R)) RestartGame();
 
-            bool showHints = _sim.Difficulty != Difficulty.Grandmaster;
             _board.SyncBackground(_sim.ScrollCells);
-            _view.Sync(_sim, CurrentSkin(), showHints);
-
-            if (scoreLabel != null) scoreLabel.text = _sim.Score.ToString();
+            bool showHints = _sim.Difficulty != Difficulty.Grandmaster && _state == State.Playing;
+            _view.Sync(_sim, CurrentSkin(), showHints, Time.deltaTime);
         }
 
         private void HandleInput()
         {
-            if (_state == State.Dead)
-            {
-                if (Input.GetKeyDown(KeyCode.R) || GetTapDown(out _))
-                    StartGame(_sim.Mode, _sim.Difficulty);
-                return;
-            }
             if (_state != State.Playing) return;
+            if (OverUI()) return; // don't move when tapping a UI button
 
             if (GetTapDown(out Vector2 screenPos))
             {
@@ -107,7 +127,16 @@ namespace KnightsGauntlet.View
                     new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
                 var (col, simY) = _board.WorldToCell(world);
                 var result = _sim.TryTap(col, simY);
-                // result.Captures will drive popups in a later phase.
+
+                if (result.Moved && result.Captures != null)
+                {
+                    foreach (var cap in result.Captures)
+                    {
+                        _view.SpawnPopup(cap.Col, cap.Y - 0.42f, "+" + cap.PointsGained, PopupGain);
+                        _view.SpawnPopup(cap.Col, cap.Y + 0.14f,
+                            "\u00D7" + cap.NewMultiplier + " (+" + cap.MultiplierDelta + ")", PopupCombo);
+                    }
+                }
             }
         }
 
@@ -120,10 +149,15 @@ namespace KnightsGauntlet.View
                 Debug.Log($"[Knight's Gauntlet] Game over — score {_sim.Score}. " +
                           $"Was I trapped? {a.Reason} (escaped={a.Escaped}).");
             }
-            else
-            {
-                Debug.Log($"[Knight's Gauntlet] Game over — score {_sim.Score}. Tap or press R to restart.");
-            }
+            _ui.ShowGameOver(_sim.Score);
+        }
+
+        private static bool OverUI()
+        {
+            var es = EventSystem.current;
+            if (es == null) return false;
+            if (Input.touchCount > 0) return es.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+            return es.IsPointerOverGameObject();
         }
 
         private static bool GetTapDown(out Vector2 pos)
@@ -139,6 +173,6 @@ namespace KnightsGauntlet.View
             return false;
         }
 
-        private static string CurrentSkin() => PlayerPrefs.GetString("kg_skin", "gold");
+        private static string CurrentSkin() => SaveData.GetSkin();
     }
 }
