@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da45c3445c6b55b4d8c953868b0ec466, type: 3}
+  m_Name: GameTheme
+  m_EditorClassIdentifier: Assembly-CSharp::KnightsGauntlet.View.GameTheme
+  cellSprite: {fileID: 0}
+  cellColorA: {r: 0.176, g: 0.176, b: 0.306, a: 1}
+  cellColorB: {r: 0.118, g: 0.118, b: 0.208, a: 1}
+  gridLineColor: {r: 1, g: 1, b: 1, a: 0.05}
+  pieces: []
+  pieceBackingSprite: {fileID: 0}
+  pieceBackingAlpha: 0.35
+  hintSprite: {fileID: 0}
+  hintDotSprite: {fileID: 0}
+  hintColor: {r: 0.941, g: 0.753, b: 0.251, a: 0.25}
+  threatSprite: {fileID: 0}
+  threatFill: {r: 0.353, g: 0.078, b: 0.078, a: 0.55}
+  threatStroke: {r: 0.588, g: 0.157, b: 0.157, a: 0.55}
+  skins: []
+  hudFont: {fileID: 0}
+  popupFont: {fileID: 0}
+  uiFont: {fileID: 0}
+  glyphFont: {fileID: 0}
