@@ -49,13 +49,21 @@ namespace KnightsGauntlet.View
 
         [Header("Move hints")]
         public Sprite hintSprite;    // null = solid square
-        public Sprite hintDotSprite; // null = no dot
+        public Sprite hintDotSprite; // null = generated circle
         public Color hintColor = new Color(0.941f, 0.753f, 0.251f, 0.25f); // #f0c040 @ .25
 
         [Header("Threat tiles (battle)")]
         public Sprite threatSprite;
         public Color threatFill = new Color(0.353f, 0.078f, 0.078f, 0.55f);
         public Color threatStroke = new Color(0.588f, 0.157f, 0.157f, 0.55f);
+
+        [Header("UI (menus / buttons) — null = generated rounded sprite")]
+        [Tooltip("9-sliced rounded fill used for buttons, inputs, pills, bars.")]
+        public Sprite uiPanelSprite;
+        [Tooltip("9-sliced rounded ring used for the selected / outline state.")]
+        public Sprite uiBorderSprite;
+        [Tooltip("Filled circle used for dots and markers.")]
+        public Sprite uiCircleSprite;
 
         [Header("Skins")]
         public SkinVisual[] skins;
@@ -97,7 +105,24 @@ namespace KnightsGauntlet.View
         public Color GetSkinTint(string id)
         {
             if (TryGetSkin(id, out var s)) return s.tint;
-            ColorUtility.TryParseHtmlString(GameConfig.PieceColorHex(PieceType.Knight), out var c);
+            return BuiltInSkinTint(id);
+        }
+
+        // Built-in skin colours, so the player/leaderboard always tint correctly
+        // even if the theme asset's `skins` array was never populated in the editor.
+        public static Color BuiltInSkinTint(string id)
+        {
+            string hex;
+            switch (id)
+            {
+                case "emerald": hex = "#3CDC78"; break;
+                case "crimson": hex = "#FF5A5A"; break;
+                case "violet":  hex = "#B070FF"; break;
+                case "frost":   hex = "#8FE0FF"; break;
+                case "magma":   hex = "#FF8A3C"; break;
+                default:        hex = "#F0C040"; break; // gold / unknown
+            }
+            ColorUtility.TryParseHtmlString(hex, out var c);
             return c;
         }
 

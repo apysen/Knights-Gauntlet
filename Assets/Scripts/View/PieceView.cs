@@ -33,24 +33,26 @@ namespace KnightsGauntlet.View
             Sprite sprite = v.sprite;
             Color tint = v.tint;
 
-            if (isPlayer && skinId != null && theme.TryGetSkin(skinId, out var skin))
+            if (isPlayer)
             {
-                tint = skin.tint;
-                if (skin.overrideSprite != null) sprite = skin.overrideSprite;
+                // The player keeps its skin colour for whatever form it's wearing.
+                tint = theme.GetSkinTint(skinId ?? "gold");
+                if (theme.TryGetSkin(skinId, out var skin) && skin.overrideSprite != null)
+                    sprite = skin.overrideSprite;
             }
 
-            // Optional translucent backing square (mirrors the rgba rect the
-            // original drew behind every piece).
+            // Translucent backing square behind the piece. The player's cell takes
+            // the skin colour; enemies get a uniform faint cell (NOT their own
+            // colour, so the board stays readable); traps are red.
             if (backing != null)
             {
-                bool showBacking = theme.pieceBackingSprite != null;
-                backing.enabled = showBacking;
-                if (showBacking)
-                {
-                    backing.sprite = theme.pieceBackingSprite;
-                    var bc = tint; bc.a = theme.pieceBackingAlpha;
-                    backing.color = bc;
-                }
+                backing.enabled = true;
+                if (theme.pieceBackingSprite != null) backing.sprite = theme.pieceBackingSprite;
+                Color bc;
+                if (isPlayer) { bc = tint; bc.a = 0.20f; }
+                else if (type == PieceType.Trap) { bc = new Color(0.78f, 0.20f, 0.20f, 0.35f); }
+                else { bc = new Color(0.31f, 0.31f, 0.55f, 0.30f); }
+                backing.color = bc;
             }
 
             if (sprite != null)

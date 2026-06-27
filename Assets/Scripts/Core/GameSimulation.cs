@@ -19,6 +19,7 @@ namespace KnightsGauntlet.Core
     {
         public bool Moved;
         public List<CaptureInfo> Captures;
+        public int RowAdvance;   // trap mode: rows gained (+) or lost (-) this move
     }
 
     // Headless game simulation for BOTH modes. No UnityEngine, no rendering.
@@ -219,6 +220,7 @@ namespace KnightsGauntlet.Core
                 int rowDelta = (int)Math.Round(PlayerY - m.Y); // forward (up) positive
                 _trapScore = Math.Max(0, _trapScore + rowDelta);
                 Score = _trapScore;
+                result.RowAdvance = rowDelta;
 
                 PlayerCol = m.Col; PlayerY = m.Y;
                 Trail.Add((PlayerCol, PlayerY - ScrollCells));

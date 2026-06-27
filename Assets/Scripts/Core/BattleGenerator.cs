@@ -41,17 +41,25 @@ namespace KnightsGauntlet.Core
             foreach (var o in pieces)
                 if (o.Alive && o.Type == PieceType.Queen) { hasQueen = true; break; }
 
+            // Columns already taken near the spawn line, so a fresh row never
+            // lands on a piece that hasn't scrolled away yet.
+            var nearTop = new HashSet<int>();
+            foreach (var o in pieces)
+                if (o.Alive && o.Type != PieceType.Trap && o.Y < 1.0f) nearTop.Add(o.Col);
+
             int n = 1 + (_rng.NextDouble() < extra ? 1 : 0); // sometimes a 2nd piece
             var used = new HashSet<int>();
             for (int bp = 0; bp < n; bp++)
             {
                 var pool = hasQueen ? PoolNoQueen : PoolWithQueen;
                 var t = pool[_rng.Next(pool.Length)];
-                if (t == PieceType.Queen) hasQueen = true;
 
                 int col, tries = 0;
                 do { col = _rng.Next(GameConfig.Cols); tries++; }
-                while (used.Contains(col) && tries < 8);
+                while ((used.Contains(col) || nearTop.Contains(col)) && tries < 8);
+                if (used.Contains(col) || nearTop.Contains(col)) continue; // no free column this row
+
+                if (t == PieceType.Queen) hasQueen = true;
                 used.Add(col);
 
                 pieces.Add(new GamePiece(t, col, y) { Dir = _rng.NextDouble() < 0.5 ? 1 : -1 });

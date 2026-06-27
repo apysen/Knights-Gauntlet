@@ -51,3 +51,7 @@ crashlytics-build.properties
 ._*
 Thumbs.db
 desktop.ini
+
+# ── Secrets (Supabase URL/key) — keep out of the repo ───────────────────────
+Assets/Resources/SupabaseConfig.asset
+Assets/Resources/SupabaseConfig.asset.meta
