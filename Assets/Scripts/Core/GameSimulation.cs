@@ -41,10 +41,15 @@ namespace KnightsGauntlet.Core
         public bool Alive { get; private set; }
         public float ScrollCells { get; private set; }
 
+        // Collectable shillings on the board, and the total collected this run.
+        public readonly List<Pickup> Pickups = new List<Pickup>();
+        public int RunShillings { get; private set; }
+
         public bool IsMimic => _transformIsMimic;
         public bool IsInvulnerable => _time < _battleInvulnUntil;
         public bool TransformActive => _transformEndsAt > 0f && _time < _transformEndsAt;
         public float TransformRemaining => TransformActive ? Math.Max(0f, _transformEndsAt - _time) : 0f;
+        public int CaptureChain => _captureChain; // 0..TransformTrigger-1 while building toward a transform
 
         // Progress toward the next enemy move, 0..1 (for the move-timer bar).
         public float EnemyMoveProgress =>
@@ -63,6 +68,7 @@ namespace KnightsGauntlet.Core
         // ── Internals ────────────────────────────────────────────────────────
         private int _trapScore;
         private float _speed, _speedStart, _speedMax;
+        private float _playerBase; // grid-lock base for the player (Trap mode)
         private float _nextSpawnCells;
         private float _time;
 
@@ -70,11 +76,12 @@ namespace KnightsGauntlet.Core
         private PieceType? _lastCaptured;
         private float _transformEndsAt, _battleInvulnUntil, _lastBattleMove, _battleMoveInterval;
         private bool _transformIsMimic;
+        private bool _pickupsEnabled = true;
 
-        private readonly Random _rng;
-        private readonly TrapGenerator _trapGen;
-        private readonly BattleGenerator _battleGen;
-        private readonly EnemyAI _enemyAI;
+        private Random _rng;
+        private TrapGenerator _trapGen;
+        private BattleGenerator _battleGen;
+        private EnemyAI _enemyAI;
 
         public GameSimulation(Random rng = null)
         {
@@ -84,13 +91,27 @@ namespace KnightsGauntlet.Core
             _enemyAI = new EnemyAI(_rng);
         }
 
-        public void Start(GameMode mode, Difficulty difficulty)
+        public void Start(GameMode mode, Difficulty difficulty,
+                          int? seed = null, bool mediumSpeed = false, bool pickups = true)
         {
+            // Daily challenge passes a fixed seed so the board is identical for
+            // everyone; reseed the generators so the run is reproducible.
+            if (seed.HasValue)
+            {
+                _rng = new Random(seed.Value);
+                _trapGen = new TrapGenerator(_rng);
+                _battleGen = new BattleGenerator(_rng);
+                _enemyAI = new EnemyAI(_rng);
+            }
+
             Mode = mode;
             Difficulty = difficulty;
             Pieces.Clear();
+            Pickups.Clear();
             Trail.Clear();
             Score = 0;
+            RunShillings = 0;
+            _pickupsEnabled = pickups;
             _trapScore = 0;
             ScrollCells = 0;
             _time = 0;
@@ -108,10 +129,11 @@ namespace KnightsGauntlet.Core
 
             PlayerCol = 2;
             PlayerY = GameConfig.Rows - 4; // 6 with Rows=10
+            _playerBase = PlayerY - ScrollCells;
 
             if (mode == GameMode.Trap)
             {
-                (_speedStart, _speedMax) = GameConfig.TrapSpeed(difficulty);
+                (_speedStart, _speedMax) = GameConfig.TrapSpeed(mediumSpeed ? Difficulty.Medium : difficulty);
                 _speed = _speedStart;
                 _trapGen.Reset(PlayerCol);
                 for (int r = 1; r < GameConfig.Rows - 1; r++)
@@ -134,6 +156,7 @@ namespace KnightsGauntlet.Core
         public void Tick(float dt)
         {
             if (!Alive) return;
+            if (dt > 1f / 30f) dt = 1f / 30f; // clamp so a frame hitch can't lurch the board
             _time += dt;
 
             float delta = _speed * dt;
@@ -141,21 +164,58 @@ namespace KnightsGauntlet.Core
             if (Mode == GameMode.Trap)
                 _speed = Math.Min(_speedMax, _speedStart + ScrollCells * GameConfig.TrapSpeedRampPerCell);
 
-            PlayerY += delta;
-            for (int i = 0; i < Pieces.Count; i++) Pieces[i].Y += delta;
+            // Grid-locked scroll: derive every position from the single shared
+            // ScrollCells + a fixed base, so nothing drifts off the grid at any
+            // speed or run length. Battle enemies get their base refreshed after
+            // each AI move (below), since the AI shifts them by whole cells.
+            PlayerY = _playerBase + ScrollCells;
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (float.IsNaN(o.Base)) o.Base = (float)Math.Round(o.Y - ScrollCells);
+                o.Y = o.Base + ScrollCells;
+            }
+            for (int i = 0; i < Pickups.Count; i++)
+            {
+                var pu = Pickups[i];
+                if (float.IsNaN(pu.Base)) pu.Base = (float)Math.Round(pu.Y - ScrollCells);
+                pu.Y = pu.Base + ScrollCells;
+            }
 
+            bool spawnedRow = false;
             while (ScrollCells >= _nextSpawnCells)
             {
                 if (Mode == GameMode.Trap)
                     _trapGen.SpawnRow(Pieces, -1f, PlayerCol, ScrollCells);
                 else
                     _battleGen.SpawnRow(Pieces, -1f, Difficulty, TransformActive);
+                TrySpawnPickup(-1f);
                 _nextSpawnCells += 1f;
+                spawnedRow = true;
             }
+            // Give newly-spawned enemy knights a planned jump right away, so their
+            // red threat tile shows before their first move (not a turn late).
+            if (spawnedRow && Mode == GameMode.Battle)
+                _enemyAI.PlanKnightMoves(Pieces, PlayerCol, PlayerY, false);
 
             // Trap keeps a long tail behind the knight for the death snapshot.
             float cullY = Mode == GameMode.Trap ? PlayerY + 26f : GameConfig.Rows + 1f;
-            Pieces.RemoveAll(o => !o.Alive || o.Y >= cullY);
+            // Stable in-place compaction (no per-frame lambda/closure allocation).
+            int wp = 0;
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (o.Alive && o.Y < cullY) Pieces[wp++] = o;
+            }
+            if (wp < Pieces.Count) Pieces.RemoveRange(wp, Pieces.Count - wp);
+            int wk = 0;
+            for (int i = 0; i < Pickups.Count; i++)
+            {
+                var p = Pickups[i];
+                if (p.Alive && p.Y < GameConfig.Rows + 1f) Pickups[wk++] = p;
+            }
+            if (wk < Pickups.Count) Pickups.RemoveRange(wk, Pickups.Count - wk);
+            CollectPickups();
 
             if (Mode == GameMode.Battle)
             {
@@ -184,6 +244,10 @@ namespace KnightsGauntlet.Core
                         }
                         else { Alive = false; OnDeath?.Invoke(); return; }
                     }
+                    // The AI shifted enemies by whole cells; re-anchor their grid
+                    // base so the derived scroll keeps them exactly on their squares.
+                    for (int i = 0; i < Pieces.Count; i++)
+                        Pieces[i].Base = (float)Math.Round(Pieces[i].Y - ScrollCells);
                 }
             }
 
@@ -193,6 +257,15 @@ namespace KnightsGauntlet.Core
 
         public List<MoveTarget> GetValidMoves()
             => MoveRules.GetValidMoves(Pieces, PlayerCol, PlayerY, Mode, PlayerForm);
+
+        // Allocation-free variant for per-frame callers (move hints). Returns a
+        // shared buffer — do not hold the reference across frames.
+        private readonly List<MoveTarget> _movesBuffer = new List<MoveTarget>();
+        public List<MoveTarget> GetValidMovesNonAlloc()
+        {
+            MoveRules.Fill(_movesBuffer, Pieces, PlayerCol, PlayerY, Mode, PlayerForm);
+            return _movesBuffer;
+        }
 
         // Tap at grid cell (col, y in cell units). Snaps to the nearest legal move
         // in that column within ~1.2 cells.
@@ -223,8 +296,10 @@ namespace KnightsGauntlet.Core
                 result.RowAdvance = rowDelta;
 
                 PlayerCol = m.Col; PlayerY = m.Y;
+                _playerBase = PlayerY - ScrollCells;
                 Trail.Add((PlayerCol, PlayerY - ScrollCells));
                 if (Trail.Count > 12) Trail.RemoveAt(0);
+                CollectPickups();
                 CheckCollision();
                 return result;
             }
@@ -244,6 +319,7 @@ namespace KnightsGauntlet.Core
                 int pts = GameConfig.PiecePoints(o.Type);
                 int gained = pts * ComboMultiplier;
                 Score += gained;
+                RunShillings += pts;   // battle earns shillings from captures (piece value)
 
                 int inc = GameConfig.ComboInc(o.Type);
                 if (PlayerForm == PieceType.Bishop || PlayerForm == PieceType.Nightrider)
@@ -290,6 +366,8 @@ namespace KnightsGauntlet.Core
             }
 
             PlayerCol = m.Col; PlayerY = m.Y;
+            _playerBase = PlayerY - ScrollCells;
+            CollectPickups();
             CheckCollision();
             return result;
         }
@@ -303,7 +381,7 @@ namespace KnightsGauntlet.Core
 
         private void CheckCollision()
         {
-            if (Mode == GameMode.Battle && _time < _battleInvulnUntil) return; // i-frames
+            if (_time < _battleInvulnUntil) return; // i-frames (battle hit / revive grace)
             for (int i = 0; i < Pieces.Count; i++)
             {
                 var o = Pieces[i];
@@ -324,6 +402,64 @@ namespace KnightsGauntlet.Core
                     o.Col == PlayerCol && Math.Abs(o.Y - PlayerY) < 0.6f)
                     o.Alive = false;
             }
+        }
+
+        // ── Pickups (shillings) ──────────────────────────────────────────────
+        private void TrySpawnPickup(float y)
+        {
+            // Coins only drop in Trap mode; Battle earns shillings from captures.
+            if (!_pickupsEnabled || Mode != GameMode.Trap) return;
+            if (_rng.NextDouble() >= 0.12) return; // ~1 per 8 rows
+            int row = (int)Math.Round(y);
+            var occupied = new HashSet<int>();
+            foreach (var o in Pieces)
+                if (o.Alive && (int)Math.Round(o.Y) == row) occupied.Add(o.Col);
+            foreach (var pk in Pickups)
+                if (pk.Alive && (int)Math.Round(pk.Y) == row) occupied.Add(pk.Col);
+            var open = new List<int>();
+            for (int c = 0; c < GameConfig.Cols; c++) if (!occupied.Contains(c)) open.Add(c);
+            if (open.Count == 0) return;
+            int col = open[_rng.Next(open.Count)];
+            int[] vals = { 10, 15, 20, 25 };
+            Pickups.Add(new Pickup(col, y, vals[_rng.Next(vals.Length)]));
+        }
+
+        private void CollectPickups()
+        {
+            for (int i = 0; i < Pickups.Count; i++)
+            {
+                var pk = Pickups[i];
+                if (!pk.Alive) continue;
+                if (pk.Col == PlayerCol && Math.Abs(pk.Y - PlayerY) < 0.5f)
+                {
+                    pk.Alive = false;
+                    RunShillings += pk.Value;
+                }
+            }
+        }
+
+        // ── Extra life (revive) ──────────────────────────────────────────────
+        // Bring the player back and clear a safe pocket around them so they don't
+        // instantly die again. Not used in the daily challenge.
+        public void Revive()
+        {
+            if (Alive) return;
+            Alive = true;
+
+            // If they fell off the bottom, bring them back on-screen FIRST so the
+            // safe pocket below is cleared around where they actually land.
+            if (PlayerY > GameConfig.Rows - 1f) { PlayerY = GameConfig.Rows - 4f; _playerBase = PlayerY - ScrollCells; }
+
+            if (Mode == GameMode.Trap)
+                Pieces.RemoveAll(o => o.Type == PieceType.Trap && Math.Abs(o.Y - PlayerY) < 3.0f);
+            else
+            {
+                Pieces.RemoveAll(o => o.Type != PieceType.Trap && Math.Abs(o.Y - PlayerY) < 2.5f);
+                _lastBattleMove = _time;
+            }
+
+            // Brief grace so the very next tick can't re-kill (honored in both modes).
+            _battleInvulnUntil = _time + 1.5f;
         }
 
         // Build the "Was I trapped?" analysis from the current (death) state.

@@ -11,6 +11,11 @@ namespace KnightsGauntlet.Core
         public float Y;
         public bool Alive = true;
 
+        // Grid-lock: Y is derived as (Base + ScrollCells) each tick in Trap mode,
+        // so traps stay perfectly aligned to the checkerboard instead of drifting
+        // from independent per-piece float accumulation. NaN = not yet initialised.
+        public float Base = float.NaN;
+
         // Battle-mode AI bookkeeping (unused in Trap mode; wired in Phase 2).
         public int Dir = 1;       // bishop diagonal direction
         public int? PlanDC;       // pre-planned knight jump, shown as a threat tile

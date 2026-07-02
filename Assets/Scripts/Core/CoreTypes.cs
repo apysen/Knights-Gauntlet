@@ -20,4 +20,16 @@ namespace KnightsGauntlet.Core
         public readonly float Y;
         public MoveTarget(int col, float y) { Col = col; Y = y; }
     }
+
+    // A collectable shillings drop sitting on the board (trap & battle modes).
+    // Scrolls down with everything; collected when the player lands on its cell.
+    public class Pickup
+    {
+        public int Col;
+        public float Y;
+        public int Value;
+        public bool Alive = true;
+        public float Base = float.NaN; // grid-lock base (see GamePiece.Base)
+        public Pickup(int col, float y, int value) { Col = col; Y = y; Value = value; }
+    }
 }

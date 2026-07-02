@@ -111,13 +111,22 @@ namespace KnightsGauntlet.Core
         // build I'd swap to sprites and use these only as an editor fallback.
         public static string PieceColorHex(PieceType t) => t switch
         {
-            PieceType.Rook => "#4080E0",
-            PieceType.Bishop => "#9060E0",
-            PieceType.Knight => "#50C878",
-            PieceType.Queen => "#E04080",
-            PieceType.Trap => "#CC3333",
+            // Muted versions of the web palette — slightly desaturated so a full
+            // screen of pieces reads calmer (the trap red is muted the most, since
+            // it covers the most area and was the most distracting).
+            PieceType.Rook => "#4A80D2",
+            PieceType.Bishop => "#8D65D2",
+            PieceType.Knight => "#57BD79",
+            PieceType.Queen => "#D24A80",
+            PieceType.Trap => "#B54A4A",
             _ => "#F0C040"
         };
+
+        // Colour of the piece a transformed player represents. Nightrider is the
+        // knight mimic, so it uses the (enemy) knight colour rather than the gold
+        // fallback — used for the transform wash and HUD form badge.
+        public static string FormColorHex(PieceType form)
+            => form == PieceType.Nightrider ? PieceColorHex(PieceType.Knight) : PieceColorHex(form);
 
         public static string Glyph(PieceType t) => t switch
         {

@@ -44,7 +44,7 @@ namespace KnightsGauntlet.View
             }
         }
 
-        public Canvas CreateCanvas(string name, int sortOrder)
+        public Canvas CreateCanvas(string name, int sortOrder, Vector2? referenceResolution = null)
         {
             var go = new GameObject(name);
             var canvas = go.AddComponent<Canvas>();
@@ -52,7 +52,10 @@ namespace KnightsGauntlet.View
             canvas.sortingOrder = sortOrder;
             var scaler = go.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(640, 1138);
+            // Lower reference = larger UI. Overlays (menus, how-to, achievements)
+            // use a smaller reference so text/buttons fill more of the screen; the
+            // in-game HUD passes the original 640x1138 to keep its buttons compact.
+            scaler.referenceResolution = referenceResolution ?? new Vector2(533, 948);
             scaler.matchWidthOrHeight = 0.5f;
             go.AddComponent<GraphicRaycaster>();
             return canvas;

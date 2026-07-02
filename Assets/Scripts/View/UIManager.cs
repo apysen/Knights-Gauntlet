@@ -16,8 +16,11 @@ namespace KnightsGauntlet.View
         private GameTheme _theme;
         private UIFactory _ui;
 
-        private GameObject _menu, _hud, _pause, _gameOver, _trapped, _settings, _ach, _howto, _patch, _toast;
+        private GameObject _menu, _hud, _pause, _gameOver, _trapped, _settings, _ach, _howto, _patch, _toast, _market, _reviveRow, _countdown, _dailyIntro, _dailyReward;
         private TMP_Text _scoreText, _gameOverScore, _savedName, _menuWarn, _speedLabel, _modeBadge;
+        private TMP_Text _nameSetLabel, _permWarn, _menuShillings, _marketBalance, _marketMsg, _goReward, _goBalance, _countdownText, _dailyIntroAttempts, _dailyRewardText;
+        private Button _dailyBtn;
+        private bool _checkingName;
         private TMP_Text _trappedVerdict, _trappedSub, _toastText;
         private RectTransform _howtoArt;
         private HowToArt _art;
@@ -25,8 +28,8 @@ namespace KnightsGauntlet.View
         private GameObject _enemyBarRoot;
         private TMP_Text _howtoTitle, _howtoBody, _howtoPager, _patchVer, _patchDate, _patchBody, _patchPager;
         private TMP_InputField _nameInput;
-        private Button _trappedBtn, _howtoPrev, _howtoNext, _patchPrev, _patchNext;
-        private RectTransform _trappedContent, _achList;
+        private Button _trappedBtn, _howtoPrev, _howtoNext, _patchPrev, _patchNext, _reviveSpendBtn;
+        private RectTransform _trappedContent, _achList, _marketList;
         private ScrollRect _trappedScroll;
 
         private GameMode _selMode = GameMode.Trap;
@@ -59,13 +62,53 @@ namespace KnightsGauntlet.View
                 theme != null ? theme.uiCircleSprite : null);
             BuildMenu(); BuildHud(); BuildPause(); BuildGameOver(); BuildTrapped();
             BuildSettings(); BuildAchievements(); BuildHowTo(); BuildPatch(); BuildToast();
+            BuildMarketplace();
+            BuildCountdown();
+            BuildDailyIntro();
+            BuildDailyReward();
             ShowMenu();
         }
 
+        private int _lastScoreShown = int.MinValue;
+        private GameObject _xformBadge;
+        private Button _cbToggle;
+        private TMP_Text _cbToggleLabel;
+        private TMP_Text _xformBadgeGlyph;
+        private Image _xformBadgeRing;
         private void Update()
         {
-            if (_hud != null && _hud.activeSelf && _scoreText != null)
+            if (_hud != null && _hud.activeSelf && _scoreText != null && _gm.Score != _lastScoreShown)
+            {
+                _lastScoreShown = _gm.Score;
                 _scoreText.text = _gm.Score.ToString();
+            }
+            if (_xformBadge != null && _hud != null && _hud.activeSelf)
+            {
+                bool xf = _gm.TransformActive;
+                if (_xformBadge.activeSelf != xf) _xformBadge.SetActive(xf);
+                if (xf)
+                {
+                    var form = _gm.PlayerForm;
+                    Color col = UIFactory.Hex(GameConfig.FormColorHex(form));
+                    _xformBadgeGlyph.text = GameConfig.Glyph(form);
+                    _xformBadgeGlyph.color = col;
+                    _xformBadgeRing.color = col;
+                }
+            }
+            else if (_xformBadge != null && _xformBadge.activeSelf) _xformBadge.SetActive(false);
+        }
+
+        private Image MakeCircleImage(Transform parent, float size, Color color)
+        {
+            var go = new GameObject("Circle", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f); rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(size, size); rt.anchoredPosition = Vector2.zero;
+            var img = go.GetComponent<Image>();
+            img.sprite = _ui.Circle();
+            img.color = color;
+            return img;
         }
 
         // ── Visibility ───────────────────────────────────────────────────────
@@ -74,8 +117,12 @@ namespace KnightsGauntlet.View
             _menu.SetActive(false); _hud.SetActive(false); _pause.SetActive(false);
             _gameOver.SetActive(false); _trapped.SetActive(false); _settings.SetActive(false);
             _ach.SetActive(false); _howto.SetActive(false); _patch.SetActive(false);
+            if (_market != null) _market.SetActive(false);
+            if (_countdown != null) _countdown.SetActive(false);
+            if (_dailyIntro != null) _dailyIntro.SetActive(false);
+            if (_dailyReward != null) _dailyReward.SetActive(false);
         }
-        public void ShowMenu() { HideAll(); _nameInput.text = SaveData.GetName(); _menuWarn.text = ""; _menu.SetActive(true); }
+        public void ShowMenu() { HideAll(); RefreshNameUI(); _menu.SetActive(true); }
         public void ShowHud()
         {
             HideAll();
@@ -84,13 +131,28 @@ namespace KnightsGauntlet.View
             _hud.SetActive(true);
         }
         public void ShowPause() { HideAll(); _hud.SetActive(true); _pause.SetActive(true); }
-        public void ShowGameOver(int score, bool isTrap, DeathAnalysis analysis)
+        public void ShowGameOver(int score, bool isTrap, DeathAnalysis analysis, int runReward, int reviveCost, int shillings)
         {
             HideAll();
             _analysis = analysis;
             _gameOverScore.text = "Score: " + score;
+            if (_goReward != null)
+            {
+                _goReward.text = runReward > 0 ? "+" + runReward + " shillings collected" : "";
+                _goReward.gameObject.SetActive(runReward > 0);
+            }
             _savedName.text = "Saved as " + SaveData.GetName();
             _trappedBtn.gameObject.SetActive(isTrap);
+
+            bool canRevive = reviveCost > 0;
+            if (_reviveRow != null) _reviveRow.SetActive(canRevive);
+            if (canRevive && _reviveSpendBtn != null)
+            {
+                var lbl = _reviveSpendBtn.GetComponentInChildren<TMP_Text>();
+                if (lbl != null) lbl.text = "Spend " + reviveCost;
+                _reviveSpendBtn.interactable = shillings >= reviveCost;
+            }
+            if (_goBalance != null) { _goBalance.color = UIFactory.Muted; _goBalance.text = shillings + " shillings"; }
             _gameOver.SetActive(true);
         }
 
@@ -119,13 +181,36 @@ namespace KnightsGauntlet.View
             var diffRow2 = _ui.Row(col, 8f);
             _diffBtns[Difficulty.Grandmaster] = _ui.Button(diffRow2, "<color=#F0C040>\u25CF</color> Grandmaster", () => SetDiff(Difficulty.Grandmaster), UIFactory.Panel, UIFactory.Muted, 214, 48, 14);
 
+            _nameSetLabel = _ui.Label(col, "", 14, UIFactory.Muted);
             _nameInput = _ui.Input(col, "ENTER NAME", 7);
+            _permWarn = _ui.Label(col, "Choose carefully \u2014 this is your permanent name and can't be changed later.", 11, UIFactory.Amber);
             _menuWarn = _ui.Label(col, "", 12, UIFactory.Amber);
 
             _ui.Button(col, "PLAY", OnPlay, UIFactory.Gold, UIFactory.Bg, 230, 56, 21);
+            _dailyBtn = _ui.Button(col, "Daily Challenge", () => OnDailyPressed(), UIFactory.Panel, UIFactory.Gold, 240, 46, 15);
             var btnRow = _ui.Row(col, 10f);
             _ui.Button(btnRow, "Leaderboard", () => _gm.ShowLeaderboard(), UIFactory.Panel, UIFactory.Gold, 150, 46, 14);
             _ui.Button(btnRow, "Settings", () => ShowSettings(), UIFactory.Panel, UIFactory.Gold, 150, 46, 14);
+
+            // Shop entry — top-right corner of the menu. It's anchored manually
+            // (no layout group here), so the size must be set on the RectTransform
+            // directly — the Button's width/height args only apply inside a layout.
+            var shop = _ui.Button(screen.transform, "Shop", () => ShowMarketplace(), UIFactory.Panel, UIFactory.Gold, 60, 32, 13);
+            var shopRt = shop.GetComponent<RectTransform>();
+            shopRt.anchorMin = shopRt.anchorMax = new Vector2(1f, 1f);
+            shopRt.pivot = new Vector2(1f, 1f);
+            shopRt.sizeDelta = new Vector2(60f, 32f);
+            shopRt.anchoredPosition = new Vector2(-14f, -14f);
+
+            // Shillings count, top-right, just to the left of the Shop button.
+            _menuShillings = _ui.Label(screen.transform, "", 14, UIFactory.Gold, FontStyles.Bold);
+            _menuShillings.alignment = TextAlignmentOptions.Right;
+            _menuShillings.enableWordWrapping = false;
+            var shillRt = _menuShillings.rectTransform;
+            shillRt.anchorMin = shillRt.anchorMax = new Vector2(1f, 1f);
+            shillRt.pivot = new Vector2(1f, 1f);
+            shillRt.sizeDelta = new Vector2(200f, 32f);
+            shillRt.anchoredPosition = new Vector2(-82f, -14f);
 
             SetMode(_selMode); SetDiff(_selDiff);
         }
@@ -142,21 +227,54 @@ namespace KnightsGauntlet.View
             _selDiff = d;
             foreach (var kv in _diffBtns) UIFactory.StyleToggle(kv.Value, kv.Key == d);
         }
+        private void RefreshNameUI()
+        {
+            bool locked = SaveData.IsNameLocked();
+            _nameSetLabel.gameObject.SetActive(locked);
+            _nameInput.gameObject.SetActive(!locked);
+            _permWarn.gameObject.SetActive(!locked);
+            if (locked) _nameSetLabel.text = "Playing as <b>" + SaveData.GetName() + "</b>";
+            _menuWarn.text = "";
+            if (_menuShillings != null) _menuShillings.text = _gm.Shillings + " shillings";
+            if (_dailyBtn != null)
+            {
+                var dl = _dailyBtn.GetComponentInChildren<TMP_Text>();
+                if (dl != null) dl.text = "Daily Challenge (" + SaveData.DailyAttemptsLeft() + " left)";
+            }
+        }
+
         private void OnPlay()
         {
+            if (_checkingName) return;
+            // Name already chosen and locked — straight to play.
+            if (SaveData.IsNameLocked()) { _gm.StartGame(_selMode, _selDiff); return; }
+
             var raw = (_nameInput.text ?? "").Trim();
             if (raw.Length > 7) raw = raw.Substring(0, 7);
             if (string.IsNullOrEmpty(raw)) { _menuWarn.color = UIFactory.Amber; _menuWarn.text = "Enter a name to play."; return; }
             if (!NameFilter.IsAllowed(raw)) { _menuWarn.color = UIFactory.Error; _menuWarn.text = "Please choose a different name."; return; }
-            _menuWarn.text = "";
-            SaveData.SetName(raw);
-            _gm.StartGame(_selMode, _selDiff);
+
+            _checkingName = true;
+            _menuWarn.color = UIFactory.Muted; _menuWarn.text = "Checking name\u2026";
+            _gm.CheckNameAvailable(raw, available =>
+            {
+                _checkingName = false;
+                if (!available)
+                {
+                    _menuWarn.color = UIFactory.Error;
+                    _menuWarn.text = "That name's taken \u2014 pick another.";
+                    return;
+                }
+                SaveData.SetName(raw);   // permanent from here on
+                RefreshNameUI();
+                _gm.StartGame(_selMode, _selDiff);
+            });
         }
 
         // ── HUD ──────────────────────────────────────────────────────────────
         private void BuildHud()
         {
-            var canvas = _ui.CreateCanvas("HUD", 90);
+            var canvas = _ui.CreateCanvas("HUD", 90, new Vector2(640, 1138));
             _hud = canvas.gameObject;
 
             _scoreText = _ui.Label(canvas.transform, "0", 28, UIFactory.Gold, FontStyles.Bold, 200);
@@ -165,20 +283,40 @@ namespace KnightsGauntlet.View
             sRt.anchoredPosition = new Vector2(24, -20);
             _scoreText.alignment = TextAlignmentOptions.TopLeft;
 
+            // Transform form badge: the enemy piece you've become, in a ring, just
+            // below the score. Hidden unless transformed.
+            _xformBadge = new GameObject("XformBadge", typeof(RectTransform));
+            _xformBadge.transform.SetParent(canvas.transform, false);
+            var xbRt = _xformBadge.GetComponent<RectTransform>();
+            xbRt.anchorMin = xbRt.anchorMax = new Vector2(0, 1); xbRt.pivot = new Vector2(0, 1);
+            xbRt.sizeDelta = new Vector2(50, 50);
+            xbRt.anchoredPosition = new Vector2(26, -62);
+            _xformBadgeRing = MakeCircleImage(_xformBadge.transform, 50, UIFactory.Gold);       // coloured ring
+            MakeCircleImage(_xformBadge.transform, 42, new Color(0.08f, 0.08f, 0.14f, 0.96f));   // dark inner disc
+            _xformBadgeGlyph = _ui.Label(_xformBadge.transform, "", 26, UIFactory.Gold, FontStyles.Bold, 50);
+            if (_theme != null && _theme.glyphFont != null) _xformBadgeGlyph.font = _theme.glyphFont;
+            var xgRt = _xformBadgeGlyph.rectTransform;
+            xgRt.anchorMin = Vector2.zero; xgRt.anchorMax = Vector2.one; xgRt.offsetMin = Vector2.zero; xgRt.offsetMax = Vector2.zero;
+            _xformBadgeGlyph.alignment = TextAlignmentOptions.Center;
+            _xformBadgeGlyph.enableWordWrapping = false;
+            _xformBadge.SetActive(false);
+
             _modeBadge = _ui.Pill(canvas.transform, "");
             var mRt = _modeBadge.transform.parent.GetComponent<RectTransform>();
             mRt.anchorMin = mRt.anchorMax = new Vector2(0.5f, 1f); mRt.pivot = new Vector2(0.5f, 1f);
             mRt.anchoredPosition = new Vector2(0, -18);
 
-            var restart = _ui.Button(canvas.transform, "\u21BA", () => _gm.RestartGame(), UIFactory.Panel, UIFactory.Gold, 56, 50, 22);
+            var restart = _ui.Button(canvas.transform, "\u21BA", () => _gm.RestartGame(), UIFactory.Panel, UIFactory.Gold, 40, 40, 18);
             var rRt = restart.GetComponent<RectTransform>();
             rRt.anchorMin = rRt.anchorMax = new Vector2(1, 1); rRt.pivot = new Vector2(1, 1);
-            rRt.anchoredPosition = new Vector2(-88, -16);
+            rRt.sizeDelta = new Vector2(40, 40);
+            rRt.anchoredPosition = new Vector2(-64, -16);
 
-            var pause = _ui.Button(canvas.transform, "II", () => _gm.PauseGame(), UIFactory.Panel, UIFactory.Gold, 56, 50, 18);
+            var pause = _ui.Button(canvas.transform, "II", () => _gm.PauseGame(), UIFactory.Panel, UIFactory.Gold, 40, 40, 16);
             var pRt = pause.GetComponent<RectTransform>();
             pRt.anchorMin = pRt.anchorMax = new Vector2(1, 1); pRt.pivot = new Vector2(1, 1);
-            pRt.anchoredPosition = new Vector2(-22, -16);
+            pRt.sizeDelta = new Vector2(40, 40);
+            pRt.anchoredPosition = new Vector2(-16, -16);
 
             // Enemy-move timer (battle only): "ENEMY MOVE" label + a filling bar.
             _enemyBarRoot = new GameObject("EnemyBar", typeof(RectTransform));
@@ -257,13 +395,106 @@ namespace KnightsGauntlet.View
             var canvas = _ui.CreateCanvas("GameOver", 110);
             _gameOver = canvas.gameObject;
             var screen = _ui.Screen(canvas.transform, new Color(0.08f, 0.08f, 0.16f, 0.95f));
-            var col = _ui.Column(screen.transform, 14f);
+            var col = _ui.Column(screen.transform, 12f);
             _ui.Label(col, "GAME OVER", 28, UIFactory.Gold, FontStyles.Bold);
             _gameOverScore = _ui.Label(col, "Score: 0", 24, UIFactory.Gold, FontStyles.Bold);
+            _goReward = _ui.Label(col, "", 13, UIFactory.Gold);
             _savedName = _ui.Label(col, "", 14, UIFactory.Muted);
             _trappedBtn = _ui.Button(col, "Was I trapped?", () => ShowTrapped(), UIFactory.Panel, UIFactory.Gold, 220, 44, 14);
+
+            _reviveRow = _ui.Column(col, 6f).gameObject;
+            _ui.Label(_reviveRow.transform, "Extra life?", 13, UIFactory.Muted);
+            var rr = _ui.Row(_reviveRow.transform, 8f);
+            _reviveSpendBtn = _ui.Button(rr, "Spend 5", OnReviveSpend, UIFactory.Gold, UIFactory.Bg, 160, 42, 14);
+
+            _goBalance = _ui.Label(col, "", 12, UIFactory.Muted);
             _ui.Button(col, "Restart", () => _gm.RestartGame(), UIFactory.Gold, UIFactory.Bg);
             _ui.Button(col, "Home", () => _gm.ToMenu(), UIFactory.Panel, UIFactory.Gold);
+        }
+
+        private void OnReviveSpend()
+        {
+            if (!_gm.TryReviveWithShillings())
+            {
+                _goBalance.color = UIFactory.Error;
+                _goBalance.text = "Not enough shillings.";
+            }
+        }
+
+        // ── Revive countdown overlay ─────────────────────────────────────────
+        private void BuildCountdown()
+        {
+            var canvas = _ui.CreateCanvas("Countdown", 140);
+            _countdown = canvas.gameObject;
+            var holder = new GameObject("num", typeof(RectTransform));
+            holder.transform.SetParent(canvas.transform, false);
+            var rt = holder.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(240, 240);
+            _countdownText = holder.AddComponent<TextMeshProUGUI>();
+            if (_theme != null && _theme.uiFont != null) _countdownText.font = _theme.uiFont;
+            _countdownText.text = "3";
+            _countdownText.fontSize = 130;
+            _countdownText.color = UIFactory.Gold;
+            _countdownText.fontStyle = FontStyles.Bold;
+            _countdownText.alignment = TextAlignmentOptions.Center;
+            _countdownText.raycastTarget = false;
+            _countdown.SetActive(false);
+        }
+        public void ShowCountdown(int n) { if (_countdownText != null) _countdownText.text = n.ToString(); if (_countdown != null) _countdown.SetActive(true); }
+        public void SetCountdown(int n) { if (_countdownText != null) _countdownText.text = n.ToString(); }
+        public void HideCountdown() { if (_countdown != null) _countdown.SetActive(false); }
+
+        // ── Daily challenge intro (first time only) ──────────────────────────
+        private void BuildDailyIntro()
+        {
+            var canvas = _ui.CreateCanvas("DailyIntro", 112);
+            _dailyIntro = canvas.gameObject;
+            var screen = _ui.Screen(canvas.transform, new Color(0.08f, 0.08f, 0.16f, 0.96f));
+            var col = _ui.Column(screen.transform, 13f);
+            _ui.Label(col, "Daily Challenge", 27, UIFactory.Gold, FontStyles.Bold);
+            _ui.Label(col, "Everyone plays the SAME board each day \u2014 the exact same layout for every player.", 15, UIFactory.Text, FontStyles.Normal, 320);
+            _ui.Label(col, "You get 10 attempts per day. They reset at midnight, and there are no extra lives.", 15, UIFactory.Text, FontStyles.Normal, 320);
+            _ui.Label(col, "Finish in the daily top 5 to earn shillings.", 13, UIFactory.Muted, FontStyles.Normal, 320);
+            _dailyIntroAttempts = _ui.Label(col, "", 15, UIFactory.Gold, FontStyles.Bold);
+            _ui.Button(col, "Let's go", () => { MarkDailySeen(); _gm.StartDaily(); }, UIFactory.Gold, UIFactory.Bg, 220, 52, 16);
+            _ui.Button(col, "Back", () => ShowMenu(), UIFactory.Panel, UIFactory.Gold, 220, 46, 14);
+        }
+        private void MarkDailySeen() { PlayerPrefs.SetInt("kg_seen_daily", 1); PlayerPrefs.Save(); }
+        private void OnDailyPressed()
+        {
+            if (PlayerPrefs.GetInt("kg_seen_daily", 0) == 1) { _gm.StartDaily(); return; }
+            HideAll();
+            if (_dailyIntroAttempts != null)
+                _dailyIntroAttempts.text = SaveData.DailyAttemptsLeft() + " attempts left today";
+            _dailyIntro.SetActive(true);
+        }
+
+        // ── Daily challenge reward popup (placed top 5 yesterday) ─────────────
+        private void BuildDailyReward()
+        {
+            var canvas = _ui.CreateCanvas("DailyReward", 116);
+            _dailyReward = canvas.gameObject;
+            var screen = _ui.Screen(canvas.transform, new Color(0.08f, 0.08f, 0.16f, 0.96f));
+            var col = _ui.Column(screen.transform, 16f);
+            _ui.Label(col, "Daily Challenge Results", 25, UIFactory.Gold, FontStyles.Bold);
+            _dailyRewardText = _ui.Label(col, "", 17, UIFactory.Text, FontStyles.Normal, 330);
+            _ui.Button(col, "Claim", () => ShowMenu(), UIFactory.Gold, UIFactory.Bg, 220, 52, 16);
+        }
+        public void ShowDailyReward(int place, int amount, string dateLabel)
+        {
+            HideAll();
+            string when = string.IsNullOrEmpty(dateLabel)
+                ? "your last Daily Challenge"
+                : "the Daily Challenge on " + dateLabel;
+            _dailyRewardText.text =
+                "Congrats! You finished <b>" + Ordinal(place) + "</b> in " + when + ".\n\n" +
+                "<size=140%><color=#F0C040><b>+" + amount + " shillings</b></color></size>";
+            _dailyReward.SetActive(true);
+        }
+        private static string Ordinal(int n)
+        {
+            switch (n) { case 1: return "1st"; case 2: return "2nd"; case 3: return "3rd"; default: return n + "th"; }
         }
 
         // ── Settings hub ─────────────────────────────────────────────────────
@@ -278,9 +509,74 @@ namespace KnightsGauntlet.View
             _ui.Button(col, "Achievements", () => ShowAchievements(), UIFactory.Panel, UIFactory.Gold);
             _ui.Button(col, "Patch Notes", () => ShowPatch(), UIFactory.Panel, UIFactory.Gold);
             _ui.Button(col, "Report a Bug", () => _gm.ReportBug(), UIFactory.Panel, UIFactory.Gold);
+            _cbToggle = _ui.Button(col, "", () => ToggleColorblind(), UIFactory.Panel, UIFactory.Gold);
+            _cbToggleLabel = _cbToggle.GetComponentInChildren<TMP_Text>();
+            UpdateColorblindLabel();
             _ui.Button(col, "Back", () => ShowMenu(), UIFactory.Gold, UIFactory.Bg);
         }
+        private void ToggleColorblind()
+        {
+            SaveData.SetColorblind(!SaveData.IsColorblind());
+            UpdateColorblindLabel();
+        }
+        private void UpdateColorblindLabel()
+        {
+            if (_cbToggleLabel != null)
+                _cbToggleLabel.text = "Colorblind Mode: " + (SaveData.IsColorblind() ? "On" : "Off");
+        }
         private void ShowSettings() { HideAll(); _settings.SetActive(true); }
+
+        // ── Marketplace ──────────────────────────────────────────────────────
+        private void BuildMarketplace()
+        {
+            var canvas = _ui.CreateCanvas("Market", 108);
+            _market = canvas.gameObject;
+            var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
+            var col = _ui.Column(screen.transform, 10f);
+            _ui.Label(col, "Marketplace", 26, UIFactory.Gold, FontStyles.Bold);
+            _marketBalance = _ui.Label(col, "", 15, UIFactory.Gold, FontStyles.Bold);
+            _ui.Label(col, "Buy skins with shillings. Equip here or from Achievements.", 11, UIFactory.Muted);
+            _marketList = _ui.Column(col, 7f);
+            _marketMsg = _ui.Label(col, "", 12, UIFactory.Amber);
+            _ui.Button(col, "Back", () => ShowMenu(), UIFactory.Gold, UIFactory.Bg);
+        }
+        private void ShowMarketplace() { HideAll(); RebuildMarket(); _market.SetActive(true); }
+        private void RebuildMarket()
+        {
+            _marketBalance.text = _gm.Shillings + " shillings";
+            _marketMsg.text = "";
+            for (int i = _marketList.childCount - 1; i >= 0; i--) Destroy(_marketList.GetChild(i).gameObject);
+
+            string equipped = SaveData.GetSkin();
+            foreach (var s in Skins.Shop)
+            {
+                var row = _ui.Row(_marketList, 8f);
+
+                var sw = new GameObject("sw", typeof(RectTransform));
+                sw.transform.SetParent(row, false);
+                sw.GetComponent<RectTransform>().sizeDelta = new Vector2(26, 26);
+                var swLe = sw.AddComponent<LayoutElement>(); swLe.preferredWidth = 26; swLe.preferredHeight = 26;
+                var swImg = sw.AddComponent<Image>(); swImg.sprite = _ui.Circle(); swImg.color = s.Color;
+
+                _ui.Label(row, s.Name, 14, UIFactory.Text, FontStyles.Bold, 96);
+
+                if (SaveData.OwnsShopSkin(s.Id))
+                {
+                    if (equipped == s.Id) _ui.Label(row, "Equipped", 12, UIFactory.Gold, FontStyles.Bold, 100);
+                    else { var id = s.Id; _ui.Button(row, "Equip", () => { _gm.EquipSkin(id); RebuildMarket(); }, UIFactory.Panel, UIFactory.Gold, 100, 40, 13); }
+                }
+                else
+                {
+                    var info = s;
+                    _ui.Button(row, s.Price + " sh", () => OnBuy(info), UIFactory.Gold, UIFactory.Bg, 100, 40, 13);
+                }
+            }
+        }
+        private void OnBuy(SkinInfo s)
+        {
+            if (_gm.BuyShopSkin(s)) RebuildMarket();
+            else { _marketMsg.color = UIFactory.Error; _marketMsg.text = "Not enough shillings for " + s.Name + "."; }
+        }
 
         // ── Achievements ─────────────────────────────────────────────────────
         private void BuildAchievements()
@@ -291,7 +587,7 @@ namespace KnightsGauntlet.View
             var col = _ui.Column(screen.transform, 12f);
             _ui.Label(col, "Achievements", 26, UIFactory.Gold, FontStyles.Bold);
             _ui.Label(col, "Earn skins by completing challenges on Hard or Grandmaster.", 12, UIFactory.Muted);
-            _achList = _ui.Column(col, 8f);
+            _achList = _ui.Column(col, 16f);
             _ui.Button(col, "Back", () => ShowSettings(), UIFactory.Gold, UIFactory.Bg);
         }
         private void ShowAchievements() { HideAll(); RebuildAchievements(); _ach.SetActive(true); }

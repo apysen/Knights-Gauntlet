@@ -50,7 +50,7 @@ namespace KnightsGauntlet.View
                 if (theme.pieceBackingSprite != null) backing.sprite = theme.pieceBackingSprite;
                 Color bc;
                 if (isPlayer) { bc = tint; bc.a = 0.20f; }
-                else if (type == PieceType.Trap) { bc = new Color(0.78f, 0.20f, 0.20f, 0.35f); }
+                else if (type == PieceType.Trap) { bc = new Color(0.71f, 0.29f, 0.29f, 0.28f); }
                 else { bc = new Color(0.31f, 0.31f, 0.55f, 0.30f); }
                 backing.color = bc;
             }
@@ -72,6 +72,10 @@ namespace KnightsGauntlet.View
                     glyphLabel.enabled = true;
                     glyphLabel.text = GameConfig.Glyph(type);
                     glyphLabel.color = tint;
+                    // The trap ✕ is drawn smaller (like the web app) so a screen of
+                    // traps isn't a wall of red; pieces keep their full size.
+                    glyphLabel.transform.localScale =
+                        (type == PieceType.Trap) ? new Vector3(0.62f, 0.62f, 1f) : Vector3.one;
                     if (theme.glyphFont != null) glyphLabel.font = theme.glyphFont;
                 }
             }

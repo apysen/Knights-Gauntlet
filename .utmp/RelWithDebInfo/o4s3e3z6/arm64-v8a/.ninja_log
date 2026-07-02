@@ -1,0 +1,23 @@
+# ninja log v5
+56	243	8047279935020082	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	32b0656ef573edbd
+14	1675	8047279949328843	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	fa308c933032d342
+26	1297	8047279945546922	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	f03641fd57d678b5
+244	426	8047279936765774	D:/GameDev/Knight's Gauntlet App/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/o4s3e3z6/obj/arm64-v8a/libswappywrapper.so	2b9ccae48d9d13f8
+32	1266	8047279945215047	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	5459cba6b4e197e
+19	1315	8047279945739149	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	3c4ff0d89450fcfc
+8	1386	8047279946415330	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	514bd546d64b9a2c
+38	1305	8047279945637508	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	aceb08a0fab8e913
+43	1623	8047279948804683	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	faa0e23fa04f7742
+49	1491	8047279947471344	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	77a9988d4810365a
+1675	1798	8047279950588859	D:/GameDev/Knight's Gauntlet App/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/o4s3e3z6/obj/arm64-v8a/libgame.so	2282a206a098af5a
+51	470	8047282059466699	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	32b0656ef573edbd
+471	817	8047282062521326	D:/GameDev/Knight's Gauntlet App/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/o4s3e3z6/obj/arm64-v8a/libswappywrapper.so	2b9ccae48d9d13f8
+40	1303	8047282067802133	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	5459cba6b4e197e
+17	1331	8047282068093479	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	3c4ff0d89450fcfc
+28	1349	8047282068271044	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	aceb08a0fab8e913
+7	1380	8047282068573272	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	f03641fd57d678b5
+12	1408	8047282068867041	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	514bd546d64b9a2c
+45	1458	8047282069353632	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	77a9988d4810365a
+34	1583	8047282070638926	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	faa0e23fa04f7742
+23	1667	8047282071450338	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	fa308c933032d342
+1667	1800	8047282072793277	D:/GameDev/Knight's Gauntlet App/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/o4s3e3z6/obj/arm64-v8a/libgame.so	2282a206a098af5a

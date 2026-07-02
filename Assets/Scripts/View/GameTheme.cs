@@ -57,6 +57,11 @@ namespace KnightsGauntlet.View
         public Color threatFill = new Color(0.353f, 0.078f, 0.078f, 0.55f);
         public Color threatStroke = new Color(0.588f, 0.157f, 0.157f, 0.55f);
 
+        [Header("Pickups (shillings)")]
+        [Tooltip("Coin/shilling sprite. null = generated gold circle.")]
+        public Sprite pickupSprite;
+        public Color pickupColor = new Color(0.95f, 0.78f, 0.25f, 1f);
+
         [Header("UI (menus / buttons) — null = generated rounded sprite")]
         [Tooltip("9-sliced rounded fill used for buttons, inputs, pills, bars.")]
         public Sprite uiPanelSprite;
@@ -110,21 +115,7 @@ namespace KnightsGauntlet.View
 
         // Built-in skin colours, so the player/leaderboard always tint correctly
         // even if the theme asset's `skins` array was never populated in the editor.
-        public static Color BuiltInSkinTint(string id)
-        {
-            string hex;
-            switch (id)
-            {
-                case "emerald": hex = "#3CDC78"; break;
-                case "crimson": hex = "#FF5A5A"; break;
-                case "violet":  hex = "#B070FF"; break;
-                case "frost":   hex = "#8FE0FF"; break;
-                case "magma":   hex = "#FF8A3C"; break;
-                default:        hex = "#F0C040"; break; // gold / unknown
-            }
-            ColorUtility.TryParseHtmlString(hex, out var c);
-            return c;
-        }
+        public static Color BuiltInSkinTint(string id) => Skins.ColorOf(id);
 
         // ── Editor convenience ──────────────────────────────────────────────
         // Right-click the asset > "Populate Defaults From Core" to fill the piece

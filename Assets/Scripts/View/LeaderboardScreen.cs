@@ -23,8 +23,8 @@ namespace KnightsGauntlet.View
 
         private string _source = "online";
         private string _category = "trap-hard";
-        private Button _personalTab, _onlineTab;
-        private GameObject _personalCats, _onlineCats;
+        private Button _personalTab, _onlineTab, _dailyTab;
+        private GameObject _personalCats, _onlineCats, _dailyCats;
         private readonly Dictionary<string, Button> _catBtns = new Dictionary<string, Button>();
 
         private static readonly Color Gold = UIFactory.Hex("#FFD34D");
@@ -43,6 +43,8 @@ namespace KnightsGauntlet.View
         private const float ScoreW = 86f;
         private const float SkinFromRight = 8f;
         private const float SkinW = 26f;
+        private const float RewardW = 80f;
+        private static readonly int[] DailyRewards = { 1000, 750, 500, 250, 100 };
 
         public void Init(GameTheme theme, LeaderboardClient client)
         {
@@ -64,6 +66,9 @@ namespace KnightsGauntlet.View
                 ? md + "-" + diff.ToString().ToLower()
                 : md + "-hard";
             ApplySourceVisibility();
+            UIFactory.StyleToggle(_personalTab, false);
+            UIFactory.StyleToggle(_onlineTab, true);
+            if (_dailyTab != null) UIFactory.StyleToggle(_dailyTab, false);
             Refresh();
             _root.SetActive(true);
         }
@@ -77,29 +82,35 @@ namespace KnightsGauntlet.View
 
             _ui.Label(col, "Leaderboard", 30, UIFactory.Gold, FontStyles.Bold);
 
-            var srcRow = _ui.Row(col, 12f);
-            _personalTab = _ui.Button(srcRow, "Personal", () => SetSource("personal"), UIFactory.Panel, UIFactory.Muted, 150, 50, 16);
-            _onlineTab = _ui.Button(srcRow, "Online", () => SetSource("online"), UIFactory.Panel, UIFactory.Muted, 150, 50, 16);
+            var srcRow = _ui.Row(col, 10f);
+            _personalTab = _ui.Button(srcRow, "Personal", () => SetSource("personal"), UIFactory.Panel, UIFactory.Muted, 122, 50, 15);
+            _onlineTab = _ui.Button(srcRow, "Online", () => SetSource("online"), UIFactory.Panel, UIFactory.Muted, 110, 50, 15);
+            _dailyTab = _ui.Button(srcRow, "Daily", () => SetSource("daily"), UIFactory.Panel, UIFactory.Muted, 110, 50, 15);
 
             // Personal categories: one row per mode, all four difficulties.
             _personalCats = _ui.Column(col, 7f).gameObject;
             var pTrap = _ui.Row(_personalCats.transform, 6f);
             _ui.Label(pTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Bold, 56);
-            CatTab(pTrap, "trap-easy", "Easy"); CatTab(pTrap, "trap-medium", "Med");
-            CatTab(pTrap, "trap-hard", "Hard"); CatTab(pTrap, "trap-grandmaster", "GM");
+            CatTab(pTrap, "personal", "trap-easy", "Easy"); CatTab(pTrap, "personal", "trap-medium", "Med");
+            CatTab(pTrap, "personal", "trap-hard", "Hard"); CatTab(pTrap, "personal", "trap-grandmaster", "GM");
             var pBat = _ui.Row(_personalCats.transform, 6f);
             _ui.Label(pBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Bold, 56);
-            CatTab(pBat, "battle-easy", "Easy"); CatTab(pBat, "battle-medium", "Med");
-            CatTab(pBat, "battle-hard", "Hard"); CatTab(pBat, "battle-grandmaster", "GM");
+            CatTab(pBat, "personal", "battle-easy", "Easy"); CatTab(pBat, "personal", "battle-medium", "Med");
+            CatTab(pBat, "personal", "battle-hard", "Hard"); CatTab(pBat, "personal", "battle-grandmaster", "GM");
 
             // Online categories: Hard & GM per mode.
             _onlineCats = _ui.Column(col, 7f).gameObject;
             var oTrap = _ui.Row(_onlineCats.transform, 6f);
             _ui.Label(oTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Bold, 56);
-            CatTab(oTrap, "trap-hard", "Hard"); CatTab(oTrap, "trap-grandmaster", "GM");
+            CatTab(oTrap, "online", "trap-hard", "Hard"); CatTab(oTrap, "online", "trap-grandmaster", "GM");
             var oBat = _ui.Row(_onlineCats.transform, 6f);
             _ui.Label(oBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Bold, 56);
-            CatTab(oBat, "battle-hard", "Hard"); CatTab(oBat, "battle-grandmaster", "GM");
+            CatTab(oBat, "online", "battle-hard", "Hard"); CatTab(oBat, "online", "battle-grandmaster", "GM");
+
+            // Daily: a single date-seeded board shared by everyone, resets daily.
+            _dailyCats = _ui.Column(col, 4f).gameObject;
+            _ui.Label(_dailyCats.transform, "TODAY'S CHALLENGE", 13, UIFactory.Gold, FontStyles.Bold, 360);
+            _ui.Label(_dailyCats.transform, "Trap \u00B7 Grandmaster \u00B7 a new board every day.", 11, UIFactory.Muted, FontStyles.Normal, 360);
 
             _status = _ui.Label(col, "", 14, UIFactory.Muted, FontStyles.Normal, 360);
 
@@ -110,10 +121,13 @@ namespace KnightsGauntlet.View
             SetSource("online");
         }
 
-        private void CatTab(Transform parent, string key, string label)
+        private void CatTab(Transform parent, string source, string key, string label)
         {
             var btn = _ui.Button(parent, label, () => SetCategory(key), UIFactory.Panel, UIFactory.Muted, 72, 44, 13);
-            _catBtns[key] = btn;
+            // Keyed by source+category: the same category (e.g. trap-hard) appears
+            // in both the Personal and Online grids, so a plain key would collide
+            // and the wrong button would get highlighted.
+            _catBtns[source + "|" + key] = btn;
         }
 
         private void BuildScroll(Transform parent)
@@ -190,10 +204,18 @@ namespace KnightsGauntlet.View
             _source = src;
             UIFactory.StyleToggle(_personalTab, src == "personal");
             UIFactory.StyleToggle(_onlineTab, src == "online");
-            if (src == "online" && !LeaderboardClient.IsOnlineCategory(_category))
-                _category = _category.StartsWith("battle") ? "battle-hard" : "trap-hard";
+            if (_dailyTab != null) UIFactory.StyleToggle(_dailyTab, src == "daily");
+            _category = DefaultCategoryFor(src);
             ApplySourceVisibility();
             Refresh();
+        }
+        // Top-left difficulty of each source's grid, so switching tabs always lands
+        // on a populated board (never a blank one).
+        private static string DefaultCategoryFor(string src)
+        {
+            if (src == "daily") return "daily-" + System.DateTime.Now.ToString("yyyyMMdd");
+            if (src == "online") return "trap-hard";
+            return "trap-easy"; // personal
         }
 
         private void SetCategory(string key) { _category = key; Refresh(); }
@@ -202,16 +224,22 @@ namespace KnightsGauntlet.View
         {
             _personalCats.SetActive(_source == "personal");
             _onlineCats.SetActive(_source == "online");
-            foreach (var kv in _catBtns) UIFactory.StyleToggle(kv.Value, kv.Key == _category);
+            if (_dailyCats != null) _dailyCats.SetActive(_source == "daily");
+            string sel = _source + "|" + _category;
+            foreach (var kv in _catBtns) UIFactory.StyleToggle(kv.Value, kv.Key == sel);
         }
 
         private void Refresh()
         {
             ApplySourceVisibility();
             ClearList();
-            if (_source == "online")
+            if (_source == "online" || _source == "daily")
             {
-                if (!LeaderboardClient.IsOnlineCategory(_category)) { _status.text = "Online is Hard & Grandmaster only."; return; }
+                if (!LeaderboardClient.IsOnlineCategory(_category))
+                {
+                    _status.text = _source == "daily" ? "No daily board yet." : "Online is Hard & Grandmaster only.";
+                    return;
+                }
                 _status.text = "Loading\u2026";
                 _client.FetchOnline(_category, rows => { if (this != null) RenderRows(rows); });
             }
@@ -226,7 +254,12 @@ namespace KnightsGauntlet.View
             ClearList();
             if (rows == null || rows.Count == 0) { _status.text = "No scores yet."; return; }
             _status.text = "";
-            for (int i = 0; i < rows.Count; i++) AddRow(i + 1, rows[i]);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                int rank = i + 1;
+                string reward = (_source == "daily" && rank <= DailyRewards.Length) ? "+" + DailyRewards[rank - 1] : null;
+                AddRow(rank, rows[i], reward);
+            }
             _scroll.verticalNormalizedPosition = 1f;
         }
 
@@ -237,11 +270,15 @@ namespace KnightsGauntlet.View
 
         // Each row is a fixed-height container with explicitly anchored children, so
         // the rank, score, crown, and skin glyph stay put regardless of width.
-        private void AddRow(int rank, ScoreRow row)
+        private void AddRow(int rank, ScoreRow row, string reward = null)
         {
             var go = new GameObject("row", typeof(RectTransform));
             go.transform.SetParent(_listContent, false);
             var le = go.AddComponent<LayoutElement>(); le.minHeight = RowH; le.preferredHeight = RowH;
+
+            // When a reward badge is shown (daily top 5), shift the score+skin left
+            // to make room for it on the far right.
+            float shift = string.IsNullOrEmpty(reward) ? 0f : RewardW + 6f;
 
             // bottom separator line
             var line = new GameObject("line", typeof(RectTransform));
@@ -267,19 +304,27 @@ namespace KnightsGauntlet.View
                              TextAlignmentOptions.Left, top ? FontStyles.Bold : FontStyles.Normal);
             var nrt = name.rectTransform;
             nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
-            nrt.offsetMin = new Vector2(NameLeft, 0); nrt.offsetMax = new Vector2(-NameRight, 0);
+            nrt.offsetMin = new Vector2(NameLeft, 0); nrt.offsetMax = new Vector2(-(NameRight + shift), 0);
 
             // score, anchored from the right
             var score = Glyph(go.transform, row.score.ToString(), 17, rowColor, _ui.Font,
                               TextAlignmentOptions.Right, FontStyles.Bold);
-            AnchorRight(score.rectTransform, ScoreFromRight, ScoreW);
+            AnchorRight(score.rectTransform, ScoreFromRight + shift, ScoreW);
 
             // skin glyph, anchored far right
             string skin = string.IsNullOrEmpty(row.skin) ? "gold" : row.skin;
             Color skinColor = _theme != null ? _theme.GetSkinTint(skin) : UIFactory.Gold;
             var sk = Glyph(go.transform, "\u265E", 17, skinColor, _theme != null ? _theme.glyphFont : null,
                            TextAlignmentOptions.Center);
-            AnchorRight(sk.rectTransform, SkinFromRight, SkinW);
+            AnchorRight(sk.rectTransform, SkinFromRight + shift, SkinW);
+
+            // daily reward badge, far right
+            if (!string.IsNullOrEmpty(reward))
+            {
+                var rw = Glyph(go.transform, reward, 15, UIFactory.Gold, _ui.Font,
+                               TextAlignmentOptions.Right, FontStyles.Bold);
+                AnchorRight(rw.rectTransform, 8f, RewardW);
+            }
         }
 
         private TMP_Text Glyph(Transform parent, string text, float size, Color color,

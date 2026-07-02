@@ -9,19 +9,32 @@ namespace KnightsGauntlet.Core
     // table-driven ray logic from the original is preserved.
     public static class MoveRules
     {
-        public static List<MoveTarget> GetValidMoves(
-            IReadOnlyList<GamePiece> pieces,
-            int playerCol,
-            float playerY,
-            GameMode mode,
-            PieceType playerForm)
-        {
-            var moves = new List<MoveTarget>();
-            var seen = new HashSet<string>();
+        private static readonly Int2[] Ortho =
+            { new Int2(1, 0), new Int2(-1, 0), new Int2(0, 1), new Int2(0, -1) };
+        private static readonly Int2[] Diag =
+            { new Int2(1, 1), new Int2(1, -1), new Int2(-1, 1), new Int2(-1, -1) };
 
-            // Mirrors the inner tryAdd(): bounds-check, collision-check, then add
-            // (deduplicated by column + relative row). Returns false when the cell
-            // is blocked/off-board, which stops a ray from continuing past it.
+        // Allocating convenience wrapper — used on tap (not per frame).
+        public static List<MoveTarget> GetValidMoves(
+            IReadOnlyList<GamePiece> pieces, int playerCol, float playerY,
+            GameMode mode, PieceType playerForm)
+        {
+            var outMoves = new List<MoveTarget>();
+            Fill(outMoves, pieces, playerCol, playerY, mode, playerForm);
+            return outMoves;
+        }
+
+        // Allocation-free: clears and fills the caller's buffer. Use this every
+        // frame (move hints) so it doesn't churn the GC. No dedup set is needed —
+        // rays from a single origin never revisit the same cell.
+        public static void Fill(
+            List<MoveTarget> outMoves, IReadOnlyList<GamePiece> pieces,
+            int playerCol, float playerY, GameMode mode, PieceType playerForm)
+        {
+            outMoves.Clear();
+
+            // Mirrors the inner tryAdd(): bounds-check, collision-check, then add.
+            // Returns false when the cell is blocked/off-board, stopping a ray.
             bool TryAdd(int nc, float ny)
             {
                 if (nc < 0 || nc >= GameConfig.Cols) return false;
@@ -33,18 +46,14 @@ namespace KnightsGauntlet.Core
                     if (!o.Alive) continue;
                     if (o.Col == nc && Math.Abs(o.Y - ny) < 0.5f)
                     {
-                        // In Battle, a non-trap piece is capturable and does NOT
+                        // In Battle a non-trap piece is capturable and does NOT
                         // block the cell. Everything else (incl. traps) blocks.
                         bool capturable = mode == GameMode.Battle && o.Type != PieceType.Trap;
                         if (!capturable) return false;
                     }
                 }
 
-                int relRow = (int)Math.Round(ny - playerY);
-                string key = nc + "|" + relRow;
-                if (seen.Contains(key)) return true; // already have this cell, but ray may continue
-                seen.Add(key);
-                moves.Add(new MoveTarget(nc, ny));
+                outMoves.Add(new MoveTarget(nc, ny));
                 return true;
             }
 
@@ -52,35 +61,35 @@ namespace KnightsGauntlet.Core
 
             if (form == PieceType.Knight)
             {
-                foreach (var d in GameConfig.LDeltas)
-                    TryAdd(playerCol + d.Col, playerY + d.Row);
+                for (int i = 0; i < GameConfig.LDeltas.Length; i++)
+                    TryAdd(playerCol + GameConfig.LDeltas[i].Col, playerY + GameConfig.LDeltas[i].Row);
             }
             else if (form == PieceType.Nightrider)
             {
-                // Rides along each L-direction until something blocks it.
-                foreach (var d in GameConfig.LDeltas)
+                for (int i = 0; i < GameConfig.LDeltas.Length; i++)
+                {
+                    var d = GameConfig.LDeltas[i];
                     for (int k = 1; k <= GameConfig.RayMax; k++)
                         if (!TryAdd(playerCol + d.Col * k, playerY + d.Row * k)) break;
+                }
             }
             else
             {
-                var dirs = new List<Int2>();
                 if (form == PieceType.Rook || form == PieceType.Queen)
-                {
-                    dirs.Add(new Int2(1, 0)); dirs.Add(new Int2(-1, 0));
-                    dirs.Add(new Int2(0, 1)); dirs.Add(new Int2(0, -1));
-                }
+                    for (int i = 0; i < Ortho.Length; i++)
+                    {
+                        var d = Ortho[i];
+                        for (int k = 1; k <= GameConfig.RayMax; k++)
+                            if (!TryAdd(playerCol + d.Col * k, playerY + d.Row * k)) break;
+                    }
                 if (form == PieceType.Bishop || form == PieceType.Queen)
-                {
-                    dirs.Add(new Int2(1, 1)); dirs.Add(new Int2(1, -1));
-                    dirs.Add(new Int2(-1, 1)); dirs.Add(new Int2(-1, -1));
-                }
-                foreach (var d in dirs)
-                    for (int k = 1; k <= GameConfig.RayMax; k++)
-                        if (!TryAdd(playerCol + d.Col * k, playerY + d.Row * k)) break;
+                    for (int i = 0; i < Diag.Length; i++)
+                    {
+                        var d = Diag[i];
+                        for (int k = 1; k <= GameConfig.RayMax; k++)
+                            if (!TryAdd(playerCol + d.Col * k, playerY + d.Row * k)) break;
+                    }
             }
-
-            return moves;
         }
     }
 }

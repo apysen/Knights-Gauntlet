@@ -57,6 +57,27 @@ namespace KnightsGauntlet.View
             return _circle;
         }
 
+        private static Sprite _ring;
+        // A hollow ring ("O"). Used as a shape-based, colour-independent marker for
+        // colourblind mode (drawn on enemy move-intent cells).
+        public static Sprite Ring()
+        {
+            if (_ring != null) return _ring;
+            const int n = 48;
+            float c = (n - 1) * 0.5f, outer = n * 0.5f, inner = outer - n * 0.16f; // ~16% thick rim
+            var tex = NewTex(n);
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c));
+                    float a = Mathf.Clamp01(outer - d + 0.5f) * Mathf.Clamp01(d - inner + 0.5f);
+                    tex.SetPixel(x, y, new Color(1, 1, 1, a));
+                }
+            tex.Apply();
+            _ring = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 100f);
+            return _ring;
+        }
+
         // Coverage of a rounded rect, optionally inset by `pad` (for the ring hole).
         private static float RoundedCoverage(int x, int y, int w, int h, float r, float pad = 0f)
         {

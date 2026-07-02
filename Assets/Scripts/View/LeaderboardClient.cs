@@ -33,7 +33,29 @@ namespace KnightsGauntlet.View
         [Serializable] private class SkinBody { public string skin; }
 
         public static bool IsOnlineCategory(string category)
-            => category != null && (category.EndsWith("hard") || category.EndsWith("grandmaster"));
+            => category != null && (category.EndsWith("hard") || category.EndsWith("grandmaster")
+                                    || category.StartsWith("daily"));
+
+        // Is this name free to claim? Queries the scores table; on no-config or a
+        // network error we allow it (can't verify offline), so play isn't blocked.
+        public void CheckNameAvailable(string name, Action<bool> done)
+        {
+            // The developer's handle is always allowed (reclaimable across resets).
+            if (!string.IsNullOrEmpty(name) && name.ToLower() == "apy") { done?.Invoke(true); return; }
+            if (!Configured() || string.IsNullOrEmpty(name)) { done?.Invoke(true); return; }
+            StartCoroutine(CheckCo(name, done));
+        }
+
+        private IEnumerator CheckCo(string name, Action<bool> done)
+        {
+            string url = supabaseUrl + "/rest/v1/scores?select=name&limit=1&name=eq." +
+                         UnityWebRequest.EscapeURL(name);
+            bool available = true;
+            yield return Get(url,
+                text => { var rows = Parse(text); available = (rows == null || rows.Length == 0); },
+                () => { available = true; });
+            done?.Invoke(available);
+        }
 
         private void SetHeaders(UnityWebRequest req, bool json)
         {

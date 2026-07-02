@@ -10,7 +10,10 @@ namespace KnightsGauntlet.View
     // downward. World space: centered on origin, Y up. CellToWorld bridges them.
     public class BoardView : MonoBehaviour
     {
-        public float cellSize = 1f;
+        public float cellSize = 1f;          // vertical cell size (world units)
+        public float cellW = 1f;             // horizontal cell size; widened to fill the screen
+        public Color WashColor = Color.clear;   // transform tint wash (driven by GameManager)
+        public float WashStrength = 0f;         // 0 = none; smoothly faded in/out
         public Color cameraBackground = new Color(0.102f, 0.102f, 0.18f); // #1a1a2e
 
         private GameTheme _theme;
@@ -29,31 +32,40 @@ namespace KnightsGauntlet.View
         // ── Coordinate conversion ────────────────────────────────────────────
         public Vector3 CellToWorld(int col, float simY)
         {
-            float bw = GameConfig.Cols * cellSize;
-            float x = (col + 0.5f) * cellSize - bw * 0.5f;
+            float bw = GameConfig.Cols * cellW;
+            float x = (col + 0.5f) * cellW - bw * 0.5f;
             float y = GameConfig.Rows * 0.5f * cellSize - (simY + 0.5f) * cellSize;
             return new Vector3(x, y, 0f);
         }
 
         public (int col, float simY) WorldToCell(Vector3 world)
         {
-            float bw = GameConfig.Cols * cellSize;
-            int col = Mathf.FloorToInt((world.x + bw * 0.5f) / cellSize);
+            float bw = GameConfig.Cols * cellW;
+            int col = Mathf.FloorToInt((world.x + bw * 0.5f) / cellW);
             float simY = (GameConfig.Rows * 0.5f * cellSize - world.y) / cellSize - 0.5f;
             return (col, simY);
         }
+
+        // Scale for anything that should fill one cell (backings, traps, hints,
+        // threat tiles, pickups). Tracks the widened cell so nothing leaves gaps.
+        public Vector3 CellScale(float mult = 1f) => new Vector3(cellW * mult, cellSize * mult, 1f);
 
         // ── Camera ───────────────────────────────────────────────────────────
         public void FitCamera(Camera cam)
         {
             if (cam == null) return;
             float aspect = (float)Screen.width / Mathf.Max(1, Screen.height);
-            float halfHBoard = GameConfig.Rows * 0.5f * cellSize;
-            float halfWBoard = GameConfig.Cols * 0.5f * cellSize;
-            float size = Mathf.Max(halfHBoard, halfWBoard / Mathf.Max(0.01f, aspect));
 
             cam.orthographic = true;
-            cam.orthographicSize = size * 1.04f; // 4% breathing room
+            // Fit the board height to the screen exactly...
+            float size = GameConfig.Rows * 0.5f * cellSize;
+            cam.orthographicSize = size;
+            // ...then widen each cell so the columns span the full screen width.
+            // This removes the side bars at any aspect ratio; the checkerboard
+            // stretches horizontally while pieces stay square and centered.
+            float visibleWidth = 2f * size * aspect;
+            cellW = visibleWidth / GameConfig.Cols;
+
             cam.transform.position = new Vector3(0f, 0f, -10f);
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = cameraBackground;
@@ -92,6 +104,13 @@ namespace KnightsGauntlet.View
 
             Color a = _theme != null ? _theme.cellColorA : new Color(0.176f, 0.176f, 0.306f);
             Color b = _theme != null ? _theme.cellColorB : new Color(0.118f, 0.118f, 0.208f);
+            // Transformation background wash: gently pull both checker colors toward
+            // the active piece's tint while the player is transformed.
+            if (WashStrength > 0.001f)
+            {
+                a = Color.Lerp(a, WashColor, WashStrength);
+                b = Color.Lerp(b, WashColor, WashStrength);
+            }
 
             int i = 0;
             for (int rr = 0; rr < TileRows; rr++)
@@ -101,6 +120,7 @@ namespace KnightsGauntlet.View
                 {
                     var sr = _tiles[i++];
                     sr.transform.position = CellToWorld(c, r + frac);
+                    sr.transform.localScale = new Vector3(cellW, cellSize, 1f);
                     int parity = (((baseRow + r + c) % 2) + 2) % 2;
                     sr.color = parity == 0 ? a : b;
                 }

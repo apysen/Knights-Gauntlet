@@ -13,6 +13,12 @@ namespace KnightsGauntlet.Core
 
         private static int RowOf(float y) => (int)Math.Round(y);
 
+        // Reused occupancy sets (integer-keyed) so a battle move tick doesn't
+        // allocate two HashSets + a string per cell every time.
+        private readonly HashSet<int> _occ = new HashSet<int>();
+        private readonly HashSet<int> _claimed = new HashSet<int>();
+        private static int Key(int col, int row) => col * 64 + (row + 32);
+
         // Advance every enemy one step toward the player. Returns true if any
         // enemy lands on (or threatens, for the queen) the knight's square.
         public bool MoveEnemies(IList<GamePiece> pieces, int playerCol, float playerY)
@@ -21,22 +27,22 @@ namespace KnightsGauntlet.Core
             int knightRow = RowOf(playerY);
 
             // Cells occupied at the START of this turn (alive, non-trap).
-            var occ = new HashSet<string>();
+            _occ.Clear();
             foreach (var oa in pieces)
             {
                 if (!oa.Alive || oa.Type == PieceType.Trap) continue;
-                occ.Add(oa.Col + "," + RowOf(oa.Y));
+                _occ.Add(Key(oa.Col, RowOf(oa.Y)));
             }
 
             // Cells claimed by pieces that have already moved this turn.
-            var claimed = new HashSet<string>();
+            _claimed.Clear();
 
             bool CellFree(int col, int row, int sc, int sr)
             {
                 if (col < 0 || col >= GameConfig.Cols) return false;
-                string key = col + "," + row;
-                if (claimed.Contains(key)) return false;
-                if (occ.Contains(key) && !(col == sc && row == sr)) return false;
+                int key = Key(col, row);
+                if (_claimed.Contains(key)) return false;
+                if (_occ.Contains(key) && !(col == sc && row == sr)) return false;
                 return true;
             }
             bool KnightAt(int col, int row) => col == playerCol && knightRow == row;
@@ -55,7 +61,7 @@ namespace KnightsGauntlet.Core
                     {
                         if (Targetable(o.Col, fwd, o.Col, cr))
                         {
-                            o.Y += 1; claimed.Add(o.Col + "," + fwd);
+                            o.Y += 1; _claimed.Add(Key(o.Col, fwd));
                         }
                         else
                         {
@@ -65,9 +71,9 @@ namespace KnightsGauntlet.Core
                             foreach (var sdir in sides)
                             {
                                 int sc = o.Col + sdir;
-                                if (CellFree(sc, cr, o.Col, cr)) { o.Col = sc; claimed.Add(sc + "," + cr); moved = true; break; }
+                                if (CellFree(sc, cr, o.Col, cr)) { o.Col = sc; _claimed.Add(Key(sc, cr)); moved = true; break; }
                             }
-                            if (!moved) claimed.Add(o.Col + "," + cr);
+                            if (!moved) _claimed.Add(Key(o.Col, cr));
                         }
                     }
                     else if (o.Type == PieceType.Bishop)
@@ -80,9 +86,9 @@ namespace KnightsGauntlet.Core
                         }
                         if (tc >= 0 && tc < GameConfig.Cols && Targetable(tc, fwd, o.Col, cr))
                         {
-                            o.Dir = dir; o.Col = tc; o.Y += 1; claimed.Add(tc + "," + fwd);
+                            o.Dir = dir; o.Col = tc; o.Y += 1; _claimed.Add(Key(tc, fwd));
                         }
-                        else { o.Dir = dir; claimed.Add(o.Col + "," + cr); }
+                        else { o.Dir = dir; _claimed.Add(Key(o.Col, cr)); }
                     }
                     else if (o.Type == PieceType.Knight)
                     {
@@ -107,9 +113,9 @@ namespace KnightsGauntlet.Core
                         if (ex != null)
                         {
                             o.Col += ex.Value.Col; o.Y += ex.Value.Row;
-                            claimed.Add(o.Col + "," + (cr + ex.Value.Row));
+                            _claimed.Add(Key(o.Col, cr + ex.Value.Row));
                         }
-                        else claimed.Add(o.Col + "," + cr);
+                        else _claimed.Add(Key(o.Col, cr));
                         o.PlanDC = null; o.PlanDR = null;
                     }
                     else if (o.Type == PieceType.Queen)
@@ -128,9 +134,9 @@ namespace KnightsGauntlet.Core
                         {
                             var qm = qpool[_rng.Next(qpool.Count)];
                             o.Col += qm.Col; o.Y += qm.Row;
-                            claimed.Add(o.Col + "," + (cr + qm.Row));
+                            _claimed.Add(Key(o.Col, cr + qm.Row));
                         }
-                        else claimed.Add(o.Col + "," + cr);
+                        else _claimed.Add(Key(o.Col, cr));
                     }
 
                     if (o.Col == playerCol && Math.Abs(o.Y - playerY) < 0.5f) dead = true;
@@ -145,11 +151,11 @@ namespace KnightsGauntlet.Core
         // tile a turn ahead. force=true re-plans even pieces with a valid plan.
         public void PlanKnightMoves(IList<GamePiece> pieces, int playerCol, float playerY, bool force)
         {
-            var occ = new HashSet<string>();
+            _occ.Clear();
             foreach (var oa in pieces)
             {
                 if (!oa.Alive || oa.Type == PieceType.Trap) continue;
-                occ.Add(oa.Col + "," + RowOf(oa.Y));
+                _occ.Add(Key(oa.Col, RowOf(oa.Y)));
             }
             int knightRow = RowOf(playerY);
 
@@ -157,7 +163,7 @@ namespace KnightsGauntlet.Core
             {
                 if (col < 0 || col >= GameConfig.Cols) return false;
                 if (col == playerCol && knightRow == row) return true;
-                if (occ.Contains(col + "," + row) && !(col == sc && row == sr)) return false;
+                if (_occ.Contains(Key(col, row)) && !(col == sc && row == sr)) return false;
                 return true;
             }
 
