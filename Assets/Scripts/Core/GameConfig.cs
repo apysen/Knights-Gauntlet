@@ -73,14 +73,42 @@ namespace KnightsGauntlet.Core
         // at a ~10-row reference height; expect to retune by feel on device.
         // Ramp matches the original exactly: speed grows 0.01 cells/s per cell
         // scrolled, capped at max.
-        public static (float start, float max) TrapSpeed(Difficulty d) => d switch
+        // Flat starting speed per difficulty (cells/sec). Difficulties differ only
+        // in this base; the per-level increase below is shared by all of them.
+        public static float TrapBaseSpeed(Difficulty d) => d switch
         {
-            Difficulty.Easy => (1.0f, 2.6f),
-            Difficulty.Medium => (1.6f, 3.4f),
-            _ => (2.1f, 4.4f) // hard & grandmaster
+            Difficulty.Easy => 1.0f,
+            Difficulty.Medium => 1.6f,
+            _ => 2.1f // hard & grandmaster
         };
 
-        public const float TrapSpeedRampPerCell = 0.01f;
+        // Tetris-style progression: speed is flat until the first threshold, then
+        // steps up one "level" per LevelInterval of score, faster and faster with
+        // no cap, until the board outruns the player (topping out).
+        public const int TrapLevelInterval = 30;      // score per speed level (first level-up at 30)
+        // cells/sec added per level. Harder modes start faster, so they scale up a
+        // little less per level to avoid getting out of hand too quickly.
+        public static float TrapSpeedPerLevel(Difficulty d) => d switch
+        {
+            Difficulty.Easy => 0.30f,
+            Difficulty.Medium => 0.28f,
+            _ => 0.26f // hard & grandmaster
+        };
+        public const float TrapMaxSpeed = 4.5f;        // every difficulty tops out here (cells/sec)
+
+        // Shilling pickup values scale with difficulty: harder modes are riskier,
+        // so their coins are worth more. (Trap mode only; battle earns from captures.)
+        private static readonly int[] PickupEasy = { 5, 10, 15, 20 };
+        private static readonly int[] PickupMedium = { 15, 20, 30, 40 };
+        private static readonly int[] PickupHard = { 30, 45, 60, 75 };
+        private static readonly int[] PickupGM = { 50, 70, 85, 100 };
+        public static int[] PickupValues(Difficulty d) => d switch
+        {
+            Difficulty.Easy => PickupEasy,
+            Difficulty.Medium => PickupMedium,
+            Difficulty.Hard => PickupHard,
+            _ => PickupGM // grandmaster
+        };
 
         // ── Battle pacing / density (used in Phase 2) ───────────────────────
         public static int BattleMoveIntervalMs(Difficulty d) => d switch
@@ -119,6 +147,7 @@ namespace KnightsGauntlet.Core
             PieceType.Knight => "#57BD79",
             PieceType.Queen => "#D24A80",
             PieceType.Trap => "#B54A4A",
+            PieceType.Pawn => "#9098AD",
             _ => "#F0C040"
         };
 
@@ -136,6 +165,7 @@ namespace KnightsGauntlet.Core
             PieceType.Queen => "\u265B",       // ♛
             PieceType.Trap => "\u2715",        // ✕
             PieceType.Nightrider => "\u2658",  // ♘
+            PieceType.Pawn => "\u265F",         // ♟
             _ => "\u265E"
         };
     }

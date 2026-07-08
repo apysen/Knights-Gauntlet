@@ -43,6 +43,7 @@ namespace KnightsGauntlet.Core
 
         // Collectable shillings on the board, and the total collected this run.
         public readonly List<Pickup> Pickups = new List<Pickup>();
+        public readonly List<AdvEnemy> AdvEnemies = new List<AdvEnemy>();
         public int RunShillings { get; private set; }
 
         public bool IsMimic => _transformIsMimic;
@@ -67,9 +68,45 @@ namespace KnightsGauntlet.Core
 
         // ── Internals ────────────────────────────────────────────────────────
         private int _trapScore;
-        private float _speed, _speedStart, _speedMax;
+        private float _speed, _trapBaseSpeed, _trapPerLevel;
+        private int _trapLevel;
+        public int TrapLevel => _trapLevel;
+        public event System.Action<int> OnTrapLevelUp; // fired when trap speed steps up a level
         private float _playerBase; // grid-lock base for the player (Trap mode)
         private float _nextSpawnCells;
+
+        // ── Interactive tutorial ─────────────────────────────────────────────
+        // When Tutorial is true the board is frozen (no scroll/spawn/AI) so the
+        // director can arrange scripted scenarios; taps are restricted to a single
+        // locked target cell so the player can't take a wrong move.
+        public bool Tutorial;
+        public bool Adventure; // scrolling adventure: constant speed, no level-up ramp
+        public int MapRows;    // tall follow-camera maps: >0 = map height; 0 = normal 10 rows
+
+        // Tall-map follow camera: content sits at map-row Bases; ScrollCells is driven
+        // externally (by the knight's position) rather than by time. Re-derive screen
+        // positions from the current ScrollCells.
+        public void AdventureSetScroll(float s) { ScrollCells = s; } // follow-camera offset (tall maps)
+        public void AdventureFollowDerive()
+        {
+            PlayerY = _playerBase + ScrollCells;
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var p = Pieces[i];
+                if (!float.IsNaN(p.Base)) p.Y = p.Base + ScrollCells;
+            }
+        }
+        // Keep the knight on the map (reject L-jumps off the top/bottom of a tall map).
+        private void FilterMapBounds(List<MoveTarget> moves)
+        {
+            if (MapRows <= 0) return;
+            for (int i = moves.Count - 1; i >= 0; i--)
+            {
+                int mr = (int)Math.Round(moves[i].Y - ScrollCells);
+                if (mr < 0 || mr > MapRows - 1) moves.RemoveAt(i);
+            }
+        }
+        private int? _lockCol, _lockRow;
         private float _time;
 
         private int _comboMissStreak, _captureChain;
@@ -116,6 +153,9 @@ namespace KnightsGauntlet.Core
             ScrollCells = 0;
             _time = 0;
             Alive = true;
+            Tutorial = false;
+            Adventure = false;
+            MapRows = 0;
 
             ComboMultiplier = 1;
             _comboMissStreak = 0;
@@ -133,8 +173,11 @@ namespace KnightsGauntlet.Core
 
             if (mode == GameMode.Trap)
             {
-                (_speedStart, _speedMax) = GameConfig.TrapSpeed(mediumSpeed ? Difficulty.Medium : difficulty);
-                _speed = _speedStart;
+                var speedDiff = mediumSpeed ? Difficulty.Medium : difficulty;
+                _trapBaseSpeed = GameConfig.TrapBaseSpeed(speedDiff);
+                _trapPerLevel = GameConfig.TrapSpeedPerLevel(speedDiff);
+                _trapLevel = 0;
+                _speed = _trapBaseSpeed;
                 _trapGen.Reset(PlayerCol);
                 for (int r = 1; r < GameConfig.Rows - 1; r++)
                     _trapGen.SpawnRow(Pieces, PlayerY - r, PlayerCol, ScrollCells);
@@ -156,13 +199,12 @@ namespace KnightsGauntlet.Core
         public void Tick(float dt)
         {
             if (!Alive) return;
+            if (Tutorial) return; // frozen scripted board; only player taps change it
             if (dt > 1f / 30f) dt = 1f / 30f; // clamp so a frame hitch can't lurch the board
             _time += dt;
 
             float delta = _speed * dt;
             ScrollCells += delta;
-            if (Mode == GameMode.Trap)
-                _speed = Math.Min(_speedMax, _speedStart + ScrollCells * GameConfig.TrapSpeedRampPerCell);
 
             // Grid-locked scroll: derive every position from the single shared
             // ScrollCells + a fixed base, so nothing drifts off the grid at any
@@ -256,7 +298,11 @@ namespace KnightsGauntlet.Core
         }
 
         public List<MoveTarget> GetValidMoves()
-            => MoveRules.GetValidMoves(Pieces, PlayerCol, PlayerY, Mode, PlayerForm);
+        {
+            var m = MoveRules.GetValidMoves(Pieces, PlayerCol, PlayerY, Mode, PlayerForm);
+            FilterMapBounds(m);
+            return m;
+        }
 
         // Allocation-free variant for per-frame callers (move hints). Returns a
         // shared buffer — do not hold the reference across frames.
@@ -264,11 +310,61 @@ namespace KnightsGauntlet.Core
         public List<MoveTarget> GetValidMovesNonAlloc()
         {
             MoveRules.Fill(_movesBuffer, Pieces, PlayerCol, PlayerY, Mode, PlayerForm);
+            FilterMapBounds(_movesBuffer);
             return _movesBuffer;
         }
 
         // Tap at grid cell (col, y in cell units). Snaps to the nearest legal move
         // in that column within ~1.2 cells.
+        // ── Interactive tutorial API ─────────────────────────────────────────
+        public void TutorialSetup(GameMode mode)
+        {
+            Mode = mode; Tutorial = true; Alive = true; MapRows = 0;
+            Difficulty = Difficulty.Medium; // consistent combo grace (2) for the miss lesson
+            Pieces.Clear(); Pickups.Clear(); Trail.Clear();
+            AdvEnemies.Clear();
+            ScrollCells = 0; _time = 0;
+            Score = 0; _trapScore = 0; RunShillings = 0;
+            ComboMultiplier = 1; _comboMissStreak = 0; _captureChain = 0;
+            _lastCaptured = null; _transformEndsAt = 0; _transformIsMimic = false;
+            _battleInvulnUntil = 0; _lastBattleMove = 0;
+            PlayerForm = PieceType.Knight;
+            _lockCol = null; _lockRow = null;
+            _speed = 0f;
+            PlayerCol = 2; PlayerY = GameConfig.Rows - 4; _playerBase = PlayerY;
+        }
+        public void TutorialClear() { Pieces.Clear(); Pickups.Clear(); }
+        public void TutorialSetPlayer(int col, int row) { PlayerCol = col; PlayerY = row; _playerBase = row - ScrollCells; }
+        public void TutorialAddTrap(int col, int row)
+            => Pieces.Add(new GamePiece(PieceType.Trap, col, row) { Alive = true, Base = row - ScrollCells });
+        public void TutorialAddPiece(PieceType type, int col, int row)
+            => Pieces.Add(new GamePiece(type, col, row) { Alive = true, Dir = 1, Base = row - ScrollCells });
+        // Adventure oscillating enemies (capture targets that also threaten).
+        public void AdventureAddEnemy(PieceType type, int col, int row, int offCol, int offRow)
+            => AdvEnemies.Add(new AdvEnemy { Type = type, HomeCol = col, HomeRow = row, OffCol = offCol, OffRow = offRow, Phase = 0, Alive = true });
+        // A currency coin at a fixed cell (frozen board, so ScrollCells is 0).
+        public void AdventureAddShilling(int col, int row, int value)
+            => Pickups.Add(new Pickup(col, row, value) { Base = row - ScrollCells });
+        // Force a constant scroll speed (scrolling adventure levels).
+        public void AdventureSetSpeed(float speed) { _speed = speed; _trapBaseSpeed = speed; }
+        public int AdvRemaining { get { int n = 0; for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Alive) n++; return n; } }
+        public bool AdvAllCaptured() { for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Alive) return false; return true; }
+        // Run after a knight move in Capture/Combined: capture an enemy on the landing
+        // tile, then oscillate the survivors; if one lands on the knight, it dies.
+        // Returns true if the knight was killed.
+        public bool AdventureAfterMove()
+        {
+            int kc = PlayerCol, kr = (int)Math.Round(PlayerY);
+            for (int i = 0; i < AdvEnemies.Count; i++) { var e = AdvEnemies[i]; if (e.Alive && e.Col == kc && e.Row == kr) e.Alive = false; }
+            for (int i = 0; i < AdvEnemies.Count; i++) { var e = AdvEnemies[i]; if (e.Alive) e.Phase = 1 - e.Phase; }
+            for (int i = 0; i < AdvEnemies.Count; i++) { var e = AdvEnemies[i]; if (e.Alive && e.Col == kc && e.Row == kr) { Alive = false; return true; } }
+            return false;
+        }
+
+        public void TutorialLock(int col, int row) { _lockCol = col; _lockRow = row; }
+        public void TutorialUnlock() { _lockCol = null; _lockRow = null; }
+        public void TutorialEnd() { Tutorial = false; _lockCol = null; _lockRow = null; }
+
         public MoveResult TryTap(int col, float y)
         {
             var moves = GetValidMoves();
@@ -281,6 +377,9 @@ namespace KnightsGauntlet.Core
                 if (d < bestDist) { bestDist = d; best = m; }
             }
             if (best == null) return new MoveResult { Moved = false, Captures = null };
+            if (_lockCol.HasValue &&
+                (best.Value.Col != _lockCol.Value || (int)Math.Round(best.Value.Y) != _lockRow.Value))
+                return new MoveResult { Moved = false, Captures = null };
             return ApplyMove(best.Value);
         }
 
@@ -293,6 +392,22 @@ namespace KnightsGauntlet.Core
                 int rowDelta = (int)Math.Round(PlayerY - m.Y); // forward (up) positive
                 _trapScore = Math.Max(0, _trapScore + rowDelta);
                 Score = _trapScore;
+                // Tetris-style progression: step up a level (and speed) once score
+                // crosses each threshold. Monotonic, so backtracking never slows it.
+                if (!Tutorial && !Adventure)
+                {
+                    int lvl = Score / GameConfig.TrapLevelInterval;
+                    if (lvl > _trapLevel)
+                    {
+                        _trapLevel = lvl;
+                        float newSpeed = Math.Min(GameConfig.TrapMaxSpeed, _trapBaseSpeed + _trapLevel * _trapPerLevel);
+                        if (newSpeed > _speed) // only flash on a real increase (stops once capped)
+                        {
+                            _speed = newSpeed;
+                            OnTrapLevelUp?.Invoke(_trapLevel);
+                        }
+                    }
+                }
                 result.RowAdvance = rowDelta;
 
                 PlayerCol = m.Col; PlayerY = m.Y;
@@ -420,7 +535,7 @@ namespace KnightsGauntlet.Core
             for (int c = 0; c < GameConfig.Cols; c++) if (!occupied.Contains(c)) open.Add(c);
             if (open.Count == 0) return;
             int col = open[_rng.Next(open.Count)];
-            int[] vals = { 10, 15, 20, 25 };
+            int[] vals = GameConfig.PickupValues(Difficulty);
             Pickups.Add(new Pickup(col, y, vals[_rng.Next(vals.Length)]));
         }
 
@@ -447,8 +562,14 @@ namespace KnightsGauntlet.Core
             Alive = true;
 
             // If they fell off the bottom, bring them back on-screen FIRST so the
-            // safe pocket below is cleared around where they actually land.
-            if (PlayerY > GameConfig.Rows - 1f) { PlayerY = GameConfig.Rows - 4f; _playerBase = PlayerY - ScrollCells; }
+            // safe pocket below is cleared around where they actually land. Snap the
+            // base to an integer (like trap bases) so the player stays grid-locked;
+            // otherwise the fractional ScrollCells knocks it off the checkerboard.
+            if (PlayerY > GameConfig.Rows - 1f)
+            {
+                _playerBase = (float)Math.Round((GameConfig.Rows - 4) - ScrollCells);
+                PlayerY = _playerBase + ScrollCells;
+            }
 
             if (Mode == GameMode.Trap)
                 Pieces.RemoveAll(o => o.Type == PieceType.Trap && Math.Abs(o.Y - PlayerY) < 3.0f);

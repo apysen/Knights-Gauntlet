@@ -28,6 +28,13 @@ namespace KnightsGauntlet.View
         public static bool IsColorblind() => PlayerPrefs.GetInt("kg_colorblind", 0) == 1;
         public static void SetColorblind(bool on) { PlayerPrefs.SetInt("kg_colorblind", on ? 1 : 0); PlayerPrefs.Save(); }
 
+        // ── Adventure mode (best stars per level, 0..3) ──────────────────────
+        public static int GetStars(string levelId) => PlayerPrefs.GetInt("kg_adv_" + levelId, 0);
+        public static void SetStars(string levelId, int stars)
+        {
+            if (stars > GetStars(levelId)) { PlayerPrefs.SetInt("kg_adv_" + levelId, stars); PlayerPrefs.Save(); }
+        }
+
         // ── Equipped skin ────────────────────────────────────────────────────
         public static string GetSkin() => PlayerPrefs.GetString(SkinKey, "gold");
         public static void SetSkin(string id) { PlayerPrefs.SetString(SkinKey, id); PlayerPrefs.Save(); }

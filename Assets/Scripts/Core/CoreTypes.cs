@@ -32,4 +32,20 @@ namespace KnightsGauntlet.Core
         public float Base = float.NaN; // grid-lock base (see GamePiece.Base)
         public Pickup(int col, float y, int value) { Col = col; Y = y; Value = value; }
     }
+
+    // Adventure capture target that oscillates between two tiles (home <-> home+off),
+    // one step per knight move. Also a hazard: if it steps onto the knight, you die.
+    // Pawn is stationary (off = 0,0).
+    public class AdvEnemy
+    {
+        public PieceType Type;
+        public int HomeCol, HomeRow, OffCol, OffRow;
+        public int Phase;        // 0 = home, 1 = away
+        public bool Alive = true;
+        public int Col => Phase == 0 ? HomeCol : HomeCol + OffCol;
+        public int Row => Phase == 0 ? HomeRow : HomeRow + OffRow;
+        public int NextCol => Phase == 0 ? HomeCol + OffCol : HomeCol;
+        public int NextRow => Phase == 0 ? HomeRow + OffRow : HomeRow;
+        public bool Moves => OffCol != 0 || OffRow != 0;
+    }
 }

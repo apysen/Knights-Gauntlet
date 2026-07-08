@@ -25,6 +25,9 @@ namespace KnightsGauntlet.View
         private readonly SpriteRenderer[] _pips = new SpriteRenderer[GameConfig.TransformTrigger];
         private int _pCol, _pRow;
         private bool _colorblind;
+        private SpriteRenderer _coachFill, _coachRing;
+        private bool _coachOn; private int _coachCol; private float _coachRow;
+        private static readonly Color CoachGold = new Color(0.941f, 0.753f, 0.251f, 1f);
 
         private static readonly Color XformBlue = new Color(0.561f, 0.878f, 1f, 1f);   // #8FE0FF
         private static readonly Color XformGold = new Color(1f, 0.816f, 0.376f, 1f);   // #FFD060
@@ -52,6 +55,10 @@ namespace KnightsGauntlet.View
             _xformBarBg = MakeBar("XformBarBg", 12, XformBg);
             _xformBarFill = MakeBar("XformBarFill", 13, XformBlue);
             for (int p = 0; p < _pips.Length; p++) _pips[p] = MakePip("XformPip" + p);
+
+            _coachFill = MakeBar("CoachFill", 8, CoachGold);
+            _coachRing = MakeBar("CoachRing", 9, CoachGold);
+            _coachRing.sprite = UISprites.RoundedBorder();
         }
 
         public void SetPlayerForm(PieceType form, string skinId)
@@ -85,11 +92,23 @@ namespace KnightsGauntlet.View
                 pv.transform.position = _board.CellToWorld(piece.Col, piece.Y);
                 ScalePiece(pv);
             }
+            // Adventure oscillating enemies (drawn with the piece pool).
+            var adv = sim.AdvEnemies;
+            for (int i = 0; i < adv.Count; i++)
+            {
+                var e = adv[i];
+                if (!e.Alive) continue;
+                var pv = GetPiece(p++);
+                pv.gameObject.SetActive(true);
+                pv.Apply(_theme, e.Type);
+                pv.transform.position = _board.CellToWorld(e.Col, e.Row);
+                ScalePiece(pv);
+            }
             for (int k = p; k < _piecePool.Count; k++) _piecePool[k].gameObject.SetActive(false);
 
             // Threat tiles (battle): red cells showing where each enemy strikes next.
             int t = 0;
-            if (sim.Mode == GameMode.Battle && sim.Alive)
+            if (sim.Mode == GameMode.Battle && sim.Alive && !sim.Tutorial)
             {
                 _pCol = sim.PlayerCol; _pRow = Mathf.RoundToInt(sim.PlayerY);
                 for (int i = 0; i < pieces.Count; i++)
@@ -116,6 +135,17 @@ namespace KnightsGauntlet.View
                                 t = Threat(t, o.Col + adj.Col, o.Y + adj.Row);
                             break;
                     }
+                }
+            }
+            // Adventure telegraph: outline where each oscillating enemy moves next.
+            if (adv.Count > 0)
+            {
+                _pCol = sim.PlayerCol; _pRow = Mathf.RoundToInt(sim.PlayerY);
+                for (int i = 0; i < adv.Count; i++)
+                {
+                    var e = adv[i];
+                    if (!e.Alive || !e.Moves) continue; // pawns don't move, no threat
+                    t = Threat(t, e.NextCol, e.NextRow);
                 }
             }
             for (int k = t; k < _threatPool.Count; k++) _threatPool[k].go.SetActive(false);
@@ -196,6 +226,7 @@ namespace KnightsGauntlet.View
             }
             for (int k = h; k < _hintPool.Count; k++) _hintPool[k].gameObject.SetActive(false);
 
+            UpdateCoachMark();
             AnimatePopups(dt);
         }
 
@@ -256,31 +287,27 @@ namespace KnightsGauntlet.View
             var tc = GetThreat(i);
             tc.go.SetActive(true);
             bool onPlayer = (col == _pCol && Mathf.RoundToInt(y) == _pRow);
+            tc.go.transform.position = _board.CellToWorld(col, y);
+            tc.go.transform.localScale = _board.CellScale();
+
+            // Normal mode: filled red highlight only. Colorblind mode: the red
+            // rounded-square outline ("O") only, no fill.
+            tc.fillSR.enabled = !_colorblind;
+            tc.borderSR.enabled = _colorblind;
+
             if (onPlayer)
             {
-                // A piece will land on YOU next move — flash a bright outline.
                 float pulse = 0.55f + 0.45f * Mathf.PingPong(Time.time * 3f, 1f);
                 tc.fillSR.color = new Color(0.92f, 0.18f, 0.18f, 0.62f);
-                tc.borderSR.color = new Color(1f, 0.5f, 0.5f, pulse);
+                tc.borderSR.color = _colorblind ? new Color(1f, 0.34f, 0.34f, pulse)
+                                                : new Color(1f, 0.5f, 0.5f, pulse);
             }
             else
             {
                 tc.fillSR.color = new Color(0.62f, 0.13f, 0.13f, 0.45f);
-                tc.borderSR.color = new Color(0.86f, 0.30f, 0.30f, 0.75f);
+                tc.borderSR.color = _colorblind ? new Color(0.95f, 0.26f, 0.26f, 1f)
+                                                : new Color(0.86f, 0.30f, 0.30f, 0.75f);
             }
-            tc.go.transform.position = _board.CellToWorld(col, y);
-            tc.go.transform.localScale = _board.CellScale();
-            // Colorblind mode: a shape-based "O" marker so enemy move-intent reads
-            // without relying on the red tint. Counter the cell's horizontal
-            // stretch so the ring stays circular.
-            if (_colorblind)
-            {
-                tc.ring.gameObject.SetActive(true);
-                const float f = 0.62f;
-                tc.ring.transform.localScale = new Vector3(f * _board.cellSize / Mathf.Max(0.0001f, _board.cellW), f, 1f);
-                tc.ring.color = onPlayer ? new Color(1f, 1f, 1f, 0.98f) : new Color(0.95f, 0.97f, 1f, 0.9f);
-            }
-            else if (tc.ring.gameObject.activeSelf) tc.ring.gameObject.SetActive(false);
             return i + 1;
         }
 
@@ -299,18 +326,12 @@ namespace KnightsGauntlet.View
                 var borderSR = bgo.AddComponent<SpriteRenderer>();
                 borderSR.sprite = UISprites.RoundedBorder();
                 borderSR.sortingOrder = 4;
-                var rgo = new GameObject("CBRing");
-                rgo.transform.SetParent(go.transform, false);
-                var ringSR = rgo.AddComponent<SpriteRenderer>();
-                ringSR.sprite = UISprites.Ring();
-                ringSR.sortingOrder = 5;
-                rgo.SetActive(false);
-                _threatPool.Add(new ThreatCell { go = go, fillSR = fillSR, borderSR = borderSR, ring = ringSR });
+                _threatPool.Add(new ThreatCell { go = go, fillSR = fillSR, borderSR = borderSR });
             }
             return _threatPool[i];
         }
 
-        private class ThreatCell { public GameObject go; public SpriteRenderer fillSR; public SpriteRenderer borderSR; public SpriteRenderer ring; }
+        private class ThreatCell { public GameObject go; public SpriteRenderer fillSR; public SpriteRenderer borderSR; }
 
         private SpriteRenderer MakeBar(string name, int order, Color color)
         {
@@ -333,6 +354,30 @@ namespace KnightsGauntlet.View
             sr.sortingOrder = 14;
             go.SetActive(false);
             return sr;
+        }
+
+        // Tutorial coach mark: a pulsing gold highlight + ring on the one cell the
+        // player should tap next.
+        public void SetCoachMark(int col, float row) { _coachOn = true; _coachCol = col; _coachRow = row; }
+        public void ClearCoachMark()
+        {
+            _coachOn = false;
+            if (_coachFill != null) _coachFill.gameObject.SetActive(false);
+            if (_coachRing != null) _coachRing.gameObject.SetActive(false);
+        }
+        private void UpdateCoachMark()
+        {
+            if (!_coachOn) { if (_coachFill.gameObject.activeSelf) ClearCoachMark(); return; }
+            float pulse = Mathf.PingPong(Time.time * 2f, 1f);
+            Vector3 pos = _board.CellToWorld(_coachCol, _coachRow);
+            _coachFill.gameObject.SetActive(true);
+            _coachFill.transform.position = pos;
+            _coachFill.transform.localScale = _board.CellScale();
+            _coachFill.color = new Color(CoachGold.r, CoachGold.g, CoachGold.b, 0.14f + 0.16f * pulse);
+            _coachRing.gameObject.SetActive(true);
+            _coachRing.transform.position = pos;
+            _coachRing.transform.localScale = _board.CellScale() * (0.92f + 0.08f * pulse);
+            _coachRing.color = new Color(CoachGold.r, CoachGold.g, CoachGold.b, 0.6f + 0.4f * pulse);
         }
 
         private SpriteRenderer GetPickup(int i)

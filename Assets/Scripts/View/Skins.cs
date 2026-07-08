@@ -36,14 +36,14 @@ namespace KnightsGauntlet.View
         // Buyable with shillings. Colours chosen to not clash with the above.
         public static readonly SkinInfo[] Shop =
         {
-            new SkinInfo { Id = "teal",   Name = "Teal",   Color = Hex("#2ED9C3"), Price = 600,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "rose",   Name = "Rose",   Color = Hex("#FF6FA5"), Price = 600,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "sky",    Name = "Sky",    Color = Hex("#4FA8FF"), Price = 800,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "lime",   Name = "Lime",   Color = Hex("#B6E33B"), Price = 800,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "amber",  Name = "Amber",  Color = Hex("#FFB300"), Price = 1000, Source = SkinSource.Shop },
-            new SkinInfo { Id = "coral",  Name = "Coral",  Color = Hex("#FF7A5C"), Price = 1000, Source = SkinSource.Shop },
-            new SkinInfo { Id = "indigo", Name = "Indigo", Color = Hex("#6C5CE7"), Price = 1200, Source = SkinSource.Shop },
-            new SkinInfo { Id = "silver", Name = "Silver", Color = Hex("#C9D2E0"), Price = 1500, Source = SkinSource.Shop },
+            new SkinInfo { Id = "teal",   Name = "Teal",   Color = Hex("#2ED9C3"), Price = 3000,  Source = SkinSource.Shop },
+            new SkinInfo { Id = "rose",   Name = "Rose",   Color = Hex("#FF6FA5"), Price = 3000,  Source = SkinSource.Shop },
+            new SkinInfo { Id = "sky",    Name = "Sky",    Color = Hex("#4FA8FF"), Price = 4000,  Source = SkinSource.Shop },
+            new SkinInfo { Id = "lime",   Name = "Lime",   Color = Hex("#B6E33B"), Price = 4000,  Source = SkinSource.Shop },
+            new SkinInfo { Id = "amber",  Name = "Amber",  Color = Hex("#FFB300"), Price = 5000, Source = SkinSource.Shop },
+            new SkinInfo { Id = "coral",  Name = "Coral",  Color = Hex("#FF7A5C"), Price = 5000, Source = SkinSource.Shop },
+            new SkinInfo { Id = "indigo", Name = "Indigo", Color = Hex("#6C5CE7"), Price = 6000, Source = SkinSource.Shop },
+            new SkinInfo { Id = "silver", Name = "Silver", Color = Hex("#C9D2E0"), Price = 7500, Source = SkinSource.Shop },
         };
 
         public static IEnumerable<SkinInfo> All()

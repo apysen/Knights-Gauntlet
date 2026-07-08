@@ -10,7 +10,8 @@ namespace KnightsGauntlet.Core
         Knight,
         Queen,
         Trap,
-        Nightrider // the knight-mimic transform form
+        Nightrider, // the knight-mimic transform form
+        Pawn        // adventure capture target (stationary)
     }
 
     public enum GameMode
