@@ -14,7 +14,7 @@ namespace KnightsGauntlet.View
         public float cellW = 1f;             // horizontal cell size; widened to fill the screen
         public Color WashColor = Color.clear;   // transform tint wash (driven by GameManager)
         public float WashStrength = 0f;         // 0 = none; smoothly faded in/out
-        public Color cameraBackground = new Color(0.102f, 0.102f, 0.18f); // #1a1a2e
+        public Color cameraBackground = new Color(0.102f, 0.102f, 0.18f); // #1a1a2e (matches web body bg)
 
         private GameTheme _theme;
         private SpriteRenderer[] _tiles;
@@ -51,22 +51,42 @@ namespace KnightsGauntlet.View
         public Vector3 CellScale(float mult = 1f) => new Vector3(cellW * mult, cellSize * mult, 1f);
 
         // ── Camera ───────────────────────────────────────────────────────────
-        public void FitCamera(Camera cam)
+        private int _lastCamW, _lastCamH;
+        private float _lastInset = -1f;
+        private float _lastBottomInset = -1f;
+        // topInsetFrac reserves a strip at the TOP of the screen (0..~0.4) for the HUD
+        // bar. The whole board is letterboxed into the area BELOW it so the top bar acts
+        // as a hard top boundary (adventure goals in row 0 are no longer hidden). Because
+        // the same 10 rows now occupy less height, cells get a little rectangular (the
+        // web look) while still spanning the full screen width.
+        public void FitCamera(Camera cam, float topInsetFrac = 0f, float bottomInsetFrac = 0f)
         {
             if (cam == null) return;
+            // Re-fit on a screen change (rotation/resize) or when either inset changes; the
+            // fit is otherwise constant, and this runs every frame from GameManager.
+            if (Screen.width == _lastCamW && Screen.height == _lastCamH &&
+                Mathf.Approximately(topInsetFrac, _lastInset) && Mathf.Approximately(bottomInsetFrac, _lastBottomInset)) return;
+            _lastCamW = Screen.width; _lastCamH = Screen.height; _lastInset = topInsetFrac; _lastBottomInset = bottomInsetFrac;
             float aspect = (float)Screen.width / Mathf.Max(1, Screen.height);
+            // Reserve a strip at the top (t) and bottom (b); the board is letterboxed into
+            // the (1 - t - b) fraction between them, so the same rows occupy less height and
+            // cells get a little rectangular (that's the accepted squish).
+            float t = Mathf.Clamp(topInsetFrac, 0f, 0.45f);
+            float b = Mathf.Clamp(bottomInsetFrac, 0f, 0.45f);
+            float mid = Mathf.Max(0.1f, 1f - t - b);
 
             cam.orthographic = true;
-            // Fit the board height to the screen exactly...
-            float size = GameConfig.Rows * 0.5f * cellSize;
+            float board = GameConfig.Rows * 0.5f * cellSize; // half the board's world height
+            float size = board / mid;                        // board fills the middle fraction
             cam.orthographicSize = size;
-            // ...then widen each cell so the columns span the full screen width.
-            // This removes the side bars at any aspect ratio; the checkerboard
-            // stretches horizontally while pieces stay square and centered.
+            // Widen each cell so the columns span the full screen width at any aspect.
             float visibleWidth = 2f * size * aspect;
             cellW = visibleWidth / GameConfig.Cols;
 
-            cam.transform.position = new Vector3(0f, 0f, -10f);
+            // Offset the camera so the board sits centred in the middle strip: the top edge
+            // lands at the top bar's bottom, the bottom edge at the bottom bar's top.
+            float camY = (t - b) * size;
+            cam.transform.position = new Vector3(0f, camY, -10f);
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = cameraBackground;
         }

@@ -80,8 +80,10 @@ namespace KnightsGauntlet.View
             Caption(row, "\u2192", Cap, 18);
             Hi(Box(row, 34, out var rt)); Put(rt, "\u265C", Blue, 18);
             Caption(row, "+4", GreenTxt, 19);
-            Pill(row, "\u00D75", Gold);
-            Caption(box, "each capture in a row builds the \u00D7", Cap, 11);
+            // Thaleah has no "\u00D7" (U+00D7); use "x" so the multiplier stays in the same
+            // pixel font as the "5" (a fallback \u00D7 rendered mismatched and off-center).
+            Pill(row, "x5", Gold);
+            Caption(box, "each capture in a row builds the x", Cap, 11);
         }
 
         private void Transform(Transform box)
@@ -174,7 +176,10 @@ namespace KnightsGauntlet.View
             UIFactory.Stretch(go.GetComponent<RectTransform>());
             var t = go.AddComponent<TextMeshProUGUI>();
             if (Glyphs) t.font = Glyphs; else if (_ui.Font) t.font = _ui.Font;
-            t.text = glyph; t.color = color; t.fontSize = size;
+            // Chess-piece glyphs (U+2654–265F) read a touch small at the pixel font's
+            // proportions, so nudge them up slightly on the how-to diagrams.
+            bool isPiece = glyph.Length > 0 && glyph[0] >= '♔' && glyph[0] <= '♟';
+            t.text = glyph; t.color = color; t.fontSize = isPiece ? size * 1.2f : size;
             t.alignment = TextAlignmentOptions.Center; t.raycastTarget = false;
         }
 
@@ -232,8 +237,8 @@ namespace KnightsGauntlet.View
             f.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             var t = New("t", go.transform).AddComponent<TextMeshProUGUI>();
             if (_ui.Font) t.font = _ui.Font;
-            t.text = text; t.color = color; t.fontSize = 16; t.fontStyle = FontStyles.Bold;
-            t.alignment = TextAlignmentOptions.Center; t.enableWordWrapping = false; t.raycastTarget = false;
+            t.text = text; t.color = color; t.fontSize = 16; t.fontStyle = FontStyles.Normal;
+            t.alignment = TextAlignmentOptions.Center; t.textWrappingMode = TextWrappingModes.NoWrap; t.raycastTarget = false;
         }
 
         private void Caption(Transform parent, string text, Color color, float size)
@@ -241,7 +246,7 @@ namespace KnightsGauntlet.View
             var t = New("cap", parent).AddComponent<TextMeshProUGUI>();
             if (_ui.Font) t.font = _ui.Font;
             t.text = text; t.color = color; t.fontSize = size;
-            t.alignment = TextAlignmentOptions.Center; t.enableWordWrapping = false; t.raycastTarget = false;
+            t.alignment = TextAlignmentOptions.Center; t.textWrappingMode = TextWrappingModes.NoWrap; t.raycastTarget = false;
         }
 
         private static GameObject New(string name, Transform parent)

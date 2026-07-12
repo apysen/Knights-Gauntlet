@@ -14,7 +14,7 @@ namespace KnightsGauntlet.View
         [Tooltip("e.g. https://yourproject.supabase.co")]
         public string url;
 
-        [Tooltip("anon / publishable key — public by design; your data is protected by RLS, not by hiding this")]
+        [Tooltip("anon / publishable key: public by design, your data is protected by RLS, not by hiding this")]
         public string key;
 
         // Finds the asset in any Assets/**/Resources/ folder. Returns null if absent.

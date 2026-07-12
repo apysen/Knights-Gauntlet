@@ -31,6 +31,7 @@ namespace KnightsGauntlet.View
         [Serializable] private class PostBody { public string name; public int score; public string category; public string skin; }
         [Serializable] private class PostBodyNoSkin { public string name; public int score; public string category; }
         [Serializable] private class SkinBody { public string skin; }
+        [Serializable] private class BugBody { public string message; public string name; public string app_version; public string device; public string os; }
 
         public static bool IsOnlineCategory(string category)
             => category != null && (category.EndsWith("hard") || category.EndsWith("grandmaster")
@@ -48,8 +49,13 @@ namespace KnightsGauntlet.View
 
         private IEnumerator CheckCo(string name, Action<bool> done)
         {
-            string url = supabaseUrl + "/rest/v1/scores?select=name&limit=1&name=eq." +
-                         UnityWebRequest.EscapeURL(name);
+            // Case-insensitive match: the pixel font is uppercase-only, so "Bob" and
+            // "BOB" read identically and must be treated as the same name. `ilike` is
+            // case-insensitive LIKE; escape its % and _ wildcards (and the escape char)
+            // so a name containing them still matches literally rather than as a pattern.
+            string pattern = name.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+            string url = supabaseUrl + "/rest/v1/scores?select=name&limit=1&name=ilike." +
+                         UnityWebRequest.EscapeURL(pattern);
             bool available = true;
             yield return Get(url,
                 text => { var rows = Parse(text); available = (rows == null || rows.Length == 0); },
@@ -120,6 +126,26 @@ namespace KnightsGauntlet.View
                 if (outList.Count >= 500) break;
             }
             return outList;
+        }
+
+        // ── Bug reports ──────────────────────────────────────────────────────
+        // Inserts a row into the `bug_reports` table. onOk/onFail let the UI toast the
+        // result. Needs Supabase configured and an RLS insert policy for anon on that
+        // table (see the SQL in the chat). Device/version are attached to help debugging.
+        public bool CanSubmitBug => Configured();
+        public void SubmitBugReport(string message, string playerName, Action onOk, Action onFail)
+        {
+            if (!Configured() || string.IsNullOrWhiteSpace(message)) { onFail?.Invoke(); return; }
+            string url = supabaseUrl + "/rest/v1/bug_reports";
+            string body = JsonUtility.ToJson(new BugBody
+            {
+                message = message,
+                name = string.IsNullOrEmpty(playerName) ? null : playerName,
+                app_version = Application.version,
+                device = SystemInfo.deviceModel,
+                os = SystemInfo.operatingSystem
+            });
+            StartCoroutine(Send(url, "POST", body, onOk, onFail));
         }
 
         // ── Sync equipped skin onto the player's rows ────────────────────────

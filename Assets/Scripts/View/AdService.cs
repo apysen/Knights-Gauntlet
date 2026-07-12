@@ -7,8 +7,8 @@ namespace KnightsGauntlet.View
     // later as a single new implementation without touching game logic.
     //
     // Two placements are wired up:
-    //   • Banner   — shown on the game-over screen.
-    //   • Rewarded — the optional "extra life" on death.
+    //   • Banner:   shown on the game-over screen.
+    //   • Rewarded: the optional "extra life" on death.
     public interface IAdService
     {
         void Initialize();
@@ -22,6 +22,13 @@ namespace KnightsGauntlet.View
         // Banner (game-over screen).
         void ShowBanner();
         void HideBanner();
+
+        // App lifecycle: forward Unity's OnApplicationPause so the network can pause/
+        // resume correctly.
+        void OnAppPause(bool paused);
+
+        // Debug helper: open the mediation Test Suite on device (Settings, debug builds).
+        void LaunchTestSuite();
     }
 
     // Default until a real network is integrated. Does nothing, and reports
@@ -34,5 +41,7 @@ namespace KnightsGauntlet.View
         public void ShowRewarded(Action onReward, Action onUnavailable) { onUnavailable?.Invoke(); }
         public void ShowBanner() { }
         public void HideBanner() { }
+        public void OnAppPause(bool paused) { }
+        public void LaunchTestSuite() { }
     }
 }

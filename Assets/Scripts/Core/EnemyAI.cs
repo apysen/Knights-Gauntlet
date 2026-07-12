@@ -5,7 +5,7 @@ namespace KnightsGauntlet.Core
 {
     // Enemy movement for Battle mode. The two-phase design (a piece CLAIMS its
     // destination cell before any later piece evaluates its move) is what stops
-    // pieces from stacking — the single-loop version had persistent overlap bugs.
+    // pieces from stacking. The single-loop version had persistent overlap bugs.
     public class EnemyAI
     {
         private readonly Random _rng;

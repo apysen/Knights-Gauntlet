@@ -55,3 +55,35 @@ desktop.ini
 # ── Secrets (Supabase URL/key) — keep out of the repo ───────────────────────
 Assets/Resources/SupabaseConfig.asset
 Assets/Resources/SupabaseConfig.asset.meta
+
+# ── Generated build/tooling output (regenerated on demand, never upload) ─────
+/.utmp/
+/UIElementsSchema/
+/graphify-out/
+
+# ── Local tooling config + scratch screenshots (not part of the game) ────────
+/.claude/
+/goal flag bug.png
+/web screenshot 1.jpg
+/web screenshot 2.jpg
+
+# ── Source art/audio packs ──────────────────────────────────────────────────
+# The originals stay on disk to re-cut from, but the game never loads them: it
+# loads its own copies from Assets/Resources/ by path. Verified unreachable from
+# the built scene + Resources, so they ship nothing and belong out of the repo.
+# NOTE: these rules must sit BELOW the `!/[Aa]ssets/**/*.meta` re-include above,
+# and name each .meta explicitly, or Unity's meta files would still be committed.
+/Assets/SFX/
+/Assets/SFX.meta
+/Assets/Pixel Art/
+/Assets/Pixel Art.meta
+/Assets/Pixel Art Skill Animations - Lightning/
+/Assets/Pixel Art Skill Animations - Lightning.meta
+/Assets/Smoke Effect 01/
+/Assets/Smoke Effect 01.meta
+/Assets/Coin_Silver/
+/Assets/Coin_Silver.meta
+/Assets/DEVNIK 2D/
+/Assets/DEVNIK 2D.meta
+/Assets/Thaleah_PixelFont/
+/Assets/Thaleah_PixelFont.meta

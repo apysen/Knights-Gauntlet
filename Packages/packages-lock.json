@@ -273,6 +273,15 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.services.levelplay": {
+      "version": "9.5.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.services.core": "1.15.1"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.shadergraph": {
       "version": "17.5.0",
       "depth": 1,

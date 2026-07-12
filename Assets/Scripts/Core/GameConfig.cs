@@ -13,6 +13,9 @@ namespace KnightsGauntlet.Core
         public const int RayMax = 12;            // ray length cap for sliding forms
         public const int TransformTrigger = 3;   // captures in a row to transform
         public const float TransformSeconds = 5f;
+        // Adventure's transformation world: captures needed to change form. Fewer
+        // than Battle's, and unlike Battle, misses never reset the progress.
+        public const int AdventureTransformPips = 2;
         public const int ComboFormBonus = 3;     // bishop & nightrider build the x faster
 
         // ── Move tables ──────────────────────────────────────────────────────
@@ -139,7 +142,7 @@ namespace KnightsGauntlet.Core
         // build I'd swap to sprites and use these only as an editor fallback.
         public static string PieceColorHex(PieceType t) => t switch
         {
-            // Muted versions of the web palette — slightly desaturated so a full
+            // Muted versions of the web palette, slightly desaturated so a full
             // screen of pieces reads calmer (the trap red is muted the most, since
             // it covers the most area and was the most distracting).
             PieceType.Rook => "#4A80D2",
@@ -153,7 +156,7 @@ namespace KnightsGauntlet.Core
 
         // Colour of the piece a transformed player represents. Nightrider is the
         // knight mimic, so it uses the (enemy) knight colour rather than the gold
-        // fallback — used for the transform wash and HUD form badge.
+        // fallback, used for the transform wash and HUD form badge.
         public static string FormColorHex(PieceType form)
             => form == PieceType.Nightrider ? PieceColorHex(PieceType.Knight) : PieceColorHex(form);
 

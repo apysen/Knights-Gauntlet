@@ -44,6 +44,7 @@ namespace KnightsGauntlet.Core
         // Collectable shillings on the board, and the total collected this run.
         public readonly List<Pickup> Pickups = new List<Pickup>();
         public readonly List<AdvEnemy> AdvEnemies = new List<AdvEnemy>();
+        public readonly List<Int2> Cracked = new List<Int2>(); // fragile tiles: safe once, collapse to a trap on leaving
         public int RunShillings { get; private set; }
 
         public bool IsMimic => _transformIsMimic;
@@ -51,6 +52,8 @@ namespace KnightsGauntlet.Core
         public bool TransformActive => _transformEndsAt > 0f && _time < _transformEndsAt;
         public float TransformRemaining => TransformActive ? Math.Max(0f, _transformEndsAt - _time) : 0f;
         public int CaptureChain => _captureChain; // 0..TransformTrigger-1 while building toward a transform
+        public int AdvPips => _advPips;            // adventure transform progress (misses never reset it)
+        public bool AdvTransform;                  // this adventure level is a transformation puzzle
 
         // Progress toward the next enemy move, 0..1 (for the move-timer bar).
         public float EnemyMoveProgress =>
@@ -62,6 +65,8 @@ namespace KnightsGauntlet.Core
         public event Action<PieceType> OnFormChanged; // transform / expiry / shield
         public event Action OnShielded;                // a transform absorbed a hit
         public event Action OnDeath;
+        public event Action OnPickupCollected;         // a shilling pickup was collected
+        public event Action OnTransformExpired;        // form ran out on the timer (not a shield break)
 
         // Last few landings in scroll-invariant world space, for the snapshot.
         public readonly List<(int col, float worldY)> Trail = new List<(int, float)>();
@@ -96,20 +101,26 @@ namespace KnightsGauntlet.Core
                 if (!float.IsNaN(p.Base)) p.Y = p.Base + ScrollCells;
             }
         }
-        // Keep the knight on the map (reject L-jumps off the top/bottom of a tall map).
+        // Keep the knight on the playable board. On scrolling modes (Trap/Battle) the
+        // board runs off-screen and the ±1 row margin from MoveRules is intentional, so
+        // we leave those alone. On STATIC boards (adventure/tutorial, which set Tutorial
+        // true) a knight L-jump that lands past an edge would carry the player clean off
+        // the visible board, so clamp those to the map: rows 0..MapRows-1 on tall maps, or
+        // the visible 0..Rows-1 on normal maps.
         private void FilterMapBounds(List<MoveTarget> moves)
         {
-            if (MapRows <= 0) return;
+            if (!Tutorial && MapRows <= 0) return; // scrolling modes keep the off-board margin
+            int maxRow = MapRows > 0 ? MapRows - 1 : GameConfig.Rows - 1;
             for (int i = moves.Count - 1; i >= 0; i--)
             {
                 int mr = (int)Math.Round(moves[i].Y - ScrollCells);
-                if (mr < 0 || mr > MapRows - 1) moves.RemoveAt(i);
+                if (mr < 0 || mr > maxRow) moves.RemoveAt(i);
             }
         }
         private int? _lockCol, _lockRow;
         private float _time;
 
-        private int _comboMissStreak, _captureChain;
+        private int _comboMissStreak, _captureChain, _advPips;
         private PieceType? _lastCaptured;
         private float _transformEndsAt, _battleInvulnUntil, _lastBattleMove, _battleMoveInterval;
         private bool _transformIsMimic;
@@ -145,6 +156,11 @@ namespace KnightsGauntlet.Core
             Difficulty = difficulty;
             Pieces.Clear();
             Pickups.Clear();
+            // Adventure state must be wiped too, otherwise a previous non-scrolling
+            // adventure level's oscillating enemies (and fragile tiles) leak into the
+            // next Trap/Battle run, where they'd render but never move or be capturable.
+            AdvEnemies.Clear();
+            Cracked.Clear();
             Trail.Clear();
             Score = 0;
             RunShillings = 0;
@@ -155,17 +171,20 @@ namespace KnightsGauntlet.Core
             Alive = true;
             Tutorial = false;
             Adventure = false;
+            AdvTransform = false;
             MapRows = 0;
 
             ComboMultiplier = 1;
             _comboMissStreak = 0;
             _captureChain = 0;
+            _advPips = 0;
             _lastCaptured = null;
             _transformEndsAt = 0;
             _transformIsMimic = false;
             _battleInvulnUntil = 0;
             _lastBattleMove = 0;
             PlayerForm = PieceType.Knight;
+            _hasBest = false; _moveEpoch = 0; _bestEpoch = -1; // reset the best-move hint cache
 
             PlayerCol = 2;
             PlayerY = GameConfig.Rows - 4; // 6 with Rows=10
@@ -194,6 +213,21 @@ namespace KnightsGauntlet.Core
                 _enemyAI.PlanKnightMoves(Pieces, PlayerCol, PlayerY, true);
                 _nextSpawnCells = ScrollCells + 1f;
             }
+        }
+
+        // Chronokinesis: scroll the board back `cells` (Trap/Battle). Everything's Y derives
+        // from ScrollCells, so lowering it shifts the knight AND the board up together,
+        // relative positions (and thus the hazard layout) are unchanged, but the knight
+        // ends further from the fixed bottom death line, giving room to retreat.
+        public void ScrollBack(float cells)
+        {
+            if (cells <= 0f || (Mode != GameMode.Trap && Mode != GameMode.Battle)) return;
+            ScrollCells -= cells;
+            PlayerY = _playerBase + ScrollCells;
+            for (int i = 0; i < Pieces.Count; i++)
+                if (!float.IsNaN(Pieces[i].Base)) Pieces[i].Y = Pieces[i].Base + ScrollCells;
+            for (int i = 0; i < Pickups.Count; i++)
+                if (!float.IsNaN(Pickups[i].Base)) Pickups[i].Y = Pickups[i].Base + ScrollCells;
         }
 
         public void Tick(float dt)
@@ -264,6 +298,7 @@ namespace KnightsGauntlet.Core
                 if (_transformEndsAt > 0f && _time >= _transformEndsAt)
                 {
                     _transformEndsAt = 0; _transformIsMimic = false; SetForm(PieceType.Knight);
+                    OnTransformExpired?.Invoke();
                 }
 
                 if (_time - _lastBattleMove >= _battleMoveInterval)
@@ -299,19 +334,198 @@ namespace KnightsGauntlet.Core
 
         public List<MoveTarget> GetValidMoves()
         {
-            var m = MoveRules.GetValidMoves(Pieces, PlayerCol, PlayerY, Mode, PlayerForm);
+            var m = MoveRules.GetValidMoves(Pieces, PlayerCol, PlayerY, Mode, PlayerForm, AdvTransform);
             FilterMapBounds(m);
             return m;
         }
 
         // Allocation-free variant for per-frame callers (move hints). Returns a
-        // shared buffer — do not hold the reference across frames.
+        // shared buffer, so do not hold the reference across frames.
         private readonly List<MoveTarget> _movesBuffer = new List<MoveTarget>();
         public List<MoveTarget> GetValidMovesNonAlloc()
         {
-            MoveRules.Fill(_movesBuffer, Pieces, PlayerCol, PlayerY, Mode, PlayerForm);
+            MoveRules.Fill(_movesBuffer, Pieces, PlayerCol, PlayerY, Mode, PlayerForm, AdvTransform);
             FilterMapBounds(_movesBuffer);
             return _movesBuffer;
+        }
+
+        // ── Best-move hint (Divine Intervention powerup) ─────────────────────
+        // The single legal move the heuristic rates highest, or null if there are none.
+        // Only meaningful in Battle and Trap. Recomputed ONCE per player move (see
+        // _moveEpoch) and cached as an offset from the knight, so the green highlight stays
+        // locked to one spot instead of flickering between equally-good options each frame;
+        // the offset is re-projected to the live board so it still follows the scroll.
+        private int _moveEpoch;
+        private int _bestEpoch = -1, _bestDCol, _bestDRow;
+        private bool _hasBest;
+
+        public MoveTarget? BestMove()
+        {
+            if (_hasBest && _bestEpoch == _moveEpoch)
+            {
+                var kept = FindValidMove(PlayerCol + _bestDCol, PlayerY + _bestDRow);
+                // Keep the same choice until the next move, unless a scrolling trap has since
+                // landed on that cell (Trap mode), in which case fall through and recompute.
+                if (kept.HasValue && (Mode != GameMode.Trap || !LandsOnHazard(kept.Value))) return kept;
+            }
+
+            MoveTarget? best = Mode == GameMode.Trap ? BestTrapMove() : BestBattleMove();
+            if (best.HasValue)
+            {
+                _hasBest = true; _bestEpoch = _moveEpoch;
+                _bestDCol = best.Value.Col - PlayerCol;
+                _bestDRow = (int)Math.Round(best.Value.Y - PlayerY);
+            }
+            else _hasBest = false;
+            return best;
+        }
+
+        private MoveTarget? FindValidMove(int col, float y)
+        {
+            var moves = GetValidMovesNonAlloc();
+            for (int i = 0; i < moves.Count; i++)
+                if (moves[i].Col == col && Near(moves[i].Y, y)) return moves[i];
+            return null;
+        }
+
+        private MoveTarget? BestBattleMove()
+        {
+            var moves = GetValidMovesNonAlloc();
+            MoveTarget? best = null;
+            float bestScore = float.NegativeInfinity;
+            for (int i = 0; i < moves.Count; i++)
+            {
+                float s = ScoreBattleMove(moves[i]);
+                if (s > bestScore) { bestScore = s; best = moves[i]; }
+            }
+            return best;
+        }
+
+        private static bool Near(float a, float b) => Math.Abs(a - b) < 0.5f;
+
+        // Trap mode: reuse the "Was I trapped?" escape solver (EscapeSolver, a BFS over
+        // knight L-moves that threads past the wall of traps ahead). Its first step is the
+        // move that leads up and out, i.e. the one that maximises forward progress / score.
+        private MoveTarget? BestTrapMove()
+        {
+            var moves = GetValidMovesNonAlloc();
+            if (moves.Count == 0) return null;
+
+            // The cell we just came from (scroll-invariant Trail base -> current Y). We never
+            // suggest stepping back onto it: a back-step loses score AND is what makes the
+            // greedy solver oscillate between the same two squares.
+            bool hasPrev = Trail.Count >= 2;
+            int prevCol = hasPrev ? Trail[Trail.Count - 2].col : -1;
+            float prevY = hasPrev ? Trail[Trail.Count - 2].worldY + ScrollCells : float.NaN;
+            bool IsBackstep(MoveTarget m) => hasPrev && m.Col == prevCol && Near(m.Y, prevY);
+
+            var traps = new List<(int col, int relRow)>();
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (o.Alive && o.Type == PieceType.Trap)
+                    traps.Add((o.Col, (int)Math.Round(o.Y - PlayerY)));
+            }
+            // Prefer the escape route's first step, but only if it makes forward progress
+            // (up = negative relRow) and isn't a step back onto the previous cell.
+            var (path, _, _) = EscapeSolver.Compute(PlayerCol, traps);
+            if (path != null && path.Count > 0 && path[0].RelRow < 0)
+            {
+                int wantCol = path[0].Col;
+                float wantY = PlayerY + path[0].RelRow;
+                for (int i = 0; i < moves.Count; i++)
+                    if (moves[i].Col == wantCol && Near(moves[i].Y, wantY) && !IsBackstep(moves[i]))
+                        return moves[i];
+            }
+
+            // Otherwise: the most forward (smallest Y) safe move that isn't the cell we came
+            // from. This keeps net upward progress and can't form an A<->B loop.
+            MoveTarget? best = null;
+            float bestY = float.MaxValue;
+            for (int i = 0; i < moves.Count; i++)
+            {
+                var m = moves[i];
+                if (LandsOnHazard(m) || IsBackstep(m)) continue;
+                if (m.Y < bestY) { bestY = m.Y; best = m; }
+            }
+            if (best.HasValue) return best;
+
+            // Last resort (every forward/lateral option is a hazard): any safe move, even a
+            // backward one, so the hint still points somewhere survivable.
+            for (int i = 0; i < moves.Count; i++)
+                if (!LandsOnHazard(moves[i]) && (!best.HasValue || moves[i].Y < best.Value.Y)) best = moves[i];
+            return best ?? moves[0];
+        }
+
+        private bool LandsOnHazard(MoveTarget m)
+        {
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (o.Alive && o.Col == m.Col && Near(o.Y, m.Y)) return true;
+            }
+            return false;
+        }
+
+        private float ScoreBattleMove(MoveTarget m)
+        {
+            // Battle: prefer the highest-value capture; avoid squares an enemy strikes next.
+            int capturedValue = 0;
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (o.Alive && o.Type != PieceType.Trap && o.Col == m.Col && Near(o.Y, m.Y))
+                    capturedValue = Math.Max(capturedValue, GameConfig.PiecePoints(o.Type));
+            }
+            float s = capturedValue * 10f;
+            if (IsBattleThreatened(m.Col, m.Y) && !TransformActive) s -= 100f; // deadly unless a shield is up
+            if (capturedValue == 0) s -= NearestEnemyDist(m.Col, m.Y) * 0.5f;  // else edge toward a capture
+            return s;
+        }
+
+        // Whether an alive battle enemy will strike (col, y) on its next move. Mirrors the
+        // threat tiles GameView draws so the hint agrees with what the player sees.
+        private bool IsBattleThreatened(int col, float y)
+        {
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (!o.Alive || o.Type == PieceType.Trap) continue;
+                switch (o.Type)
+                {
+                    case PieceType.Rook:
+                        if (o.Col == col && Near(o.Y + 1f, y)) return true;
+                        break;
+                    case PieceType.Bishop:
+                        int dir = o.Dir != 0 ? o.Dir : 1;
+                        int bc = o.Col + dir;
+                        if (bc < 0 || bc >= GameConfig.Cols) bc = o.Col - dir;
+                        if (bc == col && Near(o.Y + 1f, y)) return true;
+                        break;
+                    case PieceType.Knight:
+                        if (o.PlanDC.HasValue && o.PlanDR.HasValue &&
+                            o.Col + o.PlanDC.Value == col && Near(o.Y + o.PlanDR.Value, y)) return true;
+                        break;
+                    case PieceType.Queen:
+                        foreach (var adj in GameConfig.QueenAdj)
+                            if (o.Col + adj.Col == col && Near(o.Y + adj.Row, y)) return true;
+                        break;
+                }
+            }
+            return false;
+        }
+
+        private float NearestEnemyDist(int col, float y)
+        {
+            float best = float.MaxValue;
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (!o.Alive || o.Type == PieceType.Trap) continue;
+                float d = Math.Abs(o.Col - col) + Math.Abs(o.Y - y);
+                if (d < best) best = d;
+            }
+            return best == float.MaxValue ? 0f : best;
         }
 
         // Tap at grid cell (col, y in cell units). Snaps to the nearest legal move
@@ -320,14 +534,17 @@ namespace KnightsGauntlet.Core
         public void TutorialSetup(GameMode mode)
         {
             Mode = mode; Tutorial = true; Alive = true; MapRows = 0;
+            AdvTransform = false; _advPips = 0;
             Difficulty = Difficulty.Medium; // consistent combo grace (2) for the miss lesson
             Pieces.Clear(); Pickups.Clear(); Trail.Clear();
             AdvEnemies.Clear();
+            Cracked.Clear();
             ScrollCells = 0; _time = 0;
             Score = 0; _trapScore = 0; RunShillings = 0;
-            ComboMultiplier = 1; _comboMissStreak = 0; _captureChain = 0;
+            ComboMultiplier = 1; _comboMissStreak = 0; _captureChain = 0; _advPips = 0;
             _lastCaptured = null; _transformEndsAt = 0; _transformIsMimic = false;
             _battleInvulnUntil = 0; _lastBattleMove = 0;
+            _hasBest = false; _moveEpoch = 0; _bestEpoch = -1; // reset the best-move hint cache
             PlayerForm = PieceType.Knight;
             _lockCol = null; _lockRow = null;
             _speed = 0f;
@@ -339,25 +556,143 @@ namespace KnightsGauntlet.Core
             => Pieces.Add(new GamePiece(PieceType.Trap, col, row) { Alive = true, Base = row - ScrollCells });
         public void TutorialAddPiece(PieceType type, int col, int row)
             => Pieces.Add(new GamePiece(type, col, row) { Alive = true, Dir = 1, Base = row - ScrollCells });
-        // Adventure oscillating enemies (capture targets that also threaten).
-        public void AdventureAddEnemy(PieceType type, int col, int row, int offCol, int offRow)
-            => AdvEnemies.Add(new AdvEnemy { Type = type, HomeCol = col, HomeRow = row, OffCol = offCol, OffRow = offRow, Phase = 0, Alive = true });
+        // Adventure oscillating enemies (capture targets that also threaten), or a Hunter
+        // queen that chases the knight (a hazard, not a capture target).
+        public void AdventureAddEnemy(PieceType type, int col, int row, int offCol, int offRow, bool hunter = false)
+            => AdvEnemies.Add(new AdvEnemy
+            {
+                Type = type, HomeCol = col, HomeRow = row, OffCol = offCol, OffRow = offRow,
+                Phase = 0, Alive = true, Hunter = hunter, CurCol = col, CurRow = row
+            });
+        public void AdventureAddCracked(int col, int row) => Cracked.Add(new Int2(col, row));
+        // When the knight leaves a cracked tile, it collapses into a solid trap.
+        private void CollapseCrackedIfLeft(int fromCol, int fromRow)
+        {
+            for (int i = 0; i < Cracked.Count; i++)
+            {
+                if (Cracked[i].Col == fromCol && Cracked[i].Row == fromRow)
+                {
+                    Cracked.RemoveAt(i);
+                    Pieces.Add(new GamePiece(PieceType.Trap, fromCol, fromRow + ScrollCells) { Alive = true, Base = fromRow });
+                    return;
+                }
+            }
+        }
         // A currency coin at a fixed cell (frozen board, so ScrollCells is 0).
         public void AdventureAddShilling(int col, int row, int value)
             => Pickups.Add(new Pickup(col, row, value) { Base = row - ScrollCells });
         // Force a constant scroll speed (scrolling adventure levels).
         public void AdventureSetSpeed(float speed) { _speed = speed; _trapBaseSpeed = speed; }
-        public int AdvRemaining { get { int n = 0; for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Alive) n++; return n; } }
-        public bool AdvAllCaptured() { for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Alive) return false; return true; }
+        // Hunters (the queen boss) are hazards, not capture targets, so the minions
+        // (the ordinary pieces) drive CaptureAll / the remaining-enemy HUD.
+        public int AdvRemaining { get { int n = 0; for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Alive && !AdvEnemies[i].Hunter) n++; return n; } }
+        public bool AdvAllCaptured() { for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Alive && !AdvEnemies[i].Hunter) return false; return true; }
+        // The queen is shielded (uncapturable) while any minion (non-hunter enemy) lives.
+        public bool QueenShielded { get { for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Alive && !AdvEnemies[i].Hunter) return true; return false; } }
+        public bool HasHunter { get { for (int i = 0; i < AdvEnemies.Count; i++) if (AdvEnemies[i].Hunter) return true; return false; } }
+        public bool QueenDownThisMove;   // set for one move when the (unshielded) queen is captured
+
         // Run after a knight move in Capture/Combined: capture an enemy on the landing
         // tile, then oscillate the survivors; if one lands on the knight, it dies.
         // Returns true if the knight was killed.
         public bool AdventureAfterMove()
         {
-            int kc = PlayerCol, kr = (int)Math.Round(PlayerY);
-            for (int i = 0; i < AdvEnemies.Count; i++) { var e = AdvEnemies[i]; if (e.Alive && e.Col == kc && e.Row == kr) e.Alive = false; }
-            for (int i = 0; i < AdvEnemies.Count; i++) { var e = AdvEnemies[i]; if (e.Alive) e.Phase = 1 - e.Phase; }
+            QueenDownThisMove = false;
+            // Enemies are stored in base-row (unscrolled) coordinates, but PlayerY
+            // includes the follow-camera offset on tall maps; subtract it so capture
+            // and kill checks compare like-for-like.
+            int kc = PlayerCol, kr = (int)Math.Round(PlayerY - ScrollCells);
+            bool shielded = QueenShielded;
+            for (int i = 0; i < AdvEnemies.Count; i++)
+            {
+                var e = AdvEnemies[i];
+                // Capture the queen only once her shield is down (all minions gone); landing
+                // on her while shielded doesn't capture her. The kill-check below gets you.
+                if (e.Alive && e.Hunter && !shielded && e.Col == kc && e.Row == kr)
+                {
+                    e.Alive = false; QueenDownThisMove = true;
+                    continue;
+                }
+                if (e.Alive && !e.Hunter && e.Col == kc && e.Row == kr)
+                {
+                    e.Alive = false;
+                    // Transformation world: each capture is a pip toward changing form.
+                    // Misses never reset _advPips (unlike Battle's capture chain), so
+                    // the count only ever climbs. At the threshold the knight takes the
+                    // captured piece's movement. The goal is designed to be reachable
+                    // only that way. Other worlds ignore this entirely.
+                    if (AdvTransform)
+                    {
+                        _lastCaptured = e.Type;
+                        _advPips++;
+                        if (_advPips >= GameConfig.AdventureTransformPips)
+                        {
+                            _advPips = 0;
+                            // Guard against non-sliding forms (a Pawn form has no moves
+                            // and would soft-lock); transform targets are always Rook/Bishop.
+                            if (e.Type == PieceType.Rook || e.Type == PieceType.Bishop || e.Type == PieceType.Queen)
+                                SetForm(e.Type);
+                        }
+                    }
+                }
+            }
+            // Oscillators bob. The queen takes one king-step toward the knight WHILE
+            // shielded; once her minions (and shield) are gone she stops chasing and holds
+            // still, and is vulnerable, so a knight can line up the capture.
+            bool stillShielded = QueenShielded;
+            for (int i = 0; i < AdvEnemies.Count; i++)
+            {
+                var e = AdvEnemies[i];
+                if (!e.Alive) continue;
+                if (e.Hunter) { if (stillShielded) MoveHunter(e, kc, kr); }
+                else e.Phase = 1 - e.Phase;
+            }
             for (int i = 0; i < AdvEnemies.Count; i++) { var e = AdvEnemies[i]; if (e.Alive && e.Col == kc && e.Row == kr) { Alive = false; return true; } }
+            return false;
+        }
+
+        // True if a solid trap sits at base cell (col, row). Blocks a hunter's slide.
+        public bool AdvTrapAt(int col, int row)
+        {
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                var o = Pieces[i];
+                if (o.Alive && o.Type == PieceType.Trap && o.Col == col &&
+                    (int)Math.Round(o.Y - ScrollCells) == row) return true;
+            }
+            return false;
+        }
+
+        private int MaxAdvRow => MapRows > 0 ? MapRows - 1 : GameConfig.Rows - 1;
+
+        // Queen chase: one king-like step (into any of the 8 surrounding cells that isn't a
+        // trap or off the map) toward the knight, or straight onto the knight if adjacent
+        // (a kill). Chebyshev distance, since a diagonal step closes both axes at once.
+        private void MoveHunter(AdvEnemy q, int kc, int kr)
+        {
+            int bestCol = q.CurCol, bestRow = q.CurRow;
+            int bestDist = Math.Max(Math.Abs(q.CurCol - kc), Math.Abs(q.CurRow - kr));
+            foreach (var d in GameConfig.QueenAdj)
+            {
+                int c = q.CurCol + d.Col, r = q.CurRow + d.Row;
+                if (c < 0 || c >= GameConfig.Cols || r < 0 || r > MaxAdvRow) continue; // off the map
+                if (c == kc && r == kr) { q.CurCol = kc; q.CurRow = kr; return; }       // steps onto the knight: kill
+                if (AdvTrapAt(c, r)) continue;                                          // can't step onto a trap
+                if (AdvEnemyAt(c, r, q)) continue;                                      // can't step onto another piece
+                int dist = Math.Max(Math.Abs(c - kc), Math.Abs(r - kr));
+                if (dist < bestDist) { bestDist = dist; bestCol = c; bestRow = r; }
+            }
+            q.CurCol = bestCol; q.CurRow = bestRow;
+        }
+
+        // True if another alive adventure enemy occupies base cell (col, row).
+        private bool AdvEnemyAt(int col, int row, AdvEnemy except)
+        {
+            for (int i = 0; i < AdvEnemies.Count; i++)
+            {
+                var e = AdvEnemies[i];
+                if (e.Alive && e != except && e.Col == col && e.Row == row) return true;
+            }
             return false;
         }
 
@@ -385,10 +720,12 @@ namespace KnightsGauntlet.Core
 
         private MoveResult ApplyMove(MoveTarget m)
         {
+            _moveEpoch++; // invalidates the cached best-move hint (recomputed once per move)
             var result = new MoveResult { Moved = true, Captures = new List<CaptureInfo>() };
 
             if (Mode == GameMode.Trap)
             {
+                int fromCol = PlayerCol, fromRow = (int)Math.Round(PlayerY - ScrollCells); // cell being left
                 int rowDelta = (int)Math.Round(PlayerY - m.Y); // forward (up) positive
                 _trapScore = Math.Max(0, _trapScore + rowDelta);
                 Score = _trapScore;
@@ -412,6 +749,7 @@ namespace KnightsGauntlet.Core
 
                 PlayerCol = m.Col; PlayerY = m.Y;
                 _playerBase = PlayerY - ScrollCells;
+                if (Cracked.Count > 0) CollapseCrackedIfLeft(fromCol, fromRow);
                 Trail.Add((PlayerCol, PlayerY - ScrollCells));
                 if (Trail.Count > 12) Trail.RemoveAt(0);
                 CollectPickups();
@@ -549,6 +887,7 @@ namespace KnightsGauntlet.Core
                 {
                     pk.Alive = false;
                     RunShillings += pk.Value;
+                    OnPickupCollected?.Invoke();
                 }
             }
         }

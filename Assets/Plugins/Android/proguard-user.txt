@@ -1,0 +1,118 @@
+# R8 / ProGuard keep rules for the release build (minifyEnabled = true).
+#
+# R8 shrinks the JAVA side of the app. It does NOT touch C# (that is IL2CPP managed
+# stripping, configured separately). So the only things at risk here are Java classes
+# that nothing calls directly in Java, and are instead reached by NAME at runtime:
+#   - via JNI, from Unity's C# plugins (Play Core, IAP, LevelPlay)
+#   - via reflection, when a mediation SDK loads its ad-network adapters by class name
+# R8 cannot see those call sites, so without these rules it deletes or renames the
+# classes and the app fails at RUNTIME (not at build time) with ClassNotFoundException
+# or NoSuchMethodError.
+#
+# Unity's own rules (proguard-unity.txt) are applied automatically by the gradle
+# template and are NOT repeated here.
+#
+# If you add a new ad network or plugin, add its keep rules here too.
+
+# ── General: things reflection / the platform reach by name ──────────────────
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod, Exceptions
+-keep,allowobfuscation @interface androidx.annotation.Keep
+-keep @androidx.annotation.Keep class * { *; }
+-keepclasseswithmembers class * { @androidx.annotation.Keep <methods>; }
+
+# Native (JNI) entry points: the C++/C# side calls these by exact name.
+-keepclasseswithmembernames,includedescriptorclasses class * {
+    native <methods>;
+}
+
+# Enums are reflected over by valueOf/values in several SDKs.
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# Parcelable/Serializable are instantiated reflectively by the framework.
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
+-keepnames class * implements java.io.Serializable
+
+# ── Unity ───────────────────────────────────────────────────────────────────
+# UnityPlayer and friends are called from native code by name.
+-keep class com.unity3d.player.** { *; }
+-dontwarn com.unity3d.player.**
+
+# ── Unity IAP / Google Play Billing ─────────────────────────────────────────
+# Purchasing is driven from C# over JNI, and Billing uses reflective listeners.
+-keep class com.unity3d.plugin.** { *; }
+-keep class com.unity.purchasing.** { *; }
+-keep class com.android.billingclient.** { *; }
+-keep interface com.android.billingclient.** { *; }
+-dontwarn com.android.billingclient.**
+
+# ── LevelPlay (ironSource) + mediation adapters ─────────────────────────────
+# The mediation SDK loads each network's adapter by CLASS NAME at runtime, so the
+# adapters look unused to R8. Losing them means "no ad available" forever, with no
+# build error to warn you. Keep the SDK, the adapters, and every network below.
+-keep class com.ironsource.** { *; }
+-keep interface com.ironsource.** { *; }
+-keep class com.unity3d.mediation.** { *; }
+-keep class com.unity3d.ironsourceads.** { *; }
+-dontwarn com.ironsource.**
+
+# Networks currently wired in (see mainTemplate.gradle dependencies):
+#   AdMob, AppLovin, UnityAds
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.android.libraries.ads.mobile.sdk.** { *; }
+-dontwarn com.google.android.gms.ads.**
+-keep class com.applovin.** { *; }
+-dontwarn com.applovin.**
+-keep class com.unity3d.ads.** { *; }
+-keep class com.unity3d.services.** { *; }
+-dontwarn com.unity3d.ads.**
+
+# Advertising ID (used by the ad SDKs for attribution).
+-keep class com.google.android.gms.common.** { *; }
+-keep class com.google.android.gms.ads.identifier.** { *; }
+
+# ── Google Play Core + In-App Update ────────────────────────────────────────
+# UpdateChecker.cs drives these over JNI. Google ships these rules as loose .txt
+# files under Assets/GooglePlayPlugins/**/Proguard/, which gradle does NOT pick up
+# on its own, so they are reproduced here.
+
+# Play Core Common (Google requires this whenever any Play Core library is used).
+-keep class com.google.android.play.core.common.IntentSenderForResultStarter {
+    public void startIntentSenderForResult(android.content.IntentSender, int, android.content.Intent, int, int, int, android.os.Bundle);
+}
+-keep class com.google.android.play.core.common.LocalTestingException {
+}
+-keep class com.google.android.play.core.listener.StateUpdatedListener {
+    public abstract void onStateUpdate(java.lang.Object);
+}
+
+# Play Tasks API (the async result type every Play call returns).
+-keep class com.google.android.gms.tasks.OnCompleteListener {
+    public abstract void onComplete(com.google.android.gms.tasks.Task);
+}
+-keep class com.google.android.gms.tasks.OnFailureListener {
+    public abstract void onFailure(java.lang.Exception);
+}
+-keep class com.google.android.gms.tasks.OnSuccessListener {
+    public abstract void onSuccess(java.lang.Object);
+}
+-keep class com.google.android.gms.tasks.RuntimeExecutionException {
+}
+-keep class com.google.android.gms.tasks.Task { *; }
+-keep class com.google.android.gms.tasks.TaskExecutors {
+    public static java.util.concurrent.Executor MAIN_THREAD;
+}
+-keep class com.google.android.gms.tasks.Tasks { *; }
+-keep class com.google.android.gms.common.api.ApiException {
+    public int getStatusCode();
+}
+
+# Play In-App Update: AppUpdateManager / AppUpdateInfo / install listeners.
+-keep class com.google.android.play.core.appupdate.** { *; }
+-keep class com.google.android.play.core.install.** { *; }
+-keep class com.google.android.play.core.install.model.** { *; }
+-dontwarn com.google.android.play.core.**

@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using KnightsGauntlet.Core;
 
 namespace KnightsGauntlet.View
 {
-    public enum SkinSource { Default, Achievement, Shop }
+    public enum SkinSource { Default, Achievement, Shop, Mastery }
 
     public class SkinInfo
     {
@@ -46,12 +47,34 @@ namespace KnightsGauntlet.View
             new SkinInfo { Id = "silver", Name = "Silver", Color = Hex("#C9D2E0"), Price = 7500, Source = SkinSource.Shop },
         };
 
+        // Secret "Mastery" reward: a black knight with a red glowing eye. Unlocks only
+        // when every Adventure level has a 3-star clear (see HasMasteredAllLevels), and is
+        // shown as a mystery (???) in Customization until then. Placeholder look: a near
+        // black tint plus a red glow (GlowOf). Drop the real black-knight-with-red-eye
+        // sprite into this skin's GameTheme slot (overrideSprite) to replace the placeholder.
+        public static readonly SkinInfo Secret =
+            new SkinInfo { Id = "nightfall", Name = "Nightfall", Color = Hex("#141418"), Source = SkinSource.Mastery };
+
         public static IEnumerable<SkinInfo> All()
         {
             yield return Default;
             foreach (var s in Achievement) yield return s;
             foreach (var s in Shop) yield return s;
+            yield return Secret;
         }
+
+        // True once the player has a 3-star clear on every Adventure level.
+        public static bool HasMasteredAllLevels()
+        {
+            var all = AdventureLevels.All;
+            if (all == null || all.Length == 0) return false;
+            foreach (var lvl in all) if (SaveData.GetStars(lvl.Id) < 3) return false;
+            return true;
+        }
+
+        // The player's radial-glow colour: the skin tint, except the secret black knight
+        // whose eye glows red so it reads as more than a flat dark silhouette.
+        public static Color GlowOf(string id) => id == Secret.Id ? Hex("#FF2A2A") : ColorOf(id);
 
         public static SkinInfo Find(string id)
         {
@@ -67,6 +90,7 @@ namespace KnightsGauntlet.View
         public static bool IsOwned(string id)
         {
             if (id == "gold") return true;
+            if (id == Secret.Id) return HasMasteredAllLevels();
             foreach (var s in Shop) if (s.Id == id) return SaveData.OwnsShopSkin(id);
             foreach (var a in Achievements.All) if (a.SkinId == id) return Achievements.IsUnlocked(a.Id);
             return false;

@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Knight's Gauntlet">
+<title>Knight's Gauntlet</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;overscroll-behavior:none;}
+body{background:#1a1a2e;color:#eee;font-family:system-ui,sans-serif;height:100dvh;overflow:hidden;display:flex;justify-content:center;}
+#screen{width:100%;max-width:400px;height:100dvh;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;}
+#canvas-wrap,#gc{touch-action:none;}
+#hud{width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px 6px;z-index:10;flex-shrink:0;}
+#hud .score{font-size:22px;font-weight:700;color:#f0c040;}
+#hud .combo-badge{font-size:14px;font-weight:800;color:#ffd060;line-height:1;}
+#hud .xform-badge{font-size:11px;font-weight:700;color:#8fe0ff;line-height:1;letter-spacing:0.3px;}
+#howto-art{display:flex;justify-content:center;margin:4px 0;}
+#howto-art svg{width:190px;height:auto;border-radius:8px;background:#0f1626;}
+#howto-text{font-size:13px;color:#cfd6e6;line-height:1.5;max-width:280px;text-align:center;min-height:70px;margin:4px 0;}
+.howto-nav{display:flex;gap:14px;align-items:center;justify-content:center;margin-bottom:4px;}
+.howto-nav button{background:rgba(240,192,64,0.14);color:#f0c040;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;line-height:1;cursor:pointer;}
+.howto-nav button:disabled{opacity:0.25;cursor:default;}
+#howto-pager{font-size:12px;color:#888;min-width:42px;text-align:center;}
+#hud .mode-badge{font-size:11px;background:#333;border-radius:12px;padding:4px 10px;color:#aaa;}
+#hud-buttons{display:flex;gap:8px;}
+#canvas-wrap{position:relative;flex:1;width:100%;overflow:hidden;}
+#gc{display:block;width:100%;height:100%;}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,20,40,0.92);z-index:20;gap:16px;}
+.overlay h1{font-size:32px;font-weight:800;color:#f0c040;letter-spacing:2px;text-align:center;}
+.overlay h2{font-size:20px;font-weight:700;color:#f0c040;}
+.overlay p{font-size:14px;color:#aaa;text-align:center;max-width:280px;line-height:1.6;}
+.big{font-size:48px;}
+.btn{background:#f0c040;color:#1a1a2e;border:none;border-radius:10px;padding:12px 28px;font-size:16px;font-weight:700;cursor:pointer;}
+.btn-outline{background:transparent;color:#f0c040;border:2px solid #f0c040;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;}
+.btn-sm{background:transparent;color:#f0c040;border:2px solid #f0c040;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;}
+.mode-row{display:flex;gap:12px;}
+.mode-btn{background:#16213e;color:#aaa;border:2px solid #333;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;}
+.mode-btn.active{border-color:#f0c040;color:#f0c040;}
+.diff-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.diff-btn{background:#16213e;color:#aaa;border:2px solid #333;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+.diff-btn.active{border-color:#f0c040;color:#f0c040;}
+.diff-section{display:flex;flex-direction:column;align-items:center;gap:6px;}
+#lb-list{width:280px;padding:0;max-height:48vh;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
+#lb-list li{display:flex;justify-content:space-between;padding:9px 4px;border-bottom:1px solid #333;font-size:16px;color:#ccc;list-style:none;}
+#lb-list li:first-child{color:#f0c040;font-weight:700;}
+.lb-skin{font-size:15px;margin-left:6px;vertical-align:middle;}
+.lb-tab{background:transparent;color:#aaa;border:1px solid #444;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;}
+.lb-tab.active{border-color:#f0c040;color:#f0c040;}
+.lb-source-row{display:flex;gap:10px;margin-bottom:10px;}
+.lb-source-tab{background:#16213e;color:#aaa;border:2px solid #333;border-radius:10px;padding:8px 22px;font-size:15px;font-weight:700;cursor:pointer;}
+.lb-source-tab.active{border-color:#f0c040;color:#f0c040;}
+#name-input,#menu-name-input,#patch-ver-input,#beta-input{background:#16213e;border:2px solid #f0c040;border-radius:8px;padding:8px 14px;font-size:18px;color:#fff;text-align:center;width:200px;}
+.corner-btn{position:absolute;bottom:14px;background:#16213e;color:#9aa3c0;border:1px solid #2a2f4a;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:600;cursor:pointer;z-index:25;}
+.corner-btn:active{background:#1f2747;}
+.notif-dot{position:absolute;top:-4px;right:-4px;width:11px;height:11px;border-radius:50%;background:#ff4d4d;border:2px solid #1a1a2e;box-shadow:0 0 6px rgba(255,77,77,0.85);}
+#settings-btn{left:14px;}
+.patch-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(240,192,64,0.12);color:#f0c040;border:none;border-radius:50%;width:38px;height:38px;font-size:24px;line-height:1;cursor:pointer;z-index:30;}
+.patch-arrow:disabled{opacity:0.18;cursor:default;}
+#patch-prev{left:6px;}
+#patch-next{right:6px;}
+#patch-card{background:#16213e;border:1px solid #2a2f4a;border-radius:12px;padding:16px;width:262px;max-width:78%;min-height:160px;max-height:50vh;overflow-y:auto;text-align:left;}
+.pn-ver{font-size:18px;font-weight:800;color:#f0c040;}
+.pn-date{font-size:12px;color:#888;margin-bottom:10px;}
+.pn-body{font-size:14px;color:#ddd;line-height:1.6;white-space:pre-wrap;}
+#patch-notes-input,#compose-snippet{background:#0f1626;border:2px solid #f0c040;border-radius:8px;color:#fff;width:262px;max-width:80%;padding:10px;font-size:14px;font-family:inherit;resize:vertical;}
+#compose-snippet{border-color:#333;font-size:11px;height:84px;}
+#name-input::placeholder,#menu-name-input::placeholder,#beta-input::placeholder{color:#555;}
+.fineprint{font-size:10px;color:#666;max-width:240px;line-height:1.4;text-align:center;}
+.ach-corner{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;z-index:21;display:none;}
+#ach-list{display:flex;flex-direction:column;gap:8px;width:90%;max-width:340px;max-height:52vh;overflow-y:auto;padding:2px;}
+.ach-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 10px;text-align:left;}
+.ach-row.ach-dim{opacity:0.55;}
+.ach-glyph{font-size:22px;width:26px;text-align:center;flex:none;}
+.ach-meta{flex:1;min-width:0;}
+.ach-title{font-size:13px;font-weight:700;color:#e8ecf5;}
+.ach-desc{font-size:11px;color:#9098ad;line-height:1.3;}
+.ach-use{background:#f0c040;color:#1a1a2e;border:none;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;flex:none;}
+.ach-eq{font-size:11px;color:#3cdc78;font-weight:700;flex:none;}
+.ach-lock{font-size:11px;color:#888;flex:none;}
+#ach-toast{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:rgba(18,22,40,0.96);border:1px solid rgba(240,192,64,0.5);border-radius:12px;padding:10px 16px;font-size:13px;color:#e8ecf5;text-align:center;line-height:1.45;z-index:60;display:none;opacity:0;transition:opacity 0.4s;box-shadow:0 6px 24px rgba(0,0,0,0.5);pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="screen">
+  <div id="hud" style="display:none">
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;">
+      <div class="score" id="score-display">0</div>
+      <div class="combo-badge" id="combo-display" style="display:none">×1</div>
+      <div class="xform-badge" id="xform-badge" style="display:none"></div>
+    </div>
+    <div class="mode-badge" id="mode-badge">TRAP MODE</div>
+    <div id="hud-buttons">
+      <button class="btn-sm" onclick="pauseGame()">&#10074;&#10074;</button>
+      <button class="btn-sm" onclick="restartGame()">↺</button>
+    </div>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="gc"></canvas>
+    <div id="ach-toast"></div>
+
+    <!-- MENU -->
+    <div class="overlay" id="menu-screen">
+      <div class="big">♞</div>
+      <h1>KNIGHT'S<br>GAUNTLET</h1>
+      <p>Move in L-shapes.<br>Survive the endless battlefield.</p>
+      <div class="mode-row">
+        <button class="mode-btn active" id="btn-trap" onclick="selectMode('trap')">⚔ Trap<br><span style="font-size:10px;font-weight:400;">Avoid obstacles</span></button>
+        <button class="mode-btn" id="btn-battle" onclick="selectMode('battle')">♟ Battle<br><span style="font-size:10px;font-weight:400;">Capture enemies</span></button>
+      </div>
+      <div class="diff-section" id="diff-section">
+        <p style="font-size:11px;color:#666;text-align:center;" id="diff-label">SCROLL SPEED</p>
+        <div class="diff-row">
+          <button class="diff-btn" id="diff-easy" onclick="selectDiff('easy')">🟢 Easy</button>
+          <button class="diff-btn active" id="diff-medium" onclick="selectDiff('medium')">🟡 Medium</button>
+          <button class="diff-btn" id="diff-hard" onclick="selectDiff('hard')">🔴 Hard</button>
+          <button class="diff-btn" id="diff-grandmaster" onclick="selectDiff('grandmaster')">👑 Grandmaster</button>
+        </div>
+      </div>
+      <div id="menu-name" style="display:flex;flex-direction:column;align-items:center;gap:8px;min-height:44px;justify-content:center;">
+        <div id="menu-name-set" style="display:none;align-items:center;gap:8px;">
+          <span style="font-size:13px;color:#aaa;">Playing as <b id="menu-name-display" style="color:#f0c040;"></b></span>
+        </div>
+        <div id="menu-name-entry" style="display:none;flex-direction:column;align-items:center;gap:8px;">
+          <input type="text" id="menu-name-input" maxlength="7" placeholder="ENTER NAME" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')startGame();">
+          <p id="menu-name-warn" style="font-size:11px;color:#ffb454;margin:0;max-width:240px;line-height:1.35;">⚠ Choose carefully — this is your permanent leaderboard name and can't be changed later.</p>
+          <p id="menu-name-error" style="font-size:11px;color:#e05050;display:none;margin:0;">Please enter a valid name.</p>
+        </div>
+      </div>
+      <button class="btn" onclick="startGame()">PLAY</button>
+      <button class="btn-outline" onclick="showLeaderboard()">🏆 Leaderboard</button>
+      <button class="corner-btn" id="settings-btn" onclick="openSettings()">⚙ Settings<span class="notif-dot" id="settings-dot" style="display:none"></span></button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="overlay" id="settings-screen" style="display:none">
+      <h2>⚙ Settings</h2>
+      <p class="fineprint" id="settings-name-line" style="display:none;"></p>
+      <button class="btn-outline" onclick="openHowto({pages:[0,1,2,3,4,5],context:'settings'})">📖 How to play</button>
+      <button class="btn-outline" onclick="openAch()">🏆 Achievements</button>
+      <button class="btn-outline" onclick="openPatchNotes()">📋 Patch notes</button>
+      <button class="btn-outline" onclick="openBugReport()">🐞 Report a bug</button>
+      <button class="btn-outline" style="position:relative" onclick="openBeta()">✉ Beta sign-up<span class="notif-dot" id="beta-dot" style="display:none"></span></button>
+      <button class="btn" onclick="backToMenu()">⌂ Back</button>
+    </div>
+
+    <!-- BETA SIGN-UP -->
+    <div class="overlay" id="beta-screen" style="display:none">
+      <h2>✉ Beta sign-up</h2>
+
+      <p class="fineprint" style="max-width:280px;">
+        Drop your email to hear when the mobile beta goes live.
+      </p>
+
+      <input
+        type="email"
+        id="beta-input"
+        placeholder="you@example.com"
+        autocomplete="email"
+        spellcheck="false"
+        style="width:240px;max-width:80%;text-align:center;"
+        onkeydown="if(event.key==='Enter')submitBeta();"
+      >
+
+      <div style="margin-top:14px;display:flex;gap:20px;justify-content:center;align-items:center;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="platform" value="iOS" checked>
+          iOS
+        </label>
+
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="platform" value="Android">
+          Android
+        </label>
+      </div>
+
+      <p id="beta-msg" style="font-size:12px;margin:12px 0 0;min-height:16px;"></p>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn" id="beta-submit" onclick="submitBeta()">Sign up</button>
+        <button class="btn-outline" onclick="closeBeta()">⌂ Back</button>
+      </div>
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="overlay" id="ach-screen" style="display:none">
+      <h2>🏆 Achievements</h2>
+      <p class="fineprint" style="max-width:300px;">Complete a challenge within a single <b>Hard</b> or <b>Grandmaster</b> game to earn its skin.</p>
+      <div id="ach-list"></div>
+      <button class="btn" onclick="openSettings()">⌂ Back</button>
+    </div>
+
+    <!-- PATCH NOTES (viewer) -->
+    <div class="overlay" id="patch-screen" style="display:none">
+      <h2>📋 Patch Notes</h2>
+      <button class="patch-arrow" id="patch-prev" onclick="patchFlip(-1)">‹</button>
+      <div id="patch-card">
+        <div class="pn-ver" id="pn-ver"></div>
+        <div class="pn-date" id="pn-date"></div>
+        <div class="pn-body" id="pn-body"></div>
+      </div>
+      <button class="patch-arrow" id="patch-next" onclick="patchFlip(1)">›</button>
+      <p id="patch-pager" style="font-size:11px;color:#666;margin:0;"></p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-outline" style="font-size:12px" onclick="openSettings()">← Back</button>
+        <button class="btn-outline" id="patch-add-btn" style="font-size:12px;display:none" onclick="openCompose()">+ Add note</button>
+      </div>
+    </div>
+
+    <!-- PATCH NOTES (composer — author mode only) -->
+    <div class="overlay" id="patch-compose" style="display:none">
+      <h2>New Patch Note</h2>
+      <p style="font-size:12px;color:#888;margin:0;">Dated <b id="compose-date" style="color:#f0c040;"></b></p>
+      <input type="text" id="patch-ver-input" maxlength="14" placeholder="Version (e.g. 1.2.0)" autocomplete="off" spellcheck="false">
+      <textarea id="patch-notes-input" placeholder="What changed? One item per line…" rows="5"></textarea>
+      <p id="compose-error" style="font-size:12px;color:#e05050;display:none;margin:0;">Enter a version and some notes.</p>
+      <div id="compose-snippet-wrap" style="display:none;flex-direction:column;align-items:center;gap:6px;">
+        <p style="font-size:11px;color:#888;margin:0;max-width:262px;text-align:center;">Saved &amp; previewing. To publish to everyone, paste this into the <b>PATCH_NOTES</b> array in the source:</p>
+        <textarea id="compose-snippet" readonly></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" onclick="saveCompose()">Save</button>
+        <button class="btn-outline" onclick="openPatchNotes()">Done</button>
+      </div>
+    </div>
+
+    <!-- PAUSE -->
+    <div class="overlay" id="pause-screen" style="display:none">
+      <h2>PAUSED</h2>
+      <button class="btn" onclick="resumeGame()">▶ Resume</button>
+      <button class="btn-outline" onclick="openPauseHowto()">📖 How to Play</button>
+      <button class="btn-outline" onclick="restartGame()">↺ Restart</button>
+      <button class="btn-outline" onclick="backToMenu()">⌂ Main Menu</button>
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div class="overlay" id="howto-screen" style="display:none">
+      <h2 id="howto-title" style="margin-bottom:2px;">How to Play</h2>
+      <div id="howto-art"></div>
+      <p id="howto-text"></p>
+      <div class="howto-nav">
+        <button id="howto-prev" onclick="howtoFlip(-1)">‹</button>
+        <span id="howto-pager"></span>
+        <button id="howto-next" onclick="howtoFlip(1)">›</button>
+      </div>
+      <p id="howto-firsttime" class="fineprint" style="display:none;max-width:280px;">You can reopen these any time from ⚙ Settings, or the pause menu (❚❚) while playing.</p>
+      <button class="btn" onclick="closeHowto()">Got it</button>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="overlay" id="lb-screen" style="display:none">
+      <h2>🏆 Leaderboard</h2>
+      <div class="lb-source-row">
+        <button class="lb-source-tab" id="lbsrc-personal" onclick="selectLBSource('personal')">Personal</button>
+        <button class="lb-source-tab active" id="lbsrc-online" onclick="selectLBSource('online')">Online</button>
+      </div>
+      <!-- Personal: full grid -->
+      <div id="lb-cats-personal" style="display:none;flex-direction:column;gap:6px;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span style="font-size:10px;color:#666;width:36px;text-align:right;margin-right:4px;">TRAP</span>
+          <button class="lb-tab" id="lb-tab-trap-easy" onclick="showLBTab('trap-easy')">Easy</button>
+          <button class="lb-tab" id="lb-tab-trap-medium" onclick="showLBTab('trap-medium')">Med</button>
+          <button class="lb-tab" id="lb-tab-trap-hard" onclick="showLBTab('trap-hard')">Hard</button>
+        </div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span style="font-size:10px;color:#666;width:36px;text-align:right;margin-right:4px;">BATTLE</span>
+          <button class="lb-tab" id="lb-tab-battle-easy" onclick="showLBTab('battle-easy')">Easy</button>
+          <button class="lb-tab" id="lb-tab-battle-medium" onclick="showLBTab('battle-medium')">Med</button>
+          <button class="lb-tab" id="lb-tab-battle-hard" onclick="showLBTab('battle-hard')">Hard</button>
+        </div>
+      </div>
+      <!-- Online: Hard & Grandmaster, per mode -->
+      <div id="lb-cats-online" style="display:flex;flex-direction:column;gap:6px;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span style="font-size:10px;color:#666;width:52px;text-align:right;margin-right:4px;">⚔ TRAP</span>
+          <button class="lb-tab" id="lbo-trap-hard" onclick="showLBTab('trap-hard')">Hard</button>
+          <button class="lb-tab" id="lbo-trap-grandmaster" onclick="showLBTab('trap-grandmaster')">👑 GM</button>
+        </div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span style="font-size:10px;color:#666;width:52px;text-align:right;margin-right:4px;">♟ BATTLE</span>
+          <button class="lb-tab" id="lbo-battle-hard" onclick="showLBTab('battle-hard')">Hard</button>
+          <button class="lb-tab" id="lbo-battle-grandmaster" onclick="showLBTab('battle-grandmaster')">👑 GM</button>
+        </div>
+      </div>
+      <ul id="lb-list"></ul>
+      <button class="btn-outline" onclick="backToMenu()">← Back</button>
+      <p style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:100%;text-align:center;font-size:10px;color:#666;margin:0;"><a id="report-link" href="#" style="color:#888;text-decoration:underline;">Report an inappropriate name</a></p>
+    </div>
+
+    <!-- GAME OVER -->
+    <div class="overlay" id="name-screen" style="display:none">
+      <h2>GAME OVER</h2>
+      <p id="final-score-txt" style="font-size:26px;font-weight:700;color:#f0c040;"></p>
+      <p style="margin:0;color:#3cdc78;font-weight:700;">Saved as <span id="saved-name"></span> ✓</p>
+      <button class="btn-outline" id="trapped-btn" style="font-size:13px;display:none" onclick="showTrapped()">🟢 Was I trapped?</button>
+      <p class="fineprint">Only your best Hard and Grandmaster scores appear on the online leaderboard.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-outline" style="font-size:12px" onclick="backToMenu()">Home</button>
+        <button class="btn-outline" style="font-size:12px" onclick="restartGame()">↺ Restart</button>
+      </div>
+    </div>
+
+    <!-- WAS I TRAPPED? -->
+    <div class="overlay" id="trapped-screen" style="display:none">
+      <h1 id="trapped-verdict" style="color:#3cdc78;">Nope</h1>
+      <p id="trapped-sub" style="font-size:13px;color:#aaa;">You had a way out. Here's the path:</p>
+      <div id="snap-scroll" style="width:84%;max-width:300px;max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid #333;background:#1a1a2e;">
+        <canvas id="snap-canvas" style="display:block;width:100%;height:auto;"></canvas>
+      </div>
+      <p class="fineprint" id="trapped-legend">Green tiles, numbered in order, are the moves that get you advancing again. Scroll to see the whole board.</p>
+      <button class="btn-outline" onclick="closeTrapped()">← Back</button>
+    </div>
+  </div>
+</div>
+<!-- Real config (Supabase, email, bug-report URL, patch notes) lives here. -->
+<script src="config.js"></script>
+<script>
+var canvas, ctx, cellW, cellH;
+var COLS = 5, ROWS = 10;
+var mode = 'trap';
+var difficulty = 'medium';
+var gameState = 'menu';
+var score = 0, trapScore = 0;
+var comboMult = 1;   // battle-mode score multiplier; climbs per consecutive capture
+var comboMissStreak = 0;   // consecutive captureless moves, for the grace window
+// Transform state (battle mode). playerPiece is the active movement form.
+var playerPiece='knight', transformEndsAt=0, transformIsMimic=false;
+var captureChain=0, lastCapturedType=null;
+var battleInvulnUntil=0;   // i-frames after a transform absorbs a hit
+// achievement progress (single-game; only counts on Hard / Grandmaster)
+var achAdvance=0, achCapStreak=0, achXformStart=0, achPrevPiece='knight';
+var achXformCounts={rook:0,bishop:0,queen:0,nightrider:0};
+var unlockedAch={}, activeSkinColor='#f0c040';
+var animFrame = null, lastTime = null;
+var pendingScore = 0, lbTab = 'trap-medium';
+var scrollPx = 0, scrollSpeed = 62;
+var playerCanvasY = 0, playerCol = 2;
+var obstacles = [], popups = [];
+var nextSpawnAt = 0, spawnIndex = 0;
+var trapTrail = [];   // recent knight move positions {col, worldY} for the death snapshot
+var trapReachA = [], trapReachB = [];   // reachable open cols in the last two spawned trap rows
+var lastBattleMoveTime = 0, battleMoveInterval = 1500;
+var deathSnapshot = null;
+
+var TRAP_DIFF   = { easy:[70,180], medium:[110,240], hard:[150,300], grandmaster:[150,300] };
+var BATTLE_DIFF = { easy:3500, medium:2200, hard:800, grandmaster:800 };
+// Battle target density per difficulty. chance = a row has a piece; extra =
+// chance of a second piece that row. Hard/Grandmaster match the old behaviour
+// exactly (0.55 chance, never a second), so only easy/medium get denser boards
+// to make combos sustainable when the pace is slow.
+var BATTLE_SPAWN = {
+  easy:        { chance:0.90, extra:0.50 },
+  medium:      { chance:0.72, extra:0.25 },
+  hard:        { chance:0.55, extra:0.0 },
+  grandmaster: { chance:0.55, extra:0.0 }
+};
+
+var PIECE_TYPES = ['rook','bishop','knight','queen'];
+var PIECES = {
+  rook:   {sym:'♜', color:'#4080e0'},
+  bishop: {sym:'♝', color:'#9060e0'},
+  knight: {sym:'♞', color:'#50c878'},
+  queen:  {sym:'♛', color:'#e04080'},
+  trap:   {sym:'✕', color:'#cc3333'}
+};
+var PIECE_POINTS = {rook:1, bishop:3, knight:5, queen:10};
+// Multiplier gained per capture — inverse to point value, so cheap pieces build
+// the combo fast and the queen is the cash-in. Applied AFTER the piece scores.
+var COMBO_INC   = {rook:4, bishop:3, knight:2, queen:1};
+var COMBO_FORM_BONUS = 3;   // bishop & nightrider cover less ground, so they build the × faster
+// How many captureless moves you may take before the multiplier breaks. Easier
+// modes are forgiving (slow pace, sparse-ish targets); Hard/GM break instantly.
+var COMBO_GRACE = {easy:3, medium:2, hard:1, grandmaster:1};
+// Transform mechanic: 3 captures in a row → become that 3rd piece for 5s (knight
+// → "nightrider" mimic that re-morphs into each piece it then captures). Landing
+// 5 captures inside the window snaps the clock back to 5s. Movement set is built
+// in getValidMoves from playerPiece.
+var TRANSFORM_MS=5000, TRANSFORM_TRIGGER=3, RAY_MAX=12;
+var L_DELTAS = [[-2,-1],[-2,1],[2,-1],[2,1],[-1,-2],[1,-2],[-1,2],[1,2]];
+var KNIGHT_JUMPS = [[1,2],[-1,2],[1,-2],[-1,-2],[2,1],[2,-1],[-2,1],[-2,-1]];
+var QUEEN_ADJ = [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]];
+
+function getSavedName(){ return localStorage.getItem('kg_player_name')||''; }
+function setSavedName(n){ localStorage.setItem('kg_player_name',n); }
+
+// ── App config ─────────────────────────────────────────────────────────────
+// Real values live in config.js (loaded before this script) so they survive
+// edits to this file. Each line falls back to a placeholder if config.js is
+// missing, so the page still loads.
+var KGC = window.KG_CONFIG || {};
+
+// Contact for content reports (App Store UGC compliance).
+var REPORT_EMAIL = KGC.REPORT_EMAIL || 'youremail@example.com';
+
+// Google Form share link for the bug-report button.
+var BUG_REPORT_URL = KGC.BUG_REPORT_URL || 'https://forms.gle/YOUR-FORM-ID';
+
+// Google Apps Script web-app URL that appends beta sign-up emails to a Sheet.
+var BETA_SIGNUP_URL = KGC.BETA_SIGNUP_URL || 'https://script.google.com/macros/s/YOUR-SCRIPT-ID/exec';
+
+// Patch notes shown to everyone. Edit these in config.js (newest first; the
+// viewer also sorts by date). To author in-app, visit the page with #author in
+// the URL ▸ Patch notes ▸ "+ Add note", then paste the snippet into config.js.
+var PATCH_NOTES = KGC.PATCH_NOTES || [
+  { version: '0.0.0', date: '2026-01-01', notes: 'Placeholder — set PATCH_NOTES in config.js.' }
+];
+
+// Base list of disallowed substrings (lowercased). Used as a fallback and
+// merged with the larger open-source list loaded at startup (see loadWordlist).
+var BANNED_WORDS = [
+  'fuck','shit','bitch','cunt','dick','cock','pussy','asshole','bastard',
+  'slut','whore','fag','faggot','nigger','nigga','retard','rape','nazi',
+  'hitler','kike','spic','chink','wank','twat','prick','douche','jizz',
+  'cum','penis','vagina','boob','tits','sex','porn','anus','butt','damn'
+];
+
+// Optionally load a larger open-source wordlist at startup.
+// Supports either a plain-text file (one word per line) OR the dsojevic
+// JSON format: [{ "match": "word1|word2", "severity": N, ... }, ...].
+// Host the file next to your index.html and set WORDLIST_URL to its path.
+var WORDLIST_URL = ''; // e.g. 'profanity.json'  (relative path on GitHub Pages)
+var MIN_SEVERITY = 2;  // for JSON lists: ignore mild (severity 1) words to cut false positives
+function loadWordlist(){
+  if(!WORDLIST_URL) return;
+  fetch(WORDLIST_URL)
+    .then(function(r){ return r.text(); })
+    .then(function(txt){
+      var words=[];
+      var trimmed=txt.replace(/^\uFEFF/,'').trim();
+      if(trimmed[0]==='['||trimmed[0]==='{'){
+        // dsojevic-style JSON
+        var data=JSON.parse(trimmed);
+        for(var i=0;i<data.length;i++){
+          var entry=data[i];
+          if(typeof entry.severity==='number' && entry.severity<MIN_SEVERITY) continue;
+          // "match" can be pipe-separated alternatives
+          String(entry.match||'').split('|').forEach(function(m){
+            m=m.trim().toLowerCase();
+            if(m) words.push(m);
+          });
+        }
+      } else {
+        // plain text, one word per line
+        words=trimmed.split(/\r?\n/)
+          .map(function(w){ return w.trim().toLowerCase(); })
+          .filter(function(w){ return w.length>0 && w[0]!=='#'; });
+      }
+      var set={};
+      BANNED_WORDS.concat(words).forEach(function(w){ set[w]=true; });
+      BANNED_WORDS=Object.keys(set);
+    })
+    .catch(function(){ /* keep fallback list */ });
+}
+// Common leetspeak substitutions normalized before checking
+function normalizeForFilter(s){
+  return s.toLowerCase()
+    .replace(/[@4]/g,'a').replace(/[3]/g,'e').replace(/[1!|]/g,'i')
+    .replace(/[0]/g,'o').replace(/[5$]/g,'s').replace(/[7]/g,'t')
+    .replace(/[^a-z]/g,''); // strip spaces/numbers/symbols
+}
+function isNameAllowed(name){
+  if(!name) return false;
+  var n=normalizeForFilter(name);
+  if(n.length===0) return false;
+  for(var i=0;i<BANNED_WORDS.length;i++){
+    if(n.indexOf(BANNED_WORDS[i])!==-1) return false;
+  }
+  return true;
+}
+
+// ── Supabase config ────────────────────────────────────────────────────────
+// URL + anon (publishable) key live in config.js. The anon key is meant to be
+// public; data is protected by Row Level Security on Supabase, not by secrecy.
+var SUPABASE_URL = KGC.SUPABASE_URL || 'https://YOUR-PROJECT.supabase.co';
+var SUPABASE_KEY = KGC.SUPABASE_KEY || 'YOUR-ANON-PUBLIC-KEY';
+function sbHeaders(){
+  return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+}
+
+// ── Audio ──────────────────────────────────────────────────────────────────
+var audioCtx = null;
+function unlockAudio(){
+  try{
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+  }catch(e){}
+}
+function playMoveSound(){
+  try{
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    var now=audioCtx.currentTime,sr=audioCtx.sampleRate;
+    var bufSize=Math.floor(sr*0.15);
+    var buf=audioCtx.createBuffer(1,bufSize,sr);
+    var data=buf.getChannelData(0);
+    for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/(sr*0.025));
+    var noise=audioCtx.createBufferSource(); noise.buffer=buf;
+    var bp=audioCtx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=600; bp.Q.value=0.6;
+    var shelf=audioCtx.createBiquadFilter(); shelf.type='highshelf'; shelf.frequency.value=3000; shelf.gain.value=-10;
+    var g=audioCtx.createGain();
+    g.gain.setValueAtTime(0.35,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.15);
+    noise.connect(bp); bp.connect(shelf); shelf.connect(g); g.connect(audioCtx.destination);
+    noise.start(now); noise.stop(now+0.15);
+  }catch(e){}
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+function init(){
+  canvas=document.getElementById('gc');
+  ctx=canvas.getContext('2d');
+  resize();
+  window.addEventListener('resize',resize);
+  canvas.addEventListener('pointerdown',function(e){
+    e.preventDefault(); unlockAudio(); handleTap(e);
+  });
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden&&gameState==='playing') pauseGame();
+  });
+  var rl=document.getElementById('report-link');
+  if(rl) rl.addEventListener('click',function(e){
+    e.preventDefault();
+    var subject=encodeURIComponent("Knight's Gauntlet — report a name");
+    var body=encodeURIComponent(
+      "Please describe the inappropriate name you'd like reported:\n\n"+
+      "Name shown: \n"+
+      "Leaderboard: "+lbTab+"\n\n"+
+      "We review reports and remove names that violate our guidelines."
+    );
+    window.location.href='mailto:'+REPORT_EMAIL+'?subject='+subject+'&body='+body;
+  });
+}
+
+function resize(){
+  var wrap=document.getElementById('canvas-wrap');
+  canvas.width=wrap.clientWidth||window.innerWidth;
+  canvas.height=wrap.clientHeight||window.innerHeight;
+  cellW=canvas.width/COLS;
+  cellH=canvas.height/ROWS;
+}
+
+function selectMode(m){
+  mode=m;
+  document.getElementById('btn-trap').classList.toggle('active',m==='trap');
+  document.getElementById('btn-battle').classList.toggle('active',m==='battle');
+  document.getElementById('diff-label').textContent=m==='trap'?'SCROLL SPEED':'ENEMY SPEED';
+}
+
+function selectDiff(d){
+  difficulty=d;
+  ['easy','medium','hard','grandmaster'].forEach(function(x){
+    document.getElementById('diff-'+x).classList.toggle('active',x===d);
+  });
+}
+
+function getLBKey(){ return mode+'-'+difficulty; }
+
+// ── Start ──────────────────────────────────────────────────────────────────
+function startGame(){
+  // Resolve the player's name. If the name-entry field is open, commit whatever
+  // is typed right now (Play doubles as Save); otherwise use the saved name.
+  var entryBox=document.getElementById('menu-name-entry');
+  var inp=document.getElementById('menu-name-input');
+  var err=document.getElementById('menu-name-error');
+  var nm;
+  if(entryBox && entryBox.style.display!=='none'){
+    var raw=(inp?inp.value:'').trim().slice(0,7);
+    if(!raw){ if(err){ err.textContent='Enter a name to play.'; err.style.display='block'; } if(inp){try{inp.focus();}catch(e){}} return; }
+    if(!isNameAllowed(raw)){ if(err){ err.textContent='Please choose a different name.'; err.style.display='block'; } if(inp){try{inp.focus();}catch(e){}} return; }
+    setSavedName(raw); refreshMenuName(); nm=raw;
+  } else {
+    nm=getSavedName();
+    if(!nm || !isNameAllowed(nm)){ backToMenu(); menuEditName(true); return; }
+  }
+  resize(); hideAll();
+  document.getElementById('hud').style.display='flex';
+  var labels={easy:'Easy',medium:'Medium',hard:'Hard',grandmaster:'Grandmaster'};
+  document.getElementById('mode-badge').textContent=(mode==='trap'?'TRAP':'BATTLE')+' · '+labels[difficulty];
+  score=0; trapScore=0; scrollPx=0; comboMult=1; comboMissStreak=0;
+  playerPiece='knight'; transformEndsAt=0; transformIsMimic=false; captureChain=0; lastCapturedType=null; battleInvulnUntil=0;
+  achAdvance=0; achCapStreak=0; achXformStart=0; achPrevPiece='knight';
+  achXformCounts={rook:0,bishop:0,queen:0,nightrider:0};
+  activeSkinColor=skinColorById(getActiveSkin());
+  scrollSpeed=mode==='trap'?TRAP_DIFF[difficulty][0]:70;
+  battleMoveInterval=BATTLE_DIFF[difficulty];
+  playerCol=2; playerCanvasY=canvas.height-4*cellH;
+  obstacles=[]; popups=[];
+  spawnIndex=0; lastBattleMoveTime=Date.now(); lastTime=null;
+  trapTrail=[];   // world positions of the knight's recent moves, for the death snapshot
+  trapReachA=(mode==='trap')?[playerCol]:[]; trapReachB=[];   // seed the reachability frontier from the knight
+  for(var r=1;r<ROWS-1;r++) spawnRowAtCanvasY(playerCanvasY-r*cellH);
+  if(mode==='battle'){
+    // keep the knight's starting area clear: no enemy on its cell, and none in
+    // the two rows directly ahead (which would threaten it on move one)
+    obstacles=obstacles.filter(function(o){
+      return o.canvasY < playerCanvasY-2.5*cellH;
+    });
+  }
+  // Trap: start play-spawns one row beyond the topmost initial row (which sits at
+  // world -2*cellH) so rows stay exactly one apart and never merge — the repair's
+  // reachability bookkeeping assumes that clean one-row spacing.
+  nextSpawnAt=scrollPx+(mode==='trap'?2*cellH:cellH);
+  if(mode==='battle') planKnightMoves(true);
+  gameState='playing';
+  updateHUD();
+  if(animFrame) cancelAnimationFrame(animFrame);
+  animFrame=requestAnimationFrame(loop);
+  if(mode==='battle'){
+    var seenHowto=false; try{ seenHowto=!!localStorage.getItem('kg_seen_battle_howto'); }catch(e){}
+    if(!seenHowto) openHowto({pages:[3,4,5],context:'battle',firstTime:true});   // combo / transform / shield
+  } else if(mode==='trap'){
+    var seenTrap=false; try{ seenTrap=!!localStorage.getItem('kg_seen_trap_howto'); }catch(e){}
+    if(!seenTrap) openHowto({pages:[2],context:'trap',firstTime:true});           // trap tactics
+  }
+}
+
+// Of the new row's open columns, which can the knight actually reach from the
+// previous two rows' reachable cells? A one-row-forward L-move shifts ±2 columns;
+// a two-row-forward L-move shifts ±1. (rA = row just behind, rB = two rows behind.)
+function trapReachableNew(openCols,rA,rB){
+  var nr=[];
+  for(var i=0;i<openCols.length;i++){
+    var c=openCols[i];
+    if(rA.indexOf(c-2)>=0||rA.indexOf(c+2)>=0||rB.indexOf(c-1)>=0||rB.indexOf(c+1)>=0) nr.push(c);
+  }
+  return nr;
+}
+
+function spawnRowAtCanvasY(cy){
+  if(mode==='trap'){
+    var progress=Math.min(1,scrollPx/(cellH*40));
+    var numOpen=Math.random()<progress?2:3;
+    var dcs=[-2,-1,1,2],reachable=[];
+    for(var i=0;i<dcs.length;i++){var nc=playerCol+dcs[i];if(nc>=0&&nc<COLS)reachable.push(nc);}
+    reachable.sort(function(){return Math.random()-0.5;});
+    var open={};
+    for(var k=0;k<Math.min(numOpen,reachable.length);k++) open[reachable[k]]=true;
+    if(Object.keys(open).length<2&&reachable.length>=2){open[reachable[0]]=true;open[reachable[1]]=true;}
+
+    // Solvability repair: keep the random row, but if NONE of its open cells are
+    // reachable from the frontier (the row would seal the board), open one trap
+    // that restores a forward route. Fires on ~0.3% of rows, so the feel is intact.
+    var openCols=[]; for(var c0=0;c0<COLS;c0++) if(open[c0]) openCols.push(c0);
+    var nr=trapReachableNew(openCols,trapReachA,trapReachB);
+    if(nr.length===0 && (trapReachA.length||trapReachB.length)){
+      var cand=null,a,b;
+      for(var ai=0;ai<trapReachA.length&&cand===null;ai++){
+        a=trapReachA[ai];
+        if(a-2>=0) cand=a-2; else if(a+2<COLS) cand=a+2;
+      }
+      for(var bi=0;bi<trapReachB.length&&cand===null;bi++){
+        b=trapReachB[bi];
+        if(b-1>=0) cand=b-1; else if(b+1<COLS) cand=b+1;
+      }
+      if(cand!==null && !open[cand]){ open[cand]=true; nr.push(cand); }
+    }
+    trapReachB=trapReachA; trapReachA=nr;
+
+    for(var c=0;c<COLS;c++) if(!open[c]) obstacles.push({col:c,canvasY:cy,pieceType:'trap',alive:true});
+  } else {
+    var sp=BATTLE_SPAWN[difficulty]||BATTLE_SPAWN.hard;
+    var chance=sp.chance, extra=sp.extra;
+    // While transformed on Hard/GM the board can feel empty between captures, so
+    // bump the density a little to keep targets coming during the 5s window.
+    if(transformEndsAt && Date.now()<transformEndsAt && (difficulty==='hard'||difficulty==='grandmaster')){
+      chance=Math.min(1,chance+0.25); extra=Math.max(extra,0.2);
+    }
+    if(Math.random()<chance){
+      var POOL_Q=['rook','rook','bishop','bishop','knight','knight','queen'];
+      var POOL_NOQ=['rook','rook','bishop','bishop','knight','knight'];
+      var hasQueen=obstacles.some(function(o){return o.alive&&o.pieceType==='queen';});
+      var n=1+((Math.random()<extra)?1:0);   // sometimes a second piece
+      var used={};
+      for(var bp=0;bp<n;bp++){
+        var pool=hasQueen?POOL_NOQ:POOL_Q;        // only ever one queen on the board
+        var t=pool[Math.floor(Math.random()*pool.length)];
+        if(t==='queen') hasQueen=true;
+        var bc,tr=0; do{ bc=Math.floor(Math.random()*COLS); tr++; }while(used[bc]&&tr<8);
+        used[bc]=true;
+        obstacles.push({col:bc,canvasY:cy,pieceType:t,alive:true,dir:(Math.random()<0.5?1:-1),planDC:null,planDR:null});
+      }
+    }
+  }
+  spawnIndex++;
+}
+
+function rowOf(y){ return Math.round(y/cellH); }
+
+// ── Loop ───────────────────────────────────────────────────────────────────
+function loop(ts){
+  if(gameState!=='playing') return;
+  animFrame=requestAnimationFrame(loop);
+  var dt=lastTime?Math.min((ts-lastTime)/1000,0.1):0.016;
+  lastTime=ts;
+  update(dt); render();
+}
+
+function update(dt){
+  var delta=scrollSpeed*dt;
+  scrollPx+=delta;
+  if(mode==='trap'){
+    scrollSpeed=Math.min(TRAP_DIFF[difficulty][1],TRAP_DIFF[difficulty][0]+scrollPx*0.01);
+  }
+  playerCanvasY+=delta;
+  for(var i=0;i<obstacles.length;i++) obstacles[i].canvasY+=delta;
+  for(var pi=0;pi<popups.length;pi++) popups[pi].canvasY+=delta;
+  for(var p=popups.length-1;p>=0;p--){
+    popups[p].alpha-=dt*1.15;
+    if(popups[p].alpha<=0) popups.splice(p,1);
+  }
+  var spawned=false;
+  while(scrollPx>=nextSpawnAt){ spawnRowAtCanvasY(-cellH); nextSpawnAt+=cellH; spawned=true; }
+  if(spawned&&mode==='battle') planKnightMoves(false);
+  // Trap mode keeps a long trail of traps behind the knight (not just what's
+  // on screen) so the "Was I trapped?" analysis can look back through the lanes
+  // the knight already travelled. Off-screen traps still aren't drawn in-game.
+  var cullY=(mode==='trap')?(playerCanvasY+cellH*26):(canvas.height+cellH);
+  obstacles=obstacles.filter(function(o){return o.alive&&o.canvasY<cullY;});
+
+  if(mode==='battle'){
+    var now=Date.now();
+    if(transformEndsAt && now>=transformEndsAt){   // transform expired → back to a plain knight
+      playerPiece='knight'; transformEndsAt=0; transformIsMimic=false;
+    }
+    if(now-lastBattleMoveTime>=battleMoveInterval){
+      lastBattleMoveTime=now;
+      if(moveEnemyPieces()){
+        if(now<battleInvulnUntil){
+          clearEnemiesOnPlayer();                 // shrug it off during i-frames
+        } else if(transformEndsAt){
+          // a transform absorbs the hit: lose the form + multiplier, but survive
+          playerPiece='knight'; transformEndsAt=0; transformIsMimic=false;
+          comboMult=1; comboMissStreak=0; captureChain=0;
+          battleInvulnUntil=now+1200; clearEnemiesOnPlayer();
+          popups.push({col:playerCol,canvasY:playerCanvasY-cellH*0.3,text:'shielded!',alpha:1.2,color:'#ff9a5c'});
+        } else { loseLife(); return; }
+      }
+    }
+    trackPieceChange(now);
+    if(achActive() && achXformStart && now-achXformStart>=60000) unlockAch('battle_marathon');
+  }
+
+  if(playerCanvasY>canvas.height+cellH){ loseLife(); return; }
+  checkCollision();
+  updateHUD();
+}
+
+function moveEnemyPieces(){
+  var dead=false;
+  var knightRow=rowOf(playerCanvasY);
+  var occ={};
+  for(var a=0;a<obstacles.length;a++){
+    var oa=obstacles[a];
+    if(!oa.alive||oa.pieceType==='trap') continue;
+    occ[oa.col+','+rowOf(oa.canvasY)]=true;
+  }
+  var claimed={};
+  function cellFree(col,row,sc,sr){
+    if(col<0||col>=COLS) return false;
+    var key=col+','+row;
+    if(claimed[key]) return false;
+    if(occ[key]&&!(col===sc&&row===sr)) return false;
+    return true;
+  }
+  function knightAt(col,row){ return col===playerCol&&knightRow===row; }
+  function targetable(col,row,sc,sr){ return knightAt(col,row)||cellFree(col,row,sc,sr); }
+
+  var order=['rook','bishop','knight','queen'];
+  for(var t=0;t<order.length;t++){
+    var ptype=order[t];
+    for(var j=0;j<obstacles.length;j++){
+      var o=obstacles[j];
+      if(!o.alive||o.pieceType!==ptype) continue;
+      var cr=rowOf(o.canvasY), fwd=cr+1;
+
+      if(o.pieceType==='rook'){
+        if(targetable(o.col,fwd,o.col,cr)){
+          o.canvasY+=cellH; claimed[o.col+','+fwd]=true;
+        } else {
+          var moved=false, sides=[-1,1].sort(function(){return Math.random()-0.5;});
+          for(var s=0;s<sides.length;s++){
+            var sc=o.col+sides[s];
+            if(cellFree(sc,cr,o.col,cr)){ o.col=sc; claimed[sc+','+cr]=true; moved=true; break; }
+          }
+          if(!moved) claimed[o.col+','+cr]=true;
+        }
+      }
+      else if(o.pieceType==='bishop'){
+        var dir=o.dir||1, tc=o.col+dir;
+        if(tc<0||tc>=COLS||!targetable(tc,fwd,o.col,cr)){ dir=-dir; tc=o.col+dir; }
+        if(tc>=0&&tc<COLS&&targetable(tc,fwd,o.col,cr)){
+          o.dir=dir; o.col=tc; o.canvasY+=cellH; claimed[tc+','+fwd]=true;
+        } else { o.dir=dir; claimed[o.col+','+cr]=true; }
+      }
+      else if(o.pieceType==='knight'){
+        var ex=null;
+        if(o.planDC!==null&&o.planDC!==undefined){
+          var ptc=o.col+o.planDC, ptr=cr+o.planDR;
+          if(ptc>=0&&ptc<COLS&&targetable(ptc,ptr,o.col,cr)) ex=[o.planDC,o.planDR];
+        }
+        if(ex===null){
+          var opts=KNIGHT_JUMPS.filter(function(m){ return o.col+m[0]>=0&&o.col+m[0]<COLS&&targetable(o.col+m[0],cr+m[1],o.col,cr); });
+          var down=opts.filter(function(m){return m[1]>0;});
+          var poolm=down.length?down:opts;
+          if(poolm.length) ex=poolm[Math.floor(Math.random()*poolm.length)];
+        }
+        if(ex){ o.col+=ex[0]; o.canvasY+=ex[1]*cellH; claimed[o.col+','+(cr+ex[1])]=true; }
+        else claimed[o.col+','+cr]=true;
+        o.planDC=null; o.planDR=null;
+      }
+      else if(o.pieceType==='queen'){
+        for(var qa=0;qa<QUEEN_ADJ.length;qa++){
+          if(knightAt(o.col+QUEEN_ADJ[qa][0],cr+QUEEN_ADJ[qa][1])) dead=true;
+        }
+        var qopts=QUEEN_ADJ.filter(function(adj){ return o.col+adj[0]>=0&&o.col+adj[0]<COLS&&cellFree(o.col+adj[0],cr+adj[1],o.col,cr); });
+        var qfwd=qopts.filter(function(adj){return adj[1]>=0;});
+        var qpool=qfwd.length?qfwd:qopts;
+        if(qpool.length){ var qm=qpool[Math.floor(Math.random()*qpool.length)]; o.col+=qm[0]; o.canvasY+=qm[1]*cellH; claimed[o.col+','+(cr+qm[1])]=true; }
+        else claimed[o.col+','+cr]=true;
+      }
+
+      if(o.col===playerCol&&Math.abs(o.canvasY-playerCanvasY)<cellH*0.5) dead=true;
+    }
+  }
+  planKnightMoves(true);
+  return dead;
+}
+
+function planKnightMoves(force){
+  var occ={};
+  for(var a=0;a<obstacles.length;a++){
+    var oa=obstacles[a];
+    if(!oa.alive||oa.pieceType==='trap') continue;
+    occ[oa.col+','+rowOf(oa.canvasY)]=true;
+  }
+  var knightRow=rowOf(playerCanvasY);
+  function freeOrKnight(col,row,sc,sr){
+    if(col<0||col>=COLS) return false;
+    if(col===playerCol&&knightRow===row) return true;
+    if(occ[col+','+row]&&!(col===sc&&row===sr)) return false;
+    return true;
+  }
+  for(var j=0;j<obstacles.length;j++){
+    var o=obstacles[j];
+    if(!o.alive||o.pieceType!=='knight') continue;
+    var cr=rowOf(o.canvasY);
+    if(!force&&o.planDC!==null&&o.planDC!==undefined){
+      if(freeOrKnight(o.col+o.planDC,cr+o.planDR,o.col,cr)) continue;
+    }
+    var opts=KNIGHT_JUMPS.filter(function(m){ return freeOrKnight(o.col+m[0],cr+m[1],o.col,cr); });
+    var down=opts.filter(function(m){return m[1]>0;});
+    var poolm=down.length?down:opts;
+    if(poolm.length){ var ch=poolm[Math.floor(Math.random()*poolm.length)]; o.planDC=ch[0]; o.planDR=ch[1]; }
+    else { o.planDC=null; o.planDR=null; }
+  }
+}
+
+function checkCollision(){
+  if(mode==='battle'&&Date.now()<battleInvulnUntil) return;   // i-frames after a shielded hit
+  for(var i=0;i<obstacles.length;i++){
+    var o=obstacles[i];
+    if(!o.alive) continue;
+    if(o.col===playerCol&&Math.abs(o.canvasY-playerCanvasY)<cellH*0.5){ loseLife(); return; }
+  }
+}
+
+// Remove any enemy sitting on the knight's square (used when a transform absorbs
+// a hit, so the knight isn't instantly re-captured on the same square).
+function clearEnemiesOnPlayer(){
+  for(var i=0;i<obstacles.length;i++){
+    var o=obstacles[i];
+    if(o.alive&&o.pieceType!=='trap'&&o.col===playerCol&&Math.abs(o.canvasY-playerCanvasY)<cellH*0.6) o.alive=false;
+  }
+}
+
+function loseLife(){
+  gameState='dead';
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  pendingScore=score;
+  document.getElementById('hud').style.display='none';
+  document.getElementById('final-score-txt').textContent='Score: '+score;
+  // The name is chosen on the home screen, so every run just auto-saves.
+  var saved=getSavedName();
+  saveScore(getLBKey(),saved,pendingScore);
+  var sn=document.getElementById('saved-name'); if(sn) sn.textContent=saved;
+  // Capture trap-mode death snapshot for "Was I trapped?"
+  var tb=document.getElementById('trapped-btn');
+  if(mode==='trap'){
+    var traps=[];
+    for(var ti=0;ti<obstacles.length;ti++){
+      if(obstacles[ti].alive&&obstacles[ti].pieceType==='trap')
+        traps.push({col:obstacles[ti].col,canvasY:obstacles[ti].canvasY});
+    }
+    var esc=computeEscapePath(playerCol,traps,playerCanvasY,cellH);
+    // Convert the recent move trail (stored in world space) into the death frame.
+    var trail=[], startI=Math.max(0,trapTrail.length-10);
+    for(var mi=startI;mi<trapTrail.length;mi++){
+      var dY=trapTrail[mi].worldY+scrollPx;                 // death-frame canvasY
+      trail.push({col:trapTrail[mi].col, relRow:Math.round((dY-playerCanvasY)/cellH), n:mi-startI+1});
+    }
+    deathSnapshot={
+      playerCol:playerCol, playerCanvasY:playerCanvasY,
+      scrollPx:scrollPx, cellW:cellW, cellH:cellH,
+      w:canvas.width, h:canvas.height,
+      traps:traps, path:esc.path, escaped:esc.escaped, reason:esc.reason, trail:trail
+    };
+    if(tb) tb.style.display='inline-block';
+  } else {
+    deathSnapshot=null;
+    if(tb) tb.style.display='none';
+  }
+  showScreen('name-screen');
+}
+
+function getValidMoves(){
+  var moves=[], seen={};
+  function tryAdd(nc,ny){
+    if(nc<0||nc>=COLS) return false;
+    if(ny<-cellH||ny>canvas.height+cellH) return false;
+    for(var j=0;j<obstacles.length;j++){
+      var o=obstacles[j]; if(!o.alive) continue;
+      if(o.col===nc&&Math.abs(o.canvasY-ny)<cellH*0.5){
+        if(mode==='battle'&&o.pieceType!=='trap'){ /* capturable — doesn't block */ }
+        else return false;   // a trap (or any trap-mode obstacle) blocks the cell
+      }
+    }
+    var key=nc+'|'+Math.round((ny-playerCanvasY)/cellH);
+    if(seen[key]) return true;
+    seen[key]=true; moves.push({col:nc,canvasY:ny});
+    return true;
+  }
+  var piece=(mode==='battle')?playerPiece:'knight';
+  if(piece==='knight'){
+    for(var i=0;i<L_DELTAS.length;i++) tryAdd(playerCol+L_DELTAS[i][0], playerCanvasY+L_DELTAS[i][1]*cellH);
+  } else if(piece==='nightrider'){
+    for(var n=0;n<L_DELTAS.length;n++){
+      var dc=L_DELTAS[n][0], dr=L_DELTAS[n][1];
+      for(var k=1;k<=RAY_MAX;k++) if(!tryAdd(playerCol+dc*k, playerCanvasY+dr*k*cellH)) break;
+    }
+  } else {
+    var dirs=[];
+    if(piece==='rook'||piece==='queen') dirs.push([1,0],[-1,0],[0,1],[0,-1]);
+    if(piece==='bishop'||piece==='queen') dirs.push([1,1],[1,-1],[-1,1],[-1,-1]);
+    for(var d=0;d<dirs.length;d++){
+      for(var k2=1;k2<=RAY_MAX;k2++) if(!tryAdd(playerCol+dirs[d][0]*k2, playerCanvasY+dirs[d][1]*k2*cellH)) break;
+    }
+  }
+  return moves;
+}
+
+function handleTap(e){
+  if(gameState!=='playing') return;
+  var rect=canvas.getBoundingClientRect();
+  var tx=e.clientX-rect.left,ty=e.clientY-rect.top;
+  var tc=Math.floor(tx/cellW);
+  var moves=getValidMoves();
+  var move=null,bestDist=cellH*1.2;
+  for(var i=0;i<moves.length;i++){
+    var mv=moves[i];
+    if(mv.col!==tc) continue;
+    var dist=Math.abs(mv.canvasY-ty);
+    if(dist<bestDist){ bestDist=dist; move=mv; }
+  }
+  if(!move) return;
+  if(mode==='battle'){
+    var captured=false;
+    for(var j=0;j<obstacles.length;j++){
+      var o=obstacles[j];
+      if(o.alive&&o.pieceType!=='trap'&&o.col===move.col&&Math.abs(o.canvasY-move.canvasY)<cellH*0.5){
+        o.alive=false; captured=true; lastCapturedType=o.pieceType;
+        var pts=PIECE_POINTS[o.pieceType]||1;
+        var gained=pts*comboMult;            // score at the multiplier you've built
+        score+=gained;
+        popups.push({col:move.col,canvasY:move.canvasY-cellH*0.42,text:'+'+gained,alpha:1.25,color:'#9be8a0'});
+        var inc=COMBO_INC[o.pieceType]||1;
+        if(playerPiece==='bishop'||playerPiece==='nightrider') inc*=COMBO_FORM_BONUS; // reward the weaker forms
+        comboMult+=inc;                      // then bump it for the next capture
+        popups.push({col:move.col,canvasY:move.canvasY+cellH*0.14,text:'×'+comboMult+' (+'+inc+')',alpha:1.25,color:'#ffd060'});
+      }
+    }
+    if(captured){
+      comboMissStreak=0;
+      var nowT=Date.now();
+      if(transformEndsAt && nowT<transformEndsAt){
+        // already transformed: every capture snaps the 5s clock back to full
+        transformEndsAt=nowT+TRANSFORM_MS;
+        // the mimic re-morphs into whatever it just took (a knight → nightrider)
+        if(transformIsMimic) playerPiece=(lastCapturedType==='knight')?'nightrider':lastCapturedType;
+      } else {
+        // building toward a transform: the 3rd in a row triggers it
+        captureChain++;
+        if(captureChain>=TRANSFORM_TRIGGER){
+          transformEndsAt=nowT+TRANSFORM_MS; captureChain=0;
+          if(lastCapturedType==='knight'){ transformIsMimic=true; playerPiece='nightrider'; }
+          else { transformIsMimic=false; playerPiece=lastCapturedType; }
+        }
+      }
+    } else {
+      comboMissStreak++;
+      if(comboMissStreak > (COMBO_GRACE[difficulty]||0)){ comboMult=1; comboMissStreak=0; captureChain=0; }
+    }
+    if(achActive()){
+      if(captured){ achCapStreak++; if(achCapStreak>=5) unlockAch('battle_streak'); }
+      else achCapStreak=0;
+    }
+    trackPieceChange(Date.now());
+  }
+  if(mode==='trap'){
+    var rowDelta=Math.round((playerCanvasY-move.canvasY)/cellH);
+    trapScore=Math.max(0,trapScore+rowDelta);
+    score=trapScore;
+    if(achActive()){
+      if(rowDelta>0){ achAdvance+=rowDelta; if(achAdvance>=25) unlockAch('trap_advance'); }
+      else if(rowDelta<0) achAdvance=0;   // backtracked → streak resets
+      if(score>=150) unlockAch('trap_score');
+    }
+  }
+  playerCol=move.col; playerCanvasY=move.canvasY;
+  if(mode==='trap'){
+    // store in world space (scroll-invariant) so we can place it in the death frame
+    trapTrail.push({col:playerCol, worldY:playerCanvasY-scrollPx});
+    if(trapTrail.length>12) trapTrail.shift();
+  }
+  playMoveSound();
+  checkCollision();
+  updateHUD();
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function drawThreatCell(col,y){
+  if(col<0||col>=COLS) return;
+  if(y<-cellH||y>canvas.height) return;
+  ctx.fillStyle='rgba(90,20,20,0.55)';
+  ctx.fillRect(col*cellW,y,cellW,cellH);
+  ctx.strokeStyle='rgba(150,40,40,0.55)'; ctx.lineWidth=1.5;
+  ctx.strokeRect(col*cellW+1,y+1,cellW-2,cellH-2);
+}
+
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  var tileOffset=scrollPx%cellH,baseRow=Math.floor(scrollPx/cellH);
+
+  for(var r=-1;r<=ROWS+1;r++){
+    var ry=r*cellH+tileOffset,worldRow=baseRow+r;
+    for(var c=0;c<COLS;c++){
+      ctx.fillStyle=(worldRow+c)%2===0?'#2d2d4e':'#1e1e35';
+      ctx.fillRect(c*cellW,ry,cellW,cellH);
+    }
+  }
+
+  // Move hints (yellow highlighted squares) — shown on every difficulty except
+  // Grandmaster, where the player must read the knight's moves unaided.
+  if(difficulty!=='grandmaster'){
+    var moves=getValidMoves();
+    for(var vi=0;vi<moves.length;vi++){
+      var mv=moves[vi];
+      if(mv.canvasY>canvas.height) continue;
+      var danger=Math.max(0,Math.min(1,mv.canvasY/canvas.height));
+      var rr=Math.round(240+(255-240)*danger),gg=Math.round(192+(255-192)*danger),bb=Math.round(64+(255-64)*danger);
+      ctx.fillStyle='rgba('+rr+','+gg+','+bb+',0.25)';
+      ctx.fillRect(mv.col*cellW,mv.canvasY,cellW,cellH);
+      ctx.fillStyle='rgba('+rr+','+gg+','+bb+',0.7)';
+      ctx.beginPath(); ctx.arc(mv.col*cellW+cellW/2,mv.canvasY+cellH/2,7,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  if(mode==='battle'){
+    for(var pi=0;pi<obstacles.length;pi++){
+      var po=obstacles[pi]; if(!po.alive) continue;
+      var fy=po.canvasY+cellH;
+      if(po.pieceType==='rook'){
+        drawThreatCell(po.col,fy);
+      } else if(po.pieceType==='bishop'){
+        var bd=po.dir||1; var btc=po.col+bd;
+        if(btc<0||btc>=COLS) btc=po.col-bd;
+        drawThreatCell(btc,fy);
+      } else if(po.pieceType==='knight'){
+        if(po.planDC!==null&&po.planDC!==undefined) drawThreatCell(po.col+po.planDC, po.canvasY+po.planDR*cellH);
+      } else if(po.pieceType==='queen'){
+        for(var qi=0;qi<QUEEN_ADJ.length;qi++) drawThreatCell(po.col+QUEEN_ADJ[qi][0], po.canvasY+QUEEN_ADJ[qi][1]*cellH);
+      }
+    }
+  }
+
+  var fs=Math.round(cellW*0.55);
+  for(var oi=0;oi<obstacles.length;oi++){
+    var ob=obstacles[oi]; if(!ob.alive) continue;
+    var oy=ob.canvasY; if(oy<-cellH||oy>canvas.height) continue;
+    ctx.fillStyle=ob.pieceType==='trap'?'rgba(200,50,50,0.35)':'rgba(80,80,180,0.35)';
+    ctx.fillRect(ob.col*cellW,oy,cellW,cellH);
+    ctx.fillStyle=PIECES[ob.pieceType].color;
+    ctx.font='bold '+fs+'px "Times New Roman","Noto Sans Symbols 2","Segoe UI Symbol",serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(PIECES[ob.pieceType].sym,ob.col*cellW+cellW/2,oy+cellH/2+2);
+  }
+
+  var py=playerCanvasY;
+  var iFrame=(mode==='battle'&&Date.now()<battleInvulnUntil&&Math.floor(Date.now()/110)%2===0);
+  if(!iFrame){
+  ctx.globalAlpha=0.18; ctx.fillStyle=activeSkinColor; ctx.fillRect(playerCol*cellW,py,cellW,cellH); ctx.globalAlpha=1;
+  ctx.shadowColor=activeSkinColor; ctx.shadowBlur=14; ctx.fillStyle=activeSkinColor;
+  ctx.font='bold '+Math.round(cellW*0.62)+'px "Times New Roman","Noto Sans Symbols 2","Segoe UI Symbol",serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  var pGlyph=(mode==='battle')?({knight:'♞',rook:'♜',bishop:'♝',queen:'♛',nightrider:'♘'}[playerPiece]||'♞'):'♞';
+  ctx.fillText(pGlyph,playerCol*cellW+cellW/2,py+cellH/2+2);
+  ctx.shadowBlur=0;
+  }
+  // slim transform-timer bar just under the piece, so the corner HUD isn't needed
+  if(mode==='battle' && transformEndsAt){
+    var remF=Math.max(0,(transformEndsAt-Date.now())/TRANSFORM_MS);
+    var bw=cellW*0.66, bx=playerCol*cellW+(cellW-bw)/2, by=py+cellH+2, bh=3;
+    ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle=(remF>0.4?'#8fe0ff':(remF>0.2?'#ffd060':'#ff7050'));
+    ctx.fillRect(bx,by,bw*remF,bh);
+  }
+
+  for(var pp=0;pp<popups.length;pp++){
+    var p=popups[pp];
+    ctx.globalAlpha=Math.max(0,Math.min(1,p.alpha)); ctx.fillStyle=p.color||'#f0c040';
+    ctx.font='bold '+Math.round(cellW*0.35)+'px system-ui';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(p.text,p.col*cellW+cellW/2,p.canvasY);
+  }
+  ctx.globalAlpha=1;
+
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=0.5;
+  for(var c2=1;c2<COLS;c2++){ctx.beginPath();ctx.moveTo(c2*cellW,0);ctx.lineTo(c2*cellW,canvas.height);ctx.stroke();}
+  for(var r2=-1;r2<=ROWS+1;r2++){var ly=r2*cellH+tileOffset;ctx.beginPath();ctx.moveTo(0,ly);ctx.lineTo(canvas.width,ly);ctx.stroke();}
+
+  if(mode==='battle'&&gameState==='playing'){
+    var elapsed=Date.now()-lastBattleMoveTime;
+    var prog=Math.min(1,elapsed/battleMoveInterval);
+    var barW=canvas.width*0.55,barH=6,barX=(canvas.width-barW)/2,barY=canvas.height-10;
+    ctx.fillStyle='rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.roundRect(barX,barY,barW,barH,3); ctx.fill();
+    var brc=prog<0.5?Math.round(prog*2*240):240;
+    var bgc=prog<0.5?200:Math.round(200*(1-(prog-0.5)*2));
+    ctx.fillStyle='rgb('+brc+','+bgc+',50)';
+    ctx.beginPath(); ctx.roundRect(barX,barY,barW*prog,barH,3); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.35)';
+    ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText('ENEMY MOVE',canvas.width/2,barY-2);
+  }
+}
+
+// ── "Was I trapped?" — escape-path analysis & snapshot ─────────────────────
+// Work in player-relative rows (player = row 0). Forward = up = negative row.
+// We BFS over knight L-moves for a genuine route that threads PAST the wall of
+// traps ahead (clearing the captured field), letting the knight double back
+// (down/sideways) as deep as the retained board allows (~10+ rows). We report:
+//   forward  – a clean line out using tiles still on-screen
+//   deepback – a real way out, but it doubles back through tiles already off the
+//              bottom of the screen (the player couldn't realistically use them)
+//   sealed   – no legal route out at all; genuinely trapped
+// Returns {path, escaped, reason}.
+function computeEscapePath(pCol,traps,pCanvasY,ch){
+  var occ={}, minTrapRel=Infinity, maxTrapRel=-Infinity;
+  for(var i=0;i<traps.length;i++){
+    var rr=Math.round((traps[i].canvasY-pCanvasY)/ch);
+    occ[traps[i].col+','+rr]=true;
+    if(rr<minTrapRel) minTrapRel=rr;
+    if(rr>maxTrapRel) maxTrapRel=rr;
+  }
+  if(!traps.length) return {path:[],escaped:true,reason:'forward'};
+  var escapeRel=Math.min(minTrapRel-1,-1);          // step past the furthest trap ahead
+  var UP_LIMIT=escapeRel-1;                          // headroom just past the wall
+  var DOWN_LIMIT=Math.max(4,Math.min(maxTrapRel,22));// double back as deep as retained data
+  var ONSCREEN_BACK=4;                               // rows visible below the knight at death
+  var MAX_STEPS=70;
+
+  var visited={}; visited[pCol+',0']=true;
+  var queue=[{col:pCol,rr:0,path:[],maxBack:0}];
+  while(queue.length){
+    var cur=queue.shift();
+    if(cur.rr<=escapeRel)
+      return {path:cur.path,escaped:true,reason:(cur.maxBack>ONSCREEN_BACK?'deepback':'forward')};
+    if(cur.path.length>=MAX_STEPS) continue;
+    for(var k=0;k<L_DELTAS.length;k++){
+      var nc=cur.col+L_DELTAS[k][0], nr=cur.rr+L_DELTAS[k][1];
+      if(nc<0||nc>=COLS||nr<UP_LIMIT||nr>DOWN_LIMIT) continue;
+      var key=nc+','+nr;
+      if(visited[key]||occ[key]) continue;
+      visited[key]=true;
+      queue.push({col:nc,rr:nr,path:cur.path.concat([{col:nc,relRow:nr,dRow:L_DELTAS[k][1]}]),maxBack:Math.max(cur.maxBack,nr)});
+    }
+  }
+  return {path:[],escaped:false,reason:'sealed'};
+}
+
+function renderSnapshot(){
+  var s=deathSnapshot; if(!s) return {knightY:0};
+  var c=document.getElementById('snap-canvas'); if(!c) return {knightY:0};
+  var cx=c.getContext('2d');
+  var cw=s.cellW, ch=s.cellH;
+
+  // Player-relative grid (knight = relRow 0; forward/up = negative).
+  // The view shows: the trap wall AHEAD (up), the whole route, and a generous
+  // slice of the trail BEHIND the knight (down) — the room it backtracks into.
+  function trapRel(t){ return Math.round((t.canvasY-s.playerCanvasY)/ch); }
+  var trail=s.trail||[];
+  var routeRels=[0];
+  for(var pp=0;pp<s.path.length;pp++) routeRels.push(s.path[pp].relRow);
+  for(var qq=0;qq<trail.length;qq++) routeRels.push(trail[qq].relRow);
+  var relTop=Math.min.apply(null,routeRels), relBottom=Math.max.apply(null,routeRels);
+  var BEHIND_CAP=Math.max(16,relBottom);   // include the whole move trail behind the knight
+  for(var ti=0;ti<s.traps.length;ti++){
+    var tr=trapRel(s.traps[ti]);
+    if(tr<relTop) relTop=tr;                          // extend up to the full wall
+    if(tr>relBottom && tr<=BEHIND_CAP) relBottom=tr;  // extend down through the trail
+  }
+  relTop-=1; relBottom+=1;
+  var rows=relBottom-relTop+1;
+
+  c.width=COLS*cw; c.height=rows*ch;
+  function yOf(relRow){ return (relRow-relTop)*ch; }
+
+  cx.fillStyle='#1a1a2e'; cx.fillRect(0,0,c.width,c.height);
+
+  // checkerboard
+  for(var rr=relTop;rr<=relBottom;rr++){
+    for(var col=0;col<COLS;col++){
+      cx.fillStyle=((rr+col)%2===0)?'#2d2d4e':'#1e1e35';
+      cx.fillRect(col*cw,yOf(rr),cw,ch);
+    }
+  }
+
+  // traps within the rendered window, grid-aligned
+  var fs=Math.round(cw*0.55);
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.font='bold '+fs+'px "Times New Roman","Noto Sans Symbols 2","Segoe UI Symbol",serif';
+  for(var i=0;i<s.traps.length;i++){
+    var t=s.traps[i], rr2=trapRel(t);
+    if(rr2<relTop||rr2>relBottom) continue;
+    var ty=yOf(rr2);
+    cx.fillStyle='rgba(200,50,50,0.35)'; cx.fillRect(t.col*cw,ty,cw,ch);
+    cx.fillStyle=PIECES.trap.color;
+    cx.fillText(PIECES.trap.sym,t.col*cw+cw/2,ty+ch/2+2);
+  }
+
+  // escape route: every step green, numbered in move order
+  for(var p=0;p<s.path.length;p++){
+    var step=s.path[p], pcY=yOf(step.relRow);
+    cx.fillStyle='rgba(60,220,120,0.42)'; cx.fillRect(step.col*cw,pcY,cw,ch);
+    cx.strokeStyle='rgba(60,220,120,0.95)'; cx.lineWidth=2.5;
+    cx.strokeRect(step.col*cw+1.5,pcY+1.5,cw-3,ch-3);
+    cx.fillStyle='#d8ffe6';
+    cx.font='bold '+Math.round(cw*0.5)+'px system-ui';
+    cx.fillText(String(p+1),step.col*cw+cw/2,pcY+ch/2+1);
+  }
+
+  // player's actual path: thin connecting line through the last moves
+  if(trail.length>1){
+    cx.strokeStyle='rgba(111,211,255,0.55)'; cx.lineWidth=2;
+    cx.beginPath();
+    for(var li=0;li<trail.length;li++){
+      var lx=trail[li].col*cw+cw*0.5, ly=yOf(trail[li].relRow)+ch*0.5;
+      if(li===0) cx.moveTo(lx,ly); else cx.lineTo(lx,ly);
+    }
+    cx.stroke();
+  }
+
+  // player knight on top
+  var py=yOf(0);
+  cx.fillStyle='rgba(240,192,64,0.2)'; cx.fillRect(s.playerCol*cw,py,cw,ch);
+  cx.shadowColor='#f0c040'; cx.shadowBlur=14; cx.fillStyle='#f0c040';
+  cx.font='bold '+Math.round(cw*0.62)+'px "Times New Roman","Noto Sans Symbols 2","Segoe UI Symbol",serif';
+  cx.fillText('♞',s.playerCol*cw+cw/2,py+ch/2+2);
+  cx.shadowBlur=0;
+
+  // last-10-moves: cyan badges in the top-left corner of each tile. Squares the
+  // knight landed on more than once list every move number (e.g. "4,10") in one
+  // pill, instead of a later move hiding an earlier one.
+  var cellMoves={};
+  for(var mi=0;mi<trail.length;mi++){
+    var m=trail[mi]; if(m.relRow<relTop||m.relRow>relBottom) continue;
+    var ck=m.col+','+m.relRow;
+    (cellMoves[ck]=cellMoves[ck]||{col:m.col,relRow:m.relRow,ns:[]}).ns.push(m.n);
+  }
+  var bh=Math.round(ch*0.30), bx0=Math.round(cw*0.09), by0=Math.round(ch*0.10);
+  var bfont='bold '+Math.round(cw*0.22)+'px system-ui';
+  cx.lineWidth=1.5; cx.textAlign='left'; cx.textBaseline='middle';
+  for(var ck2 in cellMoves){
+    var cell=cellMoves[ck2];
+    cell.ns.sort(function(a,b){return a-b;});
+    var label=cell.ns.join(',');
+    cx.font=bfont;
+    var pad=Math.round(cw*0.09), rad=bh/2;
+    var bw=Math.ceil(cx.measureText(label).width)+pad*2;
+    var bx=cell.col*cw+bx0, by=yOf(cell.relRow)+by0;
+    cx.beginPath();
+    cx.moveTo(bx+rad,by);
+    cx.arcTo(bx+bw,by,bx+bw,by+bh,rad);
+    cx.arcTo(bx+bw,by+bh,bx,by+bh,rad);
+    cx.arcTo(bx,by+bh,bx,by,rad);
+    cx.arcTo(bx,by,bx+bw,by,rad);
+    cx.closePath();
+    cx.fillStyle='rgba(12,22,40,0.9)'; cx.fill();
+    cx.strokeStyle='#6fd3ff'; cx.stroke();
+    cx.fillStyle='#bfeaff';
+    cx.fillText(label,bx+pad,by+bh/2+0.5);
+  }
+  cx.textAlign='center'; cx.textBaseline='middle';
+
+  return {knightY:py, canvasH:c.height};
+}
+
+function showTrapped(){
+  document.getElementById('name-screen').style.display='none';
+  var snap=deathSnapshot||{};
+  var escaped=!!snap.escaped, reason=snap.reason||'', path=snap.path||[];
+  var hasBacktrack=path.some(function(s){return s.dRow>0;});
+  var verdict=document.getElementById('trapped-verdict');
+  var sub=document.getElementById('trapped-sub');
+  var legend=document.getElementById('trapped-legend');
+  if(escaped){
+    if(reason==='deepback'){
+      if(verdict){ verdict.textContent='Nope'; verdict.style.color='#ffd060'; }
+      if(sub) sub.textContent='Technically escapable \u2014 but the only line out doubled back through tiles already off the bottom of the screen.';
+    } else {
+      if(verdict){ verdict.textContent='Nope'; verdict.style.color='#3cdc78'; }
+      if(sub) sub.textContent=hasBacktrack
+        ? 'You had a way out \u2014 double back, then push forward.'
+        : 'You had a clean line forward.';
+    }
+    if(legend) legend.innerHTML=
+      '<b style="color:#3cdc78">Green squares</b> &mdash; a safe path you could have taken, numbered in order you\u2019d play them<br>'+
+      '<b style="color:#6fd3ff">Blue circles</b> &mdash; the last 10 squares you landed on<br>'+
+      'Scroll up and down to see the whole board.';
+  } else {
+    if(verdict){ verdict.textContent='Yep'; verdict.style.color='#ff8a5c'; }
+    if(sub) sub.textContent='Genuinely trapped \u2014 boxed in, with no legal jump out of that square.';
+    if(legend) legend.innerHTML=
+      '<b style="color:#6fd3ff">Blue numbers</b> &mdash; the last 10 squares you landed on<br>'+
+      'There was no safe square within a knight\u2019s move of where you ended up.';
+  }
+  showScreen('trapped-screen');
+  var info=renderSnapshot();
+  // start the scroll near the knight (usually low on the board), so the player
+  // sees where they died, then can scroll up through the route and trap walls.
+  var scroll=document.getElementById('snap-scroll'), cnv=document.getElementById('snap-canvas');
+  requestAnimationFrame(function(){
+    if(!scroll||!cnv||!cnv.width) return;
+    var disp=cnv.clientWidth/cnv.width;            // displayed px per canvas px
+    var knightDisp=(info.knightY||0)*disp;
+    scroll.scrollTop=Math.max(0,knightDisp-scroll.clientHeight*0.62);
+  });
+}
+function closeTrapped(){
+  document.getElementById('trapped-screen').style.display='none';
+  showScreen('name-screen');
+}
+
+// ── HUD & flow ─────────────────────────────────────────────────────────────
+function updateHUD(){
+  document.getElementById('score-display').textContent=score;
+  var cd=document.getElementById('combo-display');
+  if(cd) cd.style.display='none';   // multiplier now shows as a popup on each capture
+  var xb=document.getElementById('xform-badge');
+  if(xb){
+    if(mode==='battle' && transformEndsAt && playerPiece!=='knight'){
+      var rem=Math.max(0,(transformEndsAt-Date.now())/1000);
+      var names={rook:'ROOK',bishop:'BISHOP',queen:'QUEEN',nightrider:'NIGHTRIDER'};
+      xb.textContent=(transformIsMimic?'MIMIC · ':'')+(names[playerPiece]||'')+'  '+rem.toFixed(1)+'s';
+      xb.style.display='block';
+    } else xb.style.display='none';
+  }
+}
+
+function pauseGame(){
+  if(gameState!=='playing') return;
+  gameState='paused';
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  showScreen('pause-screen');
+}
+function resumeGame(){
+  document.getElementById('pause-screen').style.display='none';
+  gameState='playing'; lastTime=null;
+  lastBattleMoveTime=Date.now()-(battleMoveInterval*0.5);
+  animFrame=requestAnimationFrame(loop);
+}
+function restartGame(){ startGame(); }
+
+// ── Instructions (paged) ────────────────────────────────────────────────────
+function hwGrid(cols,rows,c){var s='';for(var j=0;j<rows;j++)for(var i=0;i<cols;i++)s+='<rect x="'+(i*c)+'" y="'+(j*c)+'" width="'+c+'" height="'+c+'" fill="'+(((i+j)%2)?'#15203a':'#1c2a4c')+'"/>';return s;}
+function hwGly(i,j,c,g,col){return '<text x="'+(i*c+c/2)+'" y="'+(j*c+c/2+1)+'" font-size="'+(c*0.66)+'" fill="'+col+'" text-anchor="middle" dominant-baseline="central" font-family="\'Segoe UI Symbol\',\'Noto Sans Symbols 2\',serif">'+g+'</text>';}
+function hwHi(i,j,c){return '<rect x="'+(i*c)+'" y="'+(j*c)+'" width="'+c+'" height="'+c+'" fill="rgba(240,192,64,0.22)"/><circle cx="'+(i*c+c/2)+'" cy="'+(j*c+c/2)+'" r="'+(c*0.11)+'" fill="rgba(240,192,64,0.85)"/>';}
+function hwTxt(x,y,t,col,sz,anchor,w){return '<text x="'+x+'" y="'+y+'" font-size="'+sz+'" fill="'+col+'" text-anchor="'+(anchor||'start')+'" font-family="\'Segoe UI Symbol\',system-ui,sans-serif"'+(w?' font-weight="700"':'')+'>'+t+'</text>';}
+
+function hwArtMove(){
+  var c=32,hi=[[0,1],[4,1],[0,3],[4,3],[1,0],[3,0],[1,4],[3,4]];
+  var s='<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">'+hwGrid(5,5,c);
+  for(var k=0;k<hi.length;k++)s+=hwHi(hi[k][0],hi[k][1],c);
+  return s+hwGly(2,2,c,'♞','#f0c040')+'</svg>';
+}
+function hwArtModes(){
+  var c=28,s='<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">';
+  s+=hwTxt(30,12,'TRAP — slip through the gaps','#d08080',11,'start',1);
+  s+='<g transform="translate(30,16)">'+hwGrid(5,2,c)+hwGly(0,0,c,'✕','#cc4444')+hwGly(1,0,c,'✕','#cc4444')+hwGly(3,0,c,'✕','#cc4444')+hwGly(4,0,c,'✕','#cc4444')+hwGly(2,1,c,'♞','#f0c040')+'</g>';
+  s+=hwTxt(30,88,'BATTLE — capture the pieces','#7fb0e0',11,'start',1);
+  s+='<g transform="translate(30,92)">'+hwGrid(5,2,c)+hwGly(0,0,c,'♛','#e04080')+hwGly(2,0,c,'♜','#4080e0')+hwGly(4,0,c,'♝','#9060e0')+hwGly(2,1,c,'♞','#f0c040')+'</g>';
+  return s+'</svg>';
+}
+function hwArtCombo(){
+  var c=30,s='<svg viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg">';
+  s+='<g transform="translate(12,34)">'+hwGrid(4,2,c)+hwGly(0,1,c,'♞','#f0c040')+hwHi(1,0,c)+hwGly(1,0,c,'♜','#4080e0')+'</g>';
+  s+=hwTxt(165,50,'+4','#3cdc78',19,'middle',1);
+  s+='<rect x="142" y="60" width="56" height="28" rx="8" fill="#23304f"/>'+hwTxt(170,80,'×5','#ffd060',18,'middle',1);
+  return s+hwTxt(110,130,'each capture in a row builds the ×','#8a93ad',11,'middle')+'</svg>';
+}
+function hwArtTransform(){
+  var s='<svg viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg">';
+  s+='<rect x="6" y="50" width="32" height="32" rx="5" fill="#1c2a4c"/>'+hwTxt(22,72,'♞','#f0c040',22,'middle');
+  s+=hwTxt(48,72,'→','#8a93ad',18,'middle');
+  var trio=[['♜','#4080e0'],['♛','#e04080'],['♝','#9060e0']];   // 3 captured; the 3rd is the one you become
+  for(var i=0;i<3;i++){ var x=60+i*28;
+    if(i===2) s+='<rect x="'+(x-1)+'" y="51" width="28" height="28" rx="5" fill="#1c2a4c" stroke="#f0c040" stroke-width="2"/>';
+    else s+='<rect x="'+x+'" y="52" width="26" height="26" rx="5" fill="#1c2a4c"/>';
+    s+=hwTxt(x+13,71,trio[i][0],trio[i][1],17,'middle');
+  }
+  s+=hwTxt(100,98,'3 captured','#8a93ad',10,'middle');
+  s+=hwTxt(127,134,'↑ the 3rd','#f0c040',10,'middle');
+  s+=hwTxt(152,72,'→','#8a93ad',18,'middle');
+  s+='<rect x="168" y="50" width="40" height="40" rx="6" fill="#1c2a4c"/>'+hwTxt(188,75,'♝','#9060e0',26,'middle');
+  s+='<rect x="166" y="95" width="44" height="15" rx="6" fill="#23304f"/>'+hwTxt(188,106,'5.0s','#8fe0ff',10,'middle');
+  return s+'</svg>';
+}
+function hwArtShield(){
+  var s='<svg viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg">';
+  s+='<rect x="28" y="38" width="44" height="44" rx="6" fill="#1c2a4c"/>'+hwTxt(50,68,'♛','#e04080',28,'middle');
+  s+=hwTxt(50,98,'✦ shielded!','#8fe0ff',12,'middle',1);
+  s+='<rect x="108" y="46" width="92" height="12" rx="6" fill="#23304f"/><rect x="108" y="46" width="58" height="12" rx="6" fill="#8fe0ff"/>';
+  s+=hwTxt(154,40,'every capture refills 5s','#8a93ad',10,'middle');
+  s+=hwTxt(154,86,'a hit costs the form,','#cfd6e6',11,'middle')+hwTxt(154,102,'not your run','#cfd6e6',11,'middle');
+  return s+'</svg>';
+}
+function hwArtTrap(){
+  var c=28, s='<svg viewBox="0 0 200 152" xmlns="http://www.w3.org/2000/svg">';
+  s+='<g transform="translate(30,16)">'+hwGrid(5,3,c);
+  for(var i=0;i<5;i++) if(i!==1) s+=hwGly(i,1,c,'✕','#cc4444');   // falling trap row, one gap at col 1
+  s+=hwHi(1,1,c);                                                 // the safe square to leap into
+  s+=hwGly(3,2,c,'♞','#f0c040');                                  // knight below, an L-jump away
+  s+='</g>';
+  s+=hwTxt(100,142,'leap through the gaps to push forward','#8a93ad',11,'middle');
+  return s+'</svg>';
+}
+
+var HOWTO_PAGES=[
+  {title:'Move like a knight', art:hwArtMove,
+   text:'You move in an L-shape, just like a chess knight. Tap any highlighted square to leap there. (Grandmaster hides the highlights.)'},
+  {title:'Two ways to play', art:hwArtModes,
+   text:'Trap mode: thread through the gaps in the falling trap rows and survive. Battle mode: capture the enemy pieces for points.'},
+  {title:'Trap tactics', art:hwArtTrap,
+   text:'Trap mode is about progress, not combat: thread the knight through the gaps in each falling row to push forward. And when every gap is out of reach, remember — sometimes moving backward is the best way forward.'},
+  {title:'Build a combo', art:hwArtCombo,
+   text:'In Battle, capturing on back-to-back moves builds your multiplier — and cheaper pieces add the most. You always get at least one free miss before it resets, more on easier modes.'},
+  {title:'Transform', art:hwArtTransform,
+   text:'Capture 3 without breaking your combo and you become that 3rd piece for 5 seconds, gaining its movement. Make a knight your 3rd and you turn into a nightrider that copies each piece it then captures.'},
+  {title:'Stay aggressive', art:hwArtShield,
+   text:'Every capture refills the 5-second timer, so keep hunting. While transformed, getting caught costs you the form and your multiplier — but not the run.'}
+];
+
+var howtoSet=[0,1,2,3,4], howtoPos=0, howtoContext='pause';
+function openHowto(opts){
+  if(typeof opts!=='object'||opts===null) opts={};
+  howtoSet=opts.pages||[0,1,2,3,4];
+  howtoContext=opts.context||'pause';
+  howtoPos=0;
+  if(gameState==='playing'){ gameState='paused'; if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;} }
+  document.getElementById('pause-screen').style.display='none';
+  document.getElementById('menu-screen').style.display='none';
+  document.getElementById('howto-firsttime').style.display=opts.firstTime?'block':'none';
+  renderHowto();
+  showScreen('howto-screen');
+}
+function renderHowto(){
+  var p=HOWTO_PAGES[howtoSet[howtoPos]];
+  document.getElementById('howto-title').textContent=p.title;
+  document.getElementById('howto-art').innerHTML=p.art();
+  document.getElementById('howto-text').textContent=p.text;
+  document.getElementById('howto-pager').textContent=(howtoPos+1)+' / '+howtoSet.length;
+  document.getElementById('howto-prev').disabled=howtoPos<=0;
+  document.getElementById('howto-next').disabled=howtoPos>=howtoSet.length-1;
+}
+function howtoFlip(d){ howtoPos=Math.max(0,Math.min(howtoSet.length-1,howtoPos+d)); renderHowto(); }
+function openPauseHowto(){ openHowto({pages: mode==='battle'?[3,4,5]:[2], context:'pause'}); }
+function closeHowto(){
+  document.getElementById('howto-screen').style.display='none';
+  if(howtoContext==='battle'){
+    try{ localStorage.setItem('kg_seen_battle_howto','1'); }catch(e){}
+    gameState='playing'; lastTime=null;
+    lastBattleMoveTime=Date.now()-(battleMoveInterval*0.5);
+    if(animFrame) cancelAnimationFrame(animFrame);
+    animFrame=requestAnimationFrame(loop);
+  } else if(howtoContext==='trap'){
+    try{ localStorage.setItem('kg_seen_trap_howto','1'); }catch(e){}
+    gameState='playing'; lastTime=null;
+    if(animFrame) cancelAnimationFrame(animFrame);
+    animFrame=requestAnimationFrame(loop);
+  } else if(howtoContext==='intro'){
+    try{ localStorage.setItem('kg_seen_intro','1'); }catch(e){}
+    showScreen('menu-screen');
+    maybePromptBeta();
+  } else if(howtoContext==='settings'){
+    openSettings();
+  } else {
+    showScreen('pause-screen');
+  }
+}
+
+// ── Achievements & skins ───────────────────────────────────────────────────
+var DEFAULT_SKIN={id:'gold', name:'Classic Gold', color:'#f0c040'};
+var ACHIEVEMENTS=[
+  {id:'trap_advance',    mode:'trap',   name:'Trailblazer',
+   desc:'Trap: advance 25 squares without ever backtracking.',
+   skin:{id:'emerald', name:'Emerald', color:'#3cdc78'}},
+  {id:'trap_score',      mode:'trap',   name:'Centurion',
+   desc:'Trap: reach a score of 150.',
+   skin:{id:'crimson', name:'Crimson', color:'#ff5a5a'}},
+  {id:'battle_streak',   mode:'battle', name:'Relentless',
+   desc:'Battle: capture 5 pieces in a row without a miss.',
+   skin:{id:'violet', name:'Violet', color:'#b070ff'}},
+  {id:'battle_marathon', mode:'battle', name:'Marathon',
+   desc:'Battle: hold one transformation for a full minute.',
+   skin:{id:'frost', name:'Frost', color:'#8fe0ff'}},
+  {id:'battle_polymorph',mode:'battle', name:'Shapeshifter',
+   desc:'Battle: transform into all four forms, twice each.',
+   skin:{id:'magma', name:'Magma', color:'#ff8a3c'}}
+];
+function achActive(){ return difficulty==='hard'||difficulty==='grandmaster'; }
+function loadAch(){ try{ (JSON.parse(localStorage.getItem('kg_ach')||'[]')||[]).forEach(function(id){unlockedAch[id]=true;}); }catch(e){} }
+function isAchUnlocked(id){ return !!unlockedAch[id]; }
+function unlockAch(id){
+  if(unlockedAch[id]) return;
+  unlockedAch[id]=true;
+  try{ localStorage.setItem('kg_ach',JSON.stringify(Object.keys(unlockedAch))); }catch(e){}
+  for(var i=0;i<ACHIEVEMENTS.length;i++) if(ACHIEVEMENTS[i].id===id){ showAchToast(ACHIEVEMENTS[i]); break; }
+}
+function getActiveSkin(){ try{ return localStorage.getItem('kg_skin')||'gold'; }catch(e){ return 'gold'; } }
+function setActiveSkin(id){ try{ localStorage.setItem('kg_skin',id); }catch(e){} activeSkinColor=skinColorById(id); syncEquippedSkin(); }
+function skinColorById(id){
+  if(id==='gold') return DEFAULT_SKIN.color;
+  for(var i=0;i<ACHIEVEMENTS.length;i++) if(ACHIEVEMENTS[i].skin.id===id) return ACHIEVEMENTS[i].skin.color;
+  return DEFAULT_SKIN.color;
+}
+// detect form transitions for the marathon / shapeshifter achievements
+function trackPieceChange(now){
+  if(!achActive()) return;
+  if(playerPiece!==achPrevPiece){
+    if(playerPiece==='knight'){ achXformStart=0; }
+    else {
+      if(achPrevPiece==='knight') achXformStart=now;     // a fresh transform began
+      if(achXformCounts[playerPiece]!==undefined){
+        achXformCounts[playerPiece]++;
+        if(achXformCounts.rook>=2&&achXformCounts.bishop>=2&&achXformCounts.queen>=2&&achXformCounts.nightrider>=2) unlockAch('battle_polymorph');
+      }
+    }
+    achPrevPiece=playerPiece;
+  }
+}
+function showAchToast(a){
+  var t=document.getElementById('ach-toast'); if(!t) return;
+  t.innerHTML='🏆 <b>'+a.name+'</b> unlocked'+'<br><span style="color:'+a.skin.color+'">'+a.skin.name+' skin earned</span>';
+  t.style.display='block';
+  requestAnimationFrame(function(){ t.style.opacity='1'; });
+  clearTimeout(t._timer);
+  t._timer=setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){t.style.display='none';},400); },3600);
+}
+function openAch(){ hideAll(); renderAch(); showScreen('ach-screen'); }
+function achRow(skinId,title,desc,color,unlocked,equipped){
+  var glyph=unlocked?'♞':'🔒';
+  var ctrl = unlocked
+    ? (equipped?'<span class="ach-eq">Equipped</span>':'<button class="ach-use" onclick="equipSkin(\''+skinId+'\')">Use</button>')
+    : '<span class="ach-lock">Locked</span>';
+  return '<div class="ach-row'+(unlocked?'':' ach-dim')+'">'+
+    '<span class="ach-glyph" style="color:'+(unlocked?color:'#566')+'">'+glyph+'</span>'+
+    '<div class="ach-meta"><div class="ach-title">'+title+'</div><div class="ach-desc">'+desc+'</div></div>'+
+    ctrl+'</div>';
+}
+function renderAch(){
+  var active=getActiveSkin(), html='';
+  html+=achRow('gold','Classic Gold','The piece you start with.','#f0c040',true,active==='gold');
+  for(var i=0;i<ACHIEVEMENTS.length;i++){
+    var a=ACHIEVEMENTS[i];
+    html+=achRow(a.skin.id,a.skin.name+' — '+a.name,a.desc,a.skin.color,isAchUnlocked(a.id),active===a.skin.id);
+  }
+  document.getElementById('ach-list').innerHTML=html;
+}
+function equipSkin(id){ setActiveSkin(id); renderAch(); }
+
+// ── Leaderboard (Supabase online + local Personal) ─────────────────────────
+var lbCache={}, lbLoading=false;
+var lbSource='online'; // 'online' | 'personal'
+
+function getLocalScores(key){try{return JSON.parse(localStorage.getItem('kg_'+key)||'[]');}catch(e){return[];}}
+
+function saveScore(key,name,s){
+  name=(name||'???').slice(0,7);
+  var arr=getLocalScores(key);
+  arr.push({name:name,score:s});
+  arr.sort(function(a,b){return b.score-a.score;});
+  localStorage.setItem('kg_'+key,JSON.stringify(arr.slice(0,10)));
+  if(/-(hard|grandmaster)$/.test(key)){
+    var hdr=sbHeaders(), endpoint=SUPABASE_URL+'/rest/v1/scores';
+    var done=function(){ if(lbSource==='online'&&lbTab===key) fetchOnlineScores(key); };
+    fetch(endpoint,{method:'POST', headers:hdr,
+      body:JSON.stringify({name:name,score:s,category:key,skin:getActiveSkin()})
+    }).then(function(r){
+      if(r.ok){ done(); return; }
+      // skin column may not exist yet → retry without it so the score still saves
+      fetch(endpoint,{method:'POST', headers:hdr,
+        body:JSON.stringify({name:name,score:s,category:key})
+      }).then(done).catch(function(){});
+    }).catch(function(){});
+  }
+}
+
+function fetchOnlineScores(key){
+  lbLoading=true; renderLB();
+  var base=SUPABASE_URL+'/rest/v1/scores?category=eq.'+encodeURIComponent(key);
+  var tail='&order=score.desc&limit=1000';
+  fetch(base+'&select=name,score,skin'+tail,{headers:sbHeaders()})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(data){
+      if(Array.isArray(data)) return data;
+      return fetch(base+'&select=name,score'+tail,{headers:sbHeaders()}).then(function(r){return r.json();}); // skin column missing
+    })
+    .then(function(data){
+      if(Array.isArray(data)){
+        var seen={}, top=[];
+        for(var i=0;i<data.length;i++){
+          if(seen[data[i].name]) continue;
+          seen[data[i].name]=true; top.push(data[i]);
+          if(top.length>=500) break;
+        }
+        lbCache[key]=top;
+      }
+      lbLoading=false; renderLB();
+    })
+    .catch(function(){ lbLoading=false; renderLB(); });
+}
+
+// Push the player's CURRENTLY-equipped skin onto all of their leaderboard rows,
+// so the board reflects their current skin, not whatever they wore at submit time.
+// Fires on equip and on launch. Degrades silently if the table has no skin
+// column or no anon UPDATE policy (rows then keep their submit-time skin).
+function syncEquippedSkin(){
+  var name=getSavedName();
+  if(!name || !isNameAllowed(name)) return;
+  try{
+    fetch(SUPABASE_URL+'/rest/v1/scores?name=eq.'+encodeURIComponent(name),{
+      method:'PATCH', headers:sbHeaders(), body:JSON.stringify({skin:getActiveSkin()})
+    }).then(function(r){
+      if(r && r.ok && lbSource==='online' && /-(hard|grandmaster)$/.test(lbTab)) fetchOnlineScores(lbTab);
+    }).catch(function(){});
+  }catch(e){}
+}
+
+// ── Home-screen name ────────────────────────────────────────────────────────
+function refreshMenuName(){
+  var name=getSavedName();
+  var setBox=document.getElementById('menu-name-set');
+  var entryBox=document.getElementById('menu-name-entry');
+  if(name && isNameAllowed(name)){
+    var d=document.getElementById('menu-name-display'); if(d) d.textContent=name;
+    if(setBox) setBox.style.display='flex';
+    if(entryBox) entryBox.style.display='none';
+  } else {
+    menuEditName(false);
+  }
+}
+function menuEditName(forced){
+  var setBox=document.getElementById('menu-name-set');
+  var entryBox=document.getElementById('menu-name-entry');
+  var inp=document.getElementById('menu-name-input');
+  var err=document.getElementById('menu-name-error');
+  if(setBox) setBox.style.display='none';
+  if(entryBox) entryBox.style.display='flex';
+  if(inp){ inp.value=getSavedName()||''; try{inp.focus();}catch(e){} }
+  if(err){ err.textContent = forced===true ? 'Enter a name to play.' : 'Please enter a valid name.'; err.style.display = forced===true ? 'block' : 'none'; }
+}
+function saveMenuName(){
+  var inp=document.getElementById('menu-name-input');
+  var err=document.getElementById('menu-name-error');
+  var raw=(inp?inp.value:'').trim();
+  if(!raw){ if(err){ err.textContent='Please enter a name.'; err.style.display='block'; } return; }
+  var name=raw.slice(0,7);
+  if(!isNameAllowed(name)){ if(err){ err.textContent='Please choose a different name.'; err.style.display='block'; } return; }
+  if(err) err.style.display='none';
+  setSavedName(name);
+  refreshMenuName();
+}
+
+function selectLBSource(src){
+  lbSource=src;
+  document.getElementById('lbsrc-personal').classList.toggle('active',src==='personal');
+  document.getElementById('lbsrc-online').classList.toggle('active',src==='online');
+  document.getElementById('lb-cats-personal').style.display = src==='personal' ? 'flex' : 'none';
+  document.getElementById('lb-cats-online').style.display   = src==='online'   ? 'flex' : 'none';
+  if(src==='online'&&!/-(hard|grandmaster)$/.test(lbTab)) lbTab=mode+'-hard';
+  highlightCatTab();
+  refreshLB();
+}
+
+function showLeaderboard(){
+  hideAll();
+  lbSource='online';
+  document.getElementById('lbsrc-personal').classList.remove('active');
+  document.getElementById('lbsrc-online').classList.add('active');
+  document.getElementById('lb-cats-personal').style.display='none';
+  document.getElementById('lb-cats-online').style.display='flex';
+  lbTab=/^(hard|grandmaster)$/.test(difficulty)?(mode+'-'+difficulty):(mode+'-hard');
+  highlightCatTab();
+  showScreen('lb-screen');
+  refreshLB();
+}
+
+function showLBTab(key){
+  lbTab=key;
+  highlightCatTab();
+  refreshLB();
+}
+
+function highlightCatTab(){
+  document.querySelectorAll('.lb-tab').forEach(function(el){el.classList.remove('active');});
+  if(lbSource==='online'){
+    var el=document.getElementById('lbo-'+lbTab); if(el) el.classList.add('active');
+  } else {
+    var el2=document.getElementById('lb-tab-'+lbTab); if(el2) el2.classList.add('active');
+  }
+}
+
+function refreshLB(){
+  if(lbSource==='online'&&/-(hard|grandmaster)$/.test(lbTab)) fetchOnlineScores(lbTab);
+  else renderLB();
+}
+
+function lbCrown(color){
+  return '<svg viewBox="0 0 24 20" width="15" height="13" style="vertical-align:-1px;margin-right:5px" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="M3,17 L4,6 L8,11 L12,4 L16,11 L20,6 L21,17 Z" fill="'+color+'" stroke="rgba(0,0,0,0.3)" stroke-width="0.6" stroke-linejoin="round"/>'+
+    '<circle cx="4" cy="6" r="1.4" fill="'+color+'"/><circle cx="12" cy="4" r="1.4" fill="'+color+'"/><circle cx="20" cy="6" r="1.4" fill="'+color+'"/></svg>';
+}
+function renderLB(){
+  var ul=document.getElementById('lb-list'); ul.innerHTML='';
+  if(lbSource==='online'){
+    if(!/-(hard|grandmaster)$/.test(lbTab)){
+      ul.innerHTML='<li style="color:#777;list-style:none;justify-content:center">Online is Hard &amp; Grandmaster only</li>';
+      return;
+    }
+    if(lbLoading){ ul.innerHTML='<li style="color:#888;list-style:none;justify-content:center">Loading…</li>'; return; }
+    var os=lbCache[lbTab]||[];
+    if(!os.length){ ul.innerHTML='<li style="color:#555;list-style:none;justify-content:center">No scores yet</li>'; return; }
+    for(var i=0;i<os.length;i++){
+      var li=document.createElement('li');
+      var sc=skinColorById(os[i].skin||'gold');
+      var crown = i<3 ? lbCrown(['#ffd34d','#cfd6e0','#cd7f32'][i]) : '';
+      li.innerHTML='<span>'+crown+(i+1)+'. '+os[i].name+'</span><span>'+os[i].score+
+        ' <span class="lb-skin" style="color:'+sc+'" title="'+(os[i].skin||'gold')+' skin">♞</span></span>';
+      ul.appendChild(li);
+    }
+  } else {
+    var ps=getLocalScores(lbTab);
+    if(!ps.length){ ul.innerHTML='<li style="color:#555;list-style:none;justify-content:center">No scores yet</li>'; return; }
+    for(var k=0;k<ps.length;k++){
+      var li2=document.createElement('li');
+      li2.innerHTML='<span>'+(k+1)+'. '+ps[k].name+'</span><span>'+ps[k].score+'</span>';
+      ul.appendChild(li2);
+    }
+  }
+}
+
+function backToMenu(){hideAll();showScreen('menu-screen');refreshMenuName();}
+
+function openSettings(){
+  hideAll();
+  try{ localStorage.setItem('kg_seen_settings','1'); }catch(e){}
+  updateBetaDots();
+  var name=getSavedName(), line=document.getElementById('settings-name-line');
+  if(line){
+    if(name && isNameAllowed(name)){ line.innerHTML='Playing as <b style="color:#f0c040;">'+name+'</b>'; line.style.display='block'; }
+    else line.style.display='none';
+  }
+  showScreen('settings-screen');
+}
+
+// Both notification dots stay until BOTH Settings and Beta sign-up have been tapped.
+function betaNudgeActive(){
+  var s=false,b=false;
+  try{ s=!!localStorage.getItem('kg_seen_settings'); b=!!localStorage.getItem('kg_seen_beta'); }catch(e){}
+  return !(s&&b);
+}
+function updateBetaDots(){
+  var on=betaNudgeActive()?'block':'none';
+  var sd=document.getElementById('settings-dot'); if(sd) sd.style.display=on;
+  var bd=document.getElementById('beta-dot'); if(bd) bd.style.display=on;
+}
+
+var betaReturn='settings';
+function openBeta(ret){
+  betaReturn = (ret==='menu') ? 'menu' : 'settings';
+  hideAll();
+  try{ localStorage.setItem('kg_seen_beta','1'); }catch(e){}
+  updateBetaDots();
+  var inp=document.getElementById('beta-input'), msg=document.getElementById('beta-msg'), btn=document.getElementById('beta-submit');
+  var saved=''; try{ saved=localStorage.getItem('kg_beta_email')||''; }catch(e){}
+  if(inp) inp.value=saved;
+  if(btn){ btn.disabled=false; btn.textContent='Sign me up'; }
+  if(msg){
+    if(saved){ msg.style.color='#3cdc78'; msg.textContent="You're on the list — update it any time."; }
+    else { msg.textContent=''; }
+  }
+  showScreen('beta-screen');
+  try{ inp.focus(); }catch(e){}
+}
+function closeBeta(){
+  if(betaReturn==='menu'){ hideAll(); showScreen('menu-screen'); refreshMenuName(); }
+  else openSettings();
+}
+// Auto-prompt for beta sign-up at launch, unless they've already signed up.
+function maybePromptBeta(){
+  var signed=false; try{ signed=!!localStorage.getItem('kg_beta_email'); }catch(e){}
+  if(signed) return;
+  openBeta('menu');
+}
+function submitBeta(){
+
+  var inp = document.getElementById('beta-input'),
+      msg = document.getElementById('beta-msg'),
+      btn = document.getElementById('beta-submit');
+
+  var email = (inp ? inp.value : '').trim();
+  var platform = document.querySelector('input[name="platform"]:checked').value;
+
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    if(msg){
+      msg.style.color = '#e05050';
+      msg.textContent = 'Please enter a valid email.';
+    }
+    return;
+  }
+
+  if(/YOUR-SCRIPT-ID/.test(BETA_SIGNUP_URL)){
+    if(msg){
+      msg.style.color = '#e05050';
+      msg.textContent = 'Sign-up isn’t configured yet.';
+    }
+    return;
+  }
+
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+  }
+
+  // Apps Script web apps don't return CORS headers,
+  // so this is fire-and-forget.
+  try{
+    fetch(BETA_SIGNUP_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{
+        'Content-Type':'application/x-www-form-urlencoded'
+      },
+      body:
+        'email=' + encodeURIComponent(email) +
+        '&platform=' + encodeURIComponent(platform)
+    }).catch(function(){});
+  }catch(e){}
+
+  try{
+    localStorage.setItem('kg_beta_email', email);
+  }catch(e){}
+
+  if(msg){
+    msg.style.color = '#3cdc78';
+    msg.textContent = 'Thanks! You’re on the list.';
+  }
+
+  if(btn){
+    btn.textContent = 'Signed up ✓';
+  }
+}
+
+// ── Bug report + Patch notes ────────────────────────────────────────────────
+function openBugReport(){
+  if(/YOUR-FORM-ID/.test(BUG_REPORT_URL)){ alert('Set BUG_REPORT_URL to your Google Form link.'); return; }
+  window.open(BUG_REPORT_URL,'_blank','noopener');
+}
+
+var patchList=[], patchIdx=0;
+function isAuthorMode(){ return /author/i.test(location.hash); }
+function getLocalPatchNotes(){ try{ return JSON.parse(localStorage.getItem('kg_patchnotes')||'[]'); }catch(e){ return []; } }
+function setLocalPatchNotes(a){ try{ localStorage.setItem('kg_patchnotes',JSON.stringify(a)); }catch(e){} }
+function buildPatchList(){
+  var all=PATCH_NOTES.concat(getLocalPatchNotes()), seen={}, out=[];
+  for(var i=0;i<all.length;i++){ var v=all[i].version; if(!v||seen[v]) continue; seen[v]=1; out.push(all[i]); }
+  out.sort(function(a,b){ return a.date<b.date?1:(a.date>b.date?-1:0); }); // newest first
+  return out;
+}
+function fmtDate(iso){
+  var p=String(iso).split('-'); if(p.length!==3) return iso;
+  var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1],10)-1]||'';
+  return mo+' '+parseInt(p[2],10)+', '+p[0];
+}
+function todayISO(){
+  var d=new Date(), m=('0'+(d.getMonth()+1)).slice(-2), day=('0'+d.getDate()).slice(-2);
+  return d.getFullYear()+'-'+m+'-'+day;
+}
+function openPatchNotes(){
+  hideAll();
+  patchList=buildPatchList(); patchIdx=0;
+  document.getElementById('patch-add-btn').style.display=isAuthorMode()?'inline-block':'none';
+  renderPatch();
+  showScreen('patch-screen');
+}
+function renderPatch(){
+  var prev=document.getElementById('patch-prev'), next=document.getElementById('patch-next');
+  if(!patchList.length){
+    document.getElementById('pn-ver').textContent='—';
+    document.getElementById('pn-date').textContent='';
+    document.getElementById('pn-body').textContent='No patch notes yet.';
+    document.getElementById('patch-pager').textContent='';
+    prev.disabled=true; next.disabled=true; return;
+  }
+  if(patchIdx<0) patchIdx=0;
+  if(patchIdx>=patchList.length) patchIdx=patchList.length-1;
+  var n=patchList[patchIdx];
+  document.getElementById('pn-ver').textContent='v'+n.version;
+  document.getElementById('pn-date').textContent=fmtDate(n.date);
+  document.getElementById('pn-body').textContent=n.notes;
+  document.getElementById('patch-pager').textContent=(patchIdx+1)+' / '+patchList.length;
+  prev.disabled=(patchIdx<=0);                    // newest is index 0
+  next.disabled=(patchIdx>=patchList.length-1);
+  document.getElementById('patch-card').scrollTop=0;
+}
+function patchFlip(d){ patchIdx+=d; renderPatch(); }
+
+function openCompose(){
+  hideAll();
+  document.getElementById('compose-date').textContent=fmtDate(todayISO());
+  document.getElementById('patch-ver-input').value='';
+  document.getElementById('patch-notes-input').value='';
+  document.getElementById('compose-error').style.display='none';
+  document.getElementById('compose-snippet-wrap').style.display='none';
+  showScreen('patch-compose');
+}
+function saveCompose(){
+  var ver=document.getElementById('patch-ver-input').value.trim();
+  var notes=document.getElementById('patch-notes-input').value.replace(/\s+$/,'');
+  var err=document.getElementById('compose-error');
+  if(!ver||!notes.trim()){ if(err) err.style.display='block'; return; }
+  if(err) err.style.display='none';
+  var iso=todayISO(), entry={version:ver,date:iso,notes:notes};
+  var local=getLocalPatchNotes().filter(function(e){ return e.version!==ver; });
+  local.push(entry); setLocalPatchNotes(local);
+  patchList=buildPatchList();
+  var snip='  { version: '+JSON.stringify(ver)+', date: '+JSON.stringify(iso)+', notes: '+JSON.stringify(notes)+' },';
+  document.getElementById('compose-snippet').value=snip;
+  document.getElementById('compose-snippet-wrap').style.display='flex';
+}
+function showScreen(id){document.getElementById(id).style.display='flex';}
+function hideAll(){
+  ['menu-screen','pause-screen','lb-screen','name-screen','trapped-screen','patch-screen','patch-compose','howto-screen','ach-screen','settings-screen','beta-screen'].forEach(function(id){document.getElementById(id).style.display='none';});
+  document.getElementById('hud').style.display='none';
+}
+window.addEventListener('load',function(){ init(); loadWordlist(); refreshMenuName();
+  loadAch(); activeSkinColor=skinColorById(getActiveSkin()); syncEquippedSkin(); updateBetaDots();
+  var seenIntro=false; try{ seenIntro=!!localStorage.getItem('kg_seen_intro'); }catch(e){}
+  if(!seenIntro) openHowto({pages:[0,1],context:'intro',firstTime:true});   // basics on first launch
+  else maybePromptBeta();                                                    // otherwise nudge beta sign-up
+});
+</script>
+</body>
+</html>

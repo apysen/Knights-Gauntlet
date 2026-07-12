@@ -37,14 +37,13 @@ namespace KnightsGauntlet.View
         // right gutter holds score + skin. Name stretches between them.
         private const float RowH = 50f;
         private const float LeftPad = 14f;
-        private const float NameLeft = 46f;   // space reserved on the left for the crown
-        private const float NameRight = 116f;  // space reserved on the right for score+skin
+        private const float NameLeft = 56f;   // space reserved on the left for the crown
+        private const float NameRight = 138f;  // space reserved on the right for score+skin
         private const float ScoreFromRight = 40f;
-        private const float ScoreW = 86f;
+        private const float ScoreW = 96f;
         private const float SkinFromRight = 8f;
         private const float SkinW = 26f;
         private const float RewardW = 80f;
-        private static readonly int[] DailyRewards = { 1000, 750, 500, 250, 100 };
 
         public void Init(GameTheme theme, LeaderboardClient client)
         {
@@ -53,7 +52,8 @@ namespace KnightsGauntlet.View
                 theme != null ? theme.uiFont : null,
                 theme != null ? theme.uiPanelSprite : null,
                 theme != null ? theme.uiBorderSprite : null,
-                theme != null ? theme.uiCircleSprite : null);
+                theme != null ? theme.uiCircleSprite : null,
+                theme != null ? theme.uiButtonSprite : null);
             Build();
             _root.SetActive(false);
         }
@@ -80,7 +80,7 @@ namespace KnightsGauntlet.View
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
             var col = _ui.Column(screen.transform, 12f);
 
-            _ui.Label(col, "Leaderboard", 30, UIFactory.Gold, FontStyles.Bold);
+            _ui.Label(col, "Leaderboard", 30, UIFactory.Gold, FontStyles.Normal);
 
             var srcRow = _ui.Row(col, 10f);
             _personalTab = _ui.Button(srcRow, "Personal", () => SetSource("personal"), UIFactory.Panel, UIFactory.Muted, 122, 50, 15);
@@ -90,27 +90,26 @@ namespace KnightsGauntlet.View
             // Personal categories: one row per mode, all four difficulties.
             _personalCats = _ui.Column(col, 7f).gameObject;
             var pTrap = _ui.Row(_personalCats.transform, 6f);
-            _ui.Label(pTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Bold, 56);
+            _ui.Label(pTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Normal, 56);
             CatTab(pTrap, "personal", "trap-easy", "Easy"); CatTab(pTrap, "personal", "trap-medium", "Med");
             CatTab(pTrap, "personal", "trap-hard", "Hard"); CatTab(pTrap, "personal", "trap-grandmaster", "GM");
             var pBat = _ui.Row(_personalCats.transform, 6f);
-            _ui.Label(pBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Bold, 56);
+            _ui.Label(pBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Normal, 56);
             CatTab(pBat, "personal", "battle-easy", "Easy"); CatTab(pBat, "personal", "battle-medium", "Med");
             CatTab(pBat, "personal", "battle-hard", "Hard"); CatTab(pBat, "personal", "battle-grandmaster", "GM");
 
             // Online categories: Hard & GM per mode.
             _onlineCats = _ui.Column(col, 7f).gameObject;
             var oTrap = _ui.Row(_onlineCats.transform, 6f);
-            _ui.Label(oTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Bold, 56);
+            _ui.Label(oTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Normal, 56);
             CatTab(oTrap, "online", "trap-hard", "Hard"); CatTab(oTrap, "online", "trap-grandmaster", "GM");
             var oBat = _ui.Row(_onlineCats.transform, 6f);
-            _ui.Label(oBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Bold, 56);
+            _ui.Label(oBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Normal, 56);
             CatTab(oBat, "online", "battle-hard", "Hard"); CatTab(oBat, "online", "battle-grandmaster", "GM");
 
             // Daily: a single date-seeded board shared by everyone, resets daily.
             _dailyCats = _ui.Column(col, 4f).gameObject;
-            _ui.Label(_dailyCats.transform, "TODAY'S CHALLENGE", 13, UIFactory.Gold, FontStyles.Bold, 360);
-            _ui.Label(_dailyCats.transform, "Trap \u00B7 Grandmaster \u00B7 a new board every day.", 11, UIFactory.Muted, FontStyles.Normal, 360);
+            _ui.Label(_dailyCats.transform, "TODAY'S CHALLENGE", 13, UIFactory.Gold, FontStyles.Normal, 360);
 
             _status = _ui.Label(col, "", 14, UIFactory.Muted, FontStyles.Normal, 360);
 
@@ -257,7 +256,7 @@ namespace KnightsGauntlet.View
             for (int i = 0; i < rows.Count; i++)
             {
                 int rank = i + 1;
-                string reward = (_source == "daily" && rank <= DailyRewards.Length) ? "+" + DailyRewards[rank - 1] : null;
+                string reward = (_source == "daily" && DailyPrizes.Pays(rank)) ? DailyPrizes.Badge(rank) : null;
                 AddRow(rank, rows[i], reward);
             }
             _scroll.verticalNormalizedPosition = 1f;
@@ -294,26 +293,43 @@ namespace KnightsGauntlet.View
             // crown (top 3 only), anchored far left
             if (rank <= 3)
             {
-                var crown = Glyph(go.transform, "\u2654", 19, rank == 1 ? Gold : rank == 2 ? Silver : Bronze,
+                var crown = Glyph(go.transform, "\u2654", 22, rank == 1 ? Gold : rank == 2 ? Silver : Bronze,
                                   _theme != null ? _theme.glyphFont : null, TextAlignmentOptions.Center);
-                AnchorLeft(crown.rectTransform, LeftPad, 26);
+                AnchorLeft(crown.rectTransform, LeftPad, 30);
             }
 
             // rank + name, stretched between gutters, left-aligned
             var name = Glyph(go.transform, rank + ". " + row.name, 17, rowColor, _ui.Font,
-                             TextAlignmentOptions.Left, top ? FontStyles.Bold : FontStyles.Normal);
+                             TextAlignmentOptions.Left, top ? FontStyles.Normal : FontStyles.Normal);
             var nrt = name.rectTransform;
             nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
             nrt.offsetMin = new Vector2(NameLeft, 0); nrt.offsetMax = new Vector2(-(NameRight + shift), 0);
 
             // score, anchored from the right
-            var score = Glyph(go.transform, row.score.ToString(), 17, rowColor, _ui.Font,
-                              TextAlignmentOptions.Right, FontStyles.Bold);
+            var score = Glyph(go.transform, row.score.ToString(), 20, rowColor, _ui.Font,
+                              TextAlignmentOptions.Right, FontStyles.Normal);
             AnchorRight(score.rectTransform, ScoreFromRight + shift, ScoreW);
 
             // skin glyph, anchored far right
             string skin = string.IsNullOrEmpty(row.skin) ? "gold" : row.skin;
             Color skinColor = _theme != null ? _theme.GetSkinTint(skin) : UIFactory.Gold;
+            // The near-black Nightfall knight barely reads on the dark row, so put a soft
+            // red glow behind it (added first so it sits underneath the glyph).
+            if (skin == Skins.Secret.Id)
+            {
+                var glowGo = new GameObject("skinGlow", typeof(RectTransform), typeof(Image));
+                glowGo.transform.SetParent(go.transform, false);
+                var gImg = glowGo.GetComponent<Image>();
+                gImg.sprite = UISprites.SoftGlow(); gImg.raycastTarget = false;
+                var gc = Skins.GlowOf(skin);
+                gImg.color = new Color(gc.r, gc.g, gc.b, 0.8f); // soft-glow fades to 0, so peak can be stronger
+                // A square halo centred on the glyph (which sits SkinW/2 in from its right edge).
+                const float g = 44f;
+                var grt = glowGo.GetComponent<RectTransform>();
+                grt.anchorMin = grt.anchorMax = new Vector2(1, 0.5f); grt.pivot = new Vector2(0.5f, 0.5f);
+                grt.sizeDelta = new Vector2(g, g);
+                grt.anchoredPosition = new Vector2(-(SkinFromRight + shift) - SkinW * 0.5f, 0);
+            }
             var sk = Glyph(go.transform, "\u265E", 17, skinColor, _theme != null ? _theme.glyphFont : null,
                            TextAlignmentOptions.Center);
             AnchorRight(sk.rectTransform, SkinFromRight + shift, SkinW);
@@ -322,7 +338,7 @@ namespace KnightsGauntlet.View
             if (!string.IsNullOrEmpty(reward))
             {
                 var rw = Glyph(go.transform, reward, 15, UIFactory.Gold, _ui.Font,
-                               TextAlignmentOptions.Right, FontStyles.Bold);
+                               TextAlignmentOptions.Right, FontStyles.Normal);
                 AnchorRight(rw.rectTransform, 8f, RewardW);
             }
         }
@@ -335,7 +351,7 @@ namespace KnightsGauntlet.View
             var t = go.AddComponent<TextMeshProUGUI>();
             if (font) t.font = font;
             t.text = text; t.fontSize = size; t.color = color; t.fontStyle = style;
-            t.alignment = align; t.enableWordWrapping = false;
+            t.alignment = align; t.textWrappingMode = TextWrappingModes.NoWrap;
             t.overflowMode = TextOverflowModes.Overflow; t.raycastTarget = false;
             return t;
         }

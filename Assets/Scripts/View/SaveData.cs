@@ -13,6 +13,8 @@ namespace KnightsGauntlet.View
         private const string SkinKey = "kg_skin";
         private const string ShillingsKey = "kg_shillings";
         private const string OwnedKey = "kg_owned_skins";        // CSV of shop skin ids
+        private const string VfxKey = "kg_vfx";                  // equipped movement VFX id ("none" default)
+        private const string OwnedVfxKey = "kg_owned_vfx";       // CSV of unlocked VFX ids
         private const string DailyDateKey = "kg_daily_date";     // yyyyMMdd of last daily play
         private const string DailyUsedKey = "kg_daily_used";     // attempts used today
 
@@ -25,8 +27,19 @@ namespace KnightsGauntlet.View
         public static bool IsNameLocked() => !string.IsNullOrEmpty(GetName());
 
         // ── Colorblind mode (shape markers on enemy move-intent cells) ───────
-        public static bool IsColorblind() => PlayerPrefs.GetInt("kg_colorblind", 0) == 1;
-        public static void SetColorblind(bool on) { PlayerPrefs.SetInt("kg_colorblind", on ? 1 : 0); PlayerPrefs.Save(); }
+        // Read once per frame by GameView.Sync, so it's cached in memory: PlayerPrefs is a
+        // native call, and this value only ever changes from the settings toggle below.
+        private static int _colorblindCache = -1;
+        public static bool IsColorblind()
+        {
+            if (_colorblindCache < 0) _colorblindCache = PlayerPrefs.GetInt("kg_colorblind", 0);
+            return _colorblindCache == 1;
+        }
+        public static void SetColorblind(bool on)
+        {
+            _colorblindCache = on ? 1 : 0;
+            PlayerPrefs.SetInt("kg_colorblind", _colorblindCache); PlayerPrefs.Save();
+        }
 
         // ── Adventure mode (best stars per level, 0..3) ──────────────────────
         public static int GetStars(string levelId) => PlayerPrefs.GetInt("kg_adv_" + levelId, 0);
@@ -57,6 +70,38 @@ namespace KnightsGauntlet.View
             return true;
         }
 
+        // ── Powerup inventory (consumable; buy in the shop, spend on activation) ──
+        // Stored per powerup id as a simple count under "kg_pu_<id>". The HUD reads these
+        // every frame, so counts are cached in memory and only written through on a change
+        // (the key-string concat alone was allocating once per powerup per frame).
+        private static readonly Dictionary<string, int> _powerupCache = new Dictionary<string, int>();
+        public static int GetPowerup(string id)
+        {
+            if (_powerupCache.TryGetValue(id, out int v)) return v;
+            v = PlayerPrefs.GetInt("kg_pu_" + id, 0);
+            _powerupCache[id] = v;
+            return v;
+        }
+        public static void AddPowerup(string id, int n)
+        {
+            if (n == 0) return;
+            SetPowerup(id, Math.Max(0, GetPowerup(id) + n));
+        }
+        // Consumes one; returns false (and spends nothing) if the player has none.
+        public static bool TrySpendPowerup(string id)
+        {
+            int have = GetPowerup(id);
+            if (have <= 0) return false;
+            SetPowerup(id, have - 1);
+            return true;
+        }
+        private static void SetPowerup(string id, int n)
+        {
+            _powerupCache[id] = n;
+            PlayerPrefs.SetInt("kg_pu_" + id, n);
+            PlayerPrefs.Save();
+        }
+
         // ── Owned (purchased) shop skins ─────────────────────────────────────
         public static HashSet<string> GetOwnedSkins()
         {
@@ -73,6 +118,28 @@ namespace KnightsGauntlet.View
             if (set.Add(id))
             {
                 PlayerPrefs.SetString(OwnedKey, string.Join(",", set));
+                PlayerPrefs.Save();
+            }
+        }
+
+        // ── Movement VFX (equipped + unlocked; lootbox-only) ─────────────────
+        public static string GetVfx() => PlayerPrefs.GetString(VfxKey, "none");
+        public static void SetVfx(string id) { PlayerPrefs.SetString(VfxKey, id); PlayerPrefs.Save(); }
+        public static HashSet<string> GetOwnedVfx()
+        {
+            var set = new HashSet<string>();
+            var csv = PlayerPrefs.GetString(OwnedVfxKey, "");
+            if (!string.IsNullOrEmpty(csv))
+                foreach (var id in csv.Split(',')) if (!string.IsNullOrEmpty(id)) set.Add(id);
+            return set;
+        }
+        public static bool OwnsVfx(string id) => GetOwnedVfx().Contains(id);
+        public static void AddOwnedVfx(string id)
+        {
+            var set = GetOwnedVfx();
+            if (set.Add(id))
+            {
+                PlayerPrefs.SetString(OwnedVfxKey, string.Join(",", set));
                 PlayerPrefs.Save();
             }
         }

@@ -8,7 +8,7 @@ namespace KnightsGauntlet.Core
     // the knight can still reach in the two most recently spawned rows) so it can
     // detect a row that would seal the board and pry one trap open to fix it.
     //
-    // RNG is injected so generation is deterministic in tests — you can seed a
+    // RNG is injected so generation is deterministic in tests: you can seed a
     // Random, spawn thousands of rows, and assert the board is never sealed.
     public class TrapGenerator
     {
@@ -78,7 +78,7 @@ namespace KnightsGauntlet.Core
             }
 
             // Solvability repair: if NONE of this row's open cells are reachable
-            // from the frontier, the row would seal the board — so open one extra
+            // from the frontier, the row would seal the board, so open one extra
             // cell that restores a forward route. Fires on ~0.3% of rows.
             var openCols = new List<int>();
             for (int c = 0; c < GameConfig.Cols; c++)

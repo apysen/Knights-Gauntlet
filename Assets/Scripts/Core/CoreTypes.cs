@@ -42,10 +42,17 @@ namespace KnightsGauntlet.Core
         public int HomeCol, HomeRow, OffCol, OffRow;
         public int Phase;        // 0 = home, 1 = away
         public bool Alive = true;
-        public int Col => Phase == 0 ? HomeCol : HomeCol + OffCol;
-        public int Row => Phase == 0 ? HomeRow : HomeRow + OffRow;
-        public int NextCol => Phase == 0 ? HomeCol + OffCol : HomeCol;
-        public int NextRow => Phase == 0 ? HomeRow + OffRow : HomeRow;
-        public bool Moves => OffCol != 0 || OffRow != 0;
+
+        // A Hunter queen chases the knight with real chess movement (blocked by traps)
+        // instead of oscillating. It is a pure hazard, not a capture target, and its live
+        // position is CurCol/CurRow rather than derived from Phase.
+        public bool Hunter;
+        public int CurCol, CurRow;
+
+        public int Col => Hunter ? CurCol : (Phase == 0 ? HomeCol : HomeCol + OffCol);
+        public int Row => Hunter ? CurRow : (Phase == 0 ? HomeRow : HomeRow + OffRow);
+        public int NextCol => Hunter ? CurCol : (Phase == 0 ? HomeCol + OffCol : HomeCol);
+        public int NextRow => Hunter ? CurRow : (Phase == 0 ? HomeRow + OffRow : HomeRow);
+        public bool Moves => Hunter || OffCol != 0 || OffRow != 0;
     }
 }

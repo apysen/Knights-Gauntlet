@@ -9,7 +9,7 @@ namespace KnightsGauntlet.View
 {
     // Forces a Google Play "immediate" update on launch whenever a newer version
     // is live on the Play Store. Google's own full-screen flow handles all of the
-    // UI (download, install, restart) — there is no custom panel.
+    // UI (download, install, restart). There is no custom panel.
     //
     // It self-bootstraps at launch, so nothing else needs to reference it.
     //
@@ -68,7 +68,7 @@ namespace KnightsGauntlet.View
                 if (!needsUpdate || !info.IsUpdateTypeAllowed(options)) break; // already up to date
 
                 // Immediate flow: Google shows a full-screen prompt, downloads,
-                // installs, and restarts the app on success — so the code after this
+                // installs, and restarts the app on success, so the code after this
                 // is only reached if the user backed out or the update failed.
                 var request = _manager.StartUpdate(info, options);
                 yield return request;

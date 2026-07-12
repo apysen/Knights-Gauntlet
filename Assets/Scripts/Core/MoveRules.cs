@@ -6,7 +6,9 @@ namespace KnightsGauntlet.Core
     // Port of getValidMoves(). Given the board and the player's current form,
     // returns every legal destination. In Trap mode the form is always Knight.
     // In Battle mode the player can be a sliding piece or a nightrider, so the
-    // table-driven ray logic from the original is preserved.
+    // table-driven ray logic from the original is preserved. Adventure runs in
+    // Trap mode, but its transformation world lets the knight become a sliding
+    // piece too, so it opts in via the adventureForm flag.
     public static class MoveRules
     {
         private static readonly Int2[] Ortho =
@@ -14,22 +16,23 @@ namespace KnightsGauntlet.Core
         private static readonly Int2[] Diag =
             { new Int2(1, 1), new Int2(1, -1), new Int2(-1, 1), new Int2(-1, -1) };
 
-        // Allocating convenience wrapper — used on tap (not per frame).
+        // Allocating convenience wrapper, used on tap (not per frame).
         public static List<MoveTarget> GetValidMoves(
             IReadOnlyList<GamePiece> pieces, int playerCol, float playerY,
-            GameMode mode, PieceType playerForm)
+            GameMode mode, PieceType playerForm, bool adventureForm = false)
         {
             var outMoves = new List<MoveTarget>();
-            Fill(outMoves, pieces, playerCol, playerY, mode, playerForm);
+            Fill(outMoves, pieces, playerCol, playerY, mode, playerForm, adventureForm);
             return outMoves;
         }
 
         // Allocation-free: clears and fills the caller's buffer. Use this every
-        // frame (move hints) so it doesn't churn the GC. No dedup set is needed —
+        // frame (move hints) so it doesn't churn the GC. No dedup set is needed:
         // rays from a single origin never revisit the same cell.
         public static void Fill(
             List<MoveTarget> outMoves, IReadOnlyList<GamePiece> pieces,
-            int playerCol, float playerY, GameMode mode, PieceType playerForm)
+            int playerCol, float playerY, GameMode mode, PieceType playerForm,
+            bool adventureForm = false)
         {
             outMoves.Clear();
 
@@ -57,7 +60,7 @@ namespace KnightsGauntlet.Core
                 return true;
             }
 
-            PieceType form = mode == GameMode.Battle ? playerForm : PieceType.Knight;
+            PieceType form = (mode == GameMode.Battle || adventureForm) ? playerForm : PieceType.Knight;
 
             if (form == PieceType.Knight)
             {

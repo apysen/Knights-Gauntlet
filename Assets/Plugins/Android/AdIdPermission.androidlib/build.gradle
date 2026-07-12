@@ -1,0 +1,15 @@
+// Minimal Android library that exists only to merge the AD_ID uses-permission into the
+// app. Unity 6 uses AGP 8, which requires a namespace here (not a package in the manifest).
+// compileSdk / minSdk must match Unity's unityLibrary module (currently compileSdk 36,
+// minSdk 26) — if you change the target API in Player Settings, update compileSdk here too,
+// or this module fails to resolve its R file. No code or resources, just the manifest.
+apply plugin: 'com.android.library'
+
+android {
+    namespace "com.apy.knightsgauntlet.adid"
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+}

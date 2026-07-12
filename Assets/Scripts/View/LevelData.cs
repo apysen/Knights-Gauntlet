@@ -8,8 +8,9 @@ namespace KnightsGauntlet.Core
     {
         public PieceType Type;
         public int Col, Row, OffCol, OffRow;
-        public EnemySpec(PieceType type, int col, int row, int offCol, int offRow)
-        { Type = type; Col = col; Row = row; OffCol = offCol; OffRow = offRow; }
+        public bool Hunter; // true = a queen that chases the knight (chess movement, trap-blocked), not a capture target
+        public EnemySpec(PieceType type, int col, int row, int offCol, int offRow, bool hunter = false)
+        { Type = type; Col = col; Row = row; OffCol = offCol; OffRow = offRow; Hunter = hunter; }
     }
 
     // An adventure level. Two flavors:
@@ -31,10 +32,23 @@ namespace KnightsGauntlet.Core
         public int StartCol, StartRow;
         public int GoalCol, GoalRow;  // Reach / Combined
         public Int2[] Traps;
+        public Int2[] Cracked;        // fragile tiles: safe once, collapse to a trap on leaving
         public EnemySpec[] Enemies;   // CaptureAll / Combined
         public bool HasShilling;      // spawn one random reachable coin (currency only)
+        public bool Transform;        // transformation world: capturing enemies changes the
+                                      // knight's form (2 pips) so it can slide to an otherwise
+                                      // unreachable goal. Misses never reset the pips.
         public int MapRows;           // 0 = normal 10-row board; >10 = tall follow-camera map
+        // Queen-boss encounter: play these layouts in sequence. Each phase adds a queen
+        // (an EnemySpec with Hunter = true) shielded by its minions; capturing the queen
+        // clears the phase and transports you to the next. Null for ordinary levels.
+        public LevelData[] Phases;
         public int ThreeStar;
         public int TwoStar;
+    }
+
+    public static class LevelDataExt
+    {
+        public static bool IsBoss(this LevelData lvl) => lvl != null && lvl.Phases != null && lvl.Phases.Length > 0;
     }
 }

@@ -62,13 +62,15 @@ namespace KnightsGauntlet.View
         public Sprite pickupSprite;
         public Color pickupColor = new Color(0.95f, 0.78f, 0.25f, 1f);
 
-        [Header("UI (menus / buttons) — null = generated rounded sprite")]
+        [Header("UI (menus / buttons): null = generated rounded sprite")]
         [Tooltip("9-sliced rounded fill used for buttons, inputs, pills, bars.")]
         public Sprite uiPanelSprite;
         [Tooltip("9-sliced rounded ring used for the selected / outline state.")]
         public Sprite uiBorderSprite;
         [Tooltip("Filled circle used for dots and markers.")]
         public Sprite uiCircleSprite;
+        [Tooltip("9-sliced bar used as the background for labelled buttons. Null = DEVNIK pixel bar from Resources, then the rounded fill.")]
+        public Sprite uiButtonSprite;
 
         [Header("Skins")]
         public SkinVisual[] skins;
