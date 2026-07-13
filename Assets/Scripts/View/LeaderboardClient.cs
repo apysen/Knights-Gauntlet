@@ -214,8 +214,15 @@ namespace KnightsGauntlet.View
                 SetHeaders(req, true);
                 req.SetRequestHeader("Prefer", "return=minimal");
                 yield return req.SendWebRequest();
-                if (req.result == UnityWebRequest.Result.Success) onOk?.Invoke();
-                else onFail?.Invoke();
+                if (req.result == UnityWebRequest.Result.Success) { onOk?.Invoke(); yield break; }
+
+                // Every caller on the score path passes a null onFail, so a rejected write
+                // used to vanish without a trace: the run simply never appeared online and
+                // nothing anywhere said why. Always log the status and Supabase's own error
+                // body (it names the offending column or RLS policy).
+                Debug.LogWarning($"[Leaderboard] {method} {url} failed: HTTP {req.responseCode} " +
+                                 $"({req.result}) {req.error} | sent: {body} | reply: {req.downloadHandler?.text}");
+                onFail?.Invoke();
             }
         }
     }

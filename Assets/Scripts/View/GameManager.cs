@@ -168,7 +168,13 @@ namespace KnightsGauntlet.View
             var lgo = new GameObject("Leaderboard"); lgo.transform.SetParent(transform, false);
             _lb = lgo.AddComponent<LeaderboardClient>();
             var sb = SupabaseConfig.Load();
-            if (sb != null) { _lb.supabaseUrl = sb.url; _lb.supabaseKey = sb.key; }
+            if (sb != null)
+            {
+                _lb.supabaseUrl = sb.url; _lb.supabaseKey = sb.key;
+                // Logged positively so that, on a device, an absent "no config" warning is not
+                // mistaken for a healthy load. Only the host is logged - never the key.
+                Debug.Log("[Knight's Gauntlet] Supabase configured: " + sb.url);
+            }
             else Debug.Log("[Knight's Gauntlet] No SupabaseConfig in Resources, online leaderboard is off. " +
                            "Create Assets/Resources/SupabaseConfig.asset to enable it.");
 
