@@ -171,6 +171,7 @@ namespace KnightsGauntlet.View
             if (sb != null)
             {
                 _lb.supabaseUrl = sb.url; _lb.supabaseKey = sb.key;
+                _lb.OnNameRejected += OnNameRejected;
                 // Logged positively so that, on a device, an absent "no config" warning is not
                 // mistaken for a healthy load. Only the host is logged - never the key.
                 Debug.Log("[Knight's Gauntlet] Supabase configured: " + sb.url);
@@ -301,6 +302,19 @@ namespace KnightsGauntlet.View
         public bool TransformActive => _sim != null && _sim.Mode == GameMode.Battle && _sim.TransformActive;
         public PieceType PlayerForm => _sim != null ? _sim.PlayerForm : PieceType.Knight;
         public void CheckNameAvailable(string name, Action<bool> cb) => _lb.CheckNameAvailable(name, cb);
+
+        // The server refused this name: it collides with an existing one that differs only in
+        // case, so it can never post a score. Names are normally permanent, but keeping this
+        // one would leave the player silently unable to reach the leaderboard forever - so we
+        // release it and let them choose again. Their local scores are untouched.
+        private void OnNameRejected(string name)
+        {
+            if (SaveData.GetName() != name) return; // stale reply from a name they already dropped
+
+            Debug.LogWarning("[Knight's Gauntlet] Name '" + name + "' is unusable (case conflict); releasing it.");
+            SaveData.SetName("");
+            _ui?.ShowNameRejected(name);
+        }
 
         // On a new day, see whether the player placed top-5 in yesterday's daily
         // challenge; if so, grant the reward and show a congrats popup on the menu.

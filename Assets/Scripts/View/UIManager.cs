@@ -462,6 +462,16 @@ namespace KnightsGauntlet.View
             }
         }
 
+        // The server rejected this name (it clashes with an existing one that differs only in
+        // case), so GameManager has already released it. Re-open the name field and say why,
+        // otherwise the player would just silently stop appearing on the leaderboard.
+        public void ShowNameRejected(string name)
+        {
+            RefreshNameUI();                       // name is cleared, so this re-shows the input
+            if (_nameInput != null) _nameInput.text = "";
+            SetMenuWarn("\"" + name + "\" is already taken. Please pick another name.", UIFactory.Error);
+        }
+
         // Set the menu warning line, hiding it entirely when blank so it adds no
         // layout space (keeps "Playing as…" centered between the buttons).
         private void SetMenuWarn(string text, Color color)

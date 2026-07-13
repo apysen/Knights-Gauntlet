@@ -33,6 +33,21 @@ namespace KnightsGauntlet.View
         [Serializable] private class SkinBody { public string skin; }
         [Serializable] private class BugBody { public string message; public string name; public string app_version; public string device; public string os; }
 
+        // Raised when Supabase refuses a score because the player's name collides with an
+        // existing name that differs only in case (the scores_name_case trigger). Such a
+        // name can NEVER post a score - not now, not later - so the player has to be told
+        // and allowed to pick another, even though names are otherwise permanent.
+        //
+        // This is reachable because CheckNameAvailable fails open: if the availability
+        // request errors, the claim is allowed through, and the player can end up holding
+        // e.g. "BOB" when "Bob" already exists.
+        public event Action<string> OnNameRejected;
+
+        // A rejection from that trigger: PostgREST answers 409 and Postgres' unique-violation
+        // SQLSTATE 23505, which the trigger raises explicitly.
+        private static bool IsNameConflict(long httpStatus, string reply)
+            => httpStatus == 409 && !string.IsNullOrEmpty(reply) && reply.Contains("23505");
+
         public static bool IsOnlineCategory(string category)
             => category != null && (category.EndsWith("hard") || category.EndsWith("grandmaster")
                                     || category.StartsWith("daily"));
@@ -82,11 +97,18 @@ namespace KnightsGauntlet.View
         {
             string url = supabaseUrl + "/rest/v1/scores";
             string body = JsonUtility.ToJson(new PostBody { name = name, score = score, category = category, skin = skin });
-            yield return Send(url, "POST", body, null, () =>
+            yield return Send(url, "POST", body, null, (status, reply) =>
             {
+                // A name conflict is permanent: retrying without the skin column would fail
+                // exactly the same way, so report it instead of silently trying again.
+                if (IsNameConflict(status, reply)) { OnNameRejected?.Invoke(name); return; }
+
                 // skin column may not exist yet → retry without it
                 string b2 = JsonUtility.ToJson(new PostBodyNoSkin { name = name, score = score, category = category });
-                StartCoroutine(Send(url, "POST", b2, null, null));
+                StartCoroutine(Send(url, "POST", b2, null, (status2, reply2) =>
+                {
+                    if (IsNameConflict(status2, reply2)) OnNameRejected?.Invoke(name);
+                }));
             });
         }
 
@@ -145,7 +167,7 @@ namespace KnightsGauntlet.View
                 device = SystemInfo.deviceModel,
                 os = SystemInfo.operatingSystem
             });
-            StartCoroutine(Send(url, "POST", body, onOk, onFail));
+            StartCoroutine(Send(url, "POST", body, onOk, (_, __) => onFail?.Invoke()));
         }
 
         // ── Sync equipped skin onto the player's rows ────────────────────────
@@ -205,7 +227,10 @@ namespace KnightsGauntlet.View
             }
         }
 
-        private IEnumerator Send(string url, string method, string body, Action onOk, Action onFail)
+        // onFail receives the HTTP status and Supabase's response body, so callers can tell a
+        // transient network error apart from a permanent rejection (a missing column, an RLS
+        // denial, a name conflict) and react differently.
+        private IEnumerator Send(string url, string method, string body, Action onOk, Action<long, string> onFail)
         {
             using (var req = new UnityWebRequest(url, method))
             {
@@ -214,15 +239,17 @@ namespace KnightsGauntlet.View
                 SetHeaders(req, true);
                 req.SetRequestHeader("Prefer", "return=minimal");
                 yield return req.SendWebRequest();
+
+                string reply = req.downloadHandler?.text;
                 if (req.result == UnityWebRequest.Result.Success) { onOk?.Invoke(); yield break; }
 
-                // Every caller on the score path passes a null onFail, so a rejected write
-                // used to vanish without a trace: the run simply never appeared online and
-                // nothing anywhere said why. Always log the status and Supabase's own error
-                // body (it names the offending column or RLS policy).
+                // Callers on the score path used to pass a null onFail, so a rejected write
+                // vanished without a trace: the run simply never appeared online and nothing
+                // anywhere said why. Always log the status and Supabase's own error body (it
+                // names the offending column, RLS policy, or constraint).
                 Debug.LogWarning($"[Leaderboard] {method} {url} failed: HTTP {req.responseCode} " +
-                                 $"({req.result}) {req.error} | sent: {body} | reply: {req.downloadHandler?.text}");
-                onFail?.Invoke();
+                                 $"({req.result}) {req.error} | sent: {body} | reply: {reply}");
+                onFail?.Invoke(req.responseCode, reply);
             }
         }
     }
