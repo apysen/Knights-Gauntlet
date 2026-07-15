@@ -19,20 +19,26 @@ namespace KnightsGauntlet.Core
         // Allocating convenience wrapper, used on tap (not per frame).
         public static List<MoveTarget> GetValidMoves(
             IReadOnlyList<GamePiece> pieces, int playerCol, float playerY,
-            GameMode mode, PieceType playerForm, bool adventureForm = false)
+            GameMode mode, PieceType playerForm, bool adventureForm = false,
+            float rayLo = -1f, float rayHi = GameConfig.Rows + 1f)
         {
             var outMoves = new List<MoveTarget>();
-            Fill(outMoves, pieces, playerCol, playerY, mode, playerForm, adventureForm);
+            Fill(outMoves, pieces, playerCol, playerY, mode, playerForm, adventureForm, rayLo, rayHi);
             return outMoves;
         }
 
         // Allocation-free: clears and fills the caller's buffer. Use this every
         // frame (move hints) so it doesn't churn the GC. No dedup set is needed:
         // rays from a single origin never revisit the same cell.
+        // rayLo/rayHi bound how far a ray (or knight jump) may reach in Y. They default to
+        // the ±1 off-board SCREEN margin used by the scrolling modes. Tall adventure maps
+        // pass the whole map's extent (in screen space) instead, so a slider's reach depends
+        // on the board, not the transient follow/manual camera — otherwise scrolling the view
+        // would clip your legal moves, and long slides couldn't cross the visible window.
         public static void Fill(
             List<MoveTarget> outMoves, IReadOnlyList<GamePiece> pieces,
             int playerCol, float playerY, GameMode mode, PieceType playerForm,
-            bool adventureForm = false)
+            bool adventureForm = false, float rayLo = -1f, float rayHi = GameConfig.Rows + 1f)
         {
             outMoves.Clear();
 
@@ -41,7 +47,7 @@ namespace KnightsGauntlet.Core
             bool TryAdd(int nc, float ny)
             {
                 if (nc < 0 || nc >= GameConfig.Cols) return false;
-                if (ny < -1f || ny > GameConfig.Rows + 1f) return false;
+                if (ny < rayLo || ny > rayHi) return false;
 
                 for (int j = 0; j < pieces.Count; j++)
                 {

@@ -1,11 +1,12 @@
 namespace KnightsGauntlet.Core
 {
     // Prototype content, all solver-validated (guaranteed solvable, 3-star = true
-    // optimal move count; 2-star = optimal + 2). Five worlds of six levels each, plus
-    // World 6: a single three-phase queen-boss encounter (see the "6-1" entry / Phases).
-    // Each world introduces one mechanic: the first three levels drill that
-    // mechanic in isolation, the last three combine it with every earlier world's
-    // mechanic. Difficulty (optimal move count) rises across each world.
+    // optimal move count; 2-star = optimal + 2). Six worlds of six levels each, plus
+    // World 7: a single three-phase queen-boss encounter (see the "7-1" entry / Phases).
+    // Each of the first five worlds introduces one mechanic: the first three levels
+    // drill that mechanic in isolation, the last three combine it with every earlier
+    // world's mechanic. World 6 is the gauntlet: all mechanics at once, escalating.
+    // Difficulty (optimal move count) rises across each world.
     //   World 1 - Reach: maneuver around traps to the goal tile.
     //   World 2 - CaptureAll: capture every oscillating enemy (4-6 add the goal).
     //   World 3 - Tall maps: follow-camera vertical climbs (4-6 add enemies).
@@ -16,6 +17,9 @@ namespace KnightsGauntlet.Core
     //             then slide as a rook/bishop to the goal. Targets are stationary
     //             for 5-1/5-2, then move; 5-5/5-6 add a third target you capture
     //             after transforming.
+    //   World 6 - The gauntlet: every earlier mechanic combined in one level each
+    //             (traps, capture-all, tall climbs, cracked ground, transform),
+    //             escalating to the tall transform finale "Apotheosis".
     // Enemy oscillation: rook = (0,±1) vertical, bishop = (±1,±1) diagonal,
     // pawn/stationary = (0,0).
     public static class AdventureLevels
@@ -294,7 +298,72 @@ namespace KnightsGauntlet.Core
                 ThreeStar = 11, TwoStar = 13
             },
 
-            // ── World 6 : the crown, a three-phase queen boss ─────────────────
+            // ── World 6 : the gauntlet, every earlier mechanic at once ────────
+            // The victory-lap world: traps, capture-all, tall follow-camera climbs,
+            // cracked ground and transformation are combined in a single level each,
+            // escalating. Transform levels keep the World-5 trick (the goal's knight
+            // L-sources are trapped, so only a rook/bishop slide reaches it) layered on
+            // top of cracked tiles and tall maps. Every layout is solver-validated:
+            // 3-star = optimal move count, 2-star = optimal + 2.
+            new LevelData
+            {
+                Id = "6-1", Name = "Convergence", Objective = Objective.Combined,
+                StartCol = 2, StartRow = 9, GoalCol = 2, GoalRow = 0,
+                Enemies = new[] { new EnemySpec(PieceType.Bishop, 1, 7, 1, -1), new EnemySpec(PieceType.Bishop, 3, 5, -1, -1) },
+                Traps = new[] { new Int2(0,3), new Int2(4,3), new Int2(2,7), new Int2(1,1), new Int2(3,1), new Int2(0,8), new Int2(4,7) },
+                Cracked = new[] { new Int2(1,5), new Int2(3,3), new Int2(2,2), new Int2(0,5), new Int2(4,5), new Int2(2,8), new Int2(1,3) },
+                ThreeStar = 9, TwoStar = 11
+            },
+            new LevelData
+            {
+                Id = "6-2", Name = "Brittle Crown", Objective = Objective.Combined, Transform = true,
+                StartCol = 2, StartRow = 9, GoalCol = 2, GoalRow = 0,
+                Enemies = new[] { new EnemySpec(PieceType.Rook, 2, 4, 0, 0), new EnemySpec(PieceType.Rook, 1, 7, 0, 1), new EnemySpec(PieceType.Bishop, 3, 6, -1, -1) },
+                Traps = new[] { new Int2(0,1), new Int2(4,1), new Int2(1,2), new Int2(3,2), new Int2(0,6), new Int2(4,5) },
+                Cracked = new[] { new Int2(1,4), new Int2(3,4), new Int2(0,4), new Int2(4,4), new Int2(1,8), new Int2(3,8) },
+                ThreeStar = 5, TwoStar = 7
+            },
+            new LevelData
+            {
+                Id = "6-3", Name = "The Long Climb", Objective = Objective.Combined, MapRows = 16,
+                StartCol = 2, StartRow = 14, GoalCol = 2, GoalRow = 1,
+                Enemies = new[] { new EnemySpec(PieceType.Bishop, 2, 15, -1, -1), new EnemySpec(PieceType.Bishop, 3, 9, -1, -1), new EnemySpec(PieceType.Pawn, 4, 6, 0, 0) },
+                Traps = new[] { new Int2(2,4), new Int2(0,12), new Int2(0,6), new Int2(2,10), new Int2(4,15), new Int2(0,2), new Int2(4,9), new Int2(0,10), new Int2(1,5), new Int2(0,3) },
+                Cracked = new[] { new Int2(0,4), new Int2(0,5), new Int2(0,8), new Int2(0,11), new Int2(0,13), new Int2(0,15), new Int2(1,1), new Int2(1,3), new Int2(1,4), new Int2(1,7), new Int2(1,11), new Int2(1,12), new Int2(1,13), new Int2(1,14), new Int2(1,15), new Int2(2,5), new Int2(2,6), new Int2(2,8), new Int2(3,0), new Int2(3,1), new Int2(3,2), new Int2(3,3), new Int2(3,5), new Int2(3,6), new Int2(3,7), new Int2(3,8), new Int2(3,11), new Int2(3,13), new Int2(4,3), new Int2(4,7), new Int2(4,8), new Int2(4,11), new Int2(4,13), new Int2(4,14) },
+                ThreeStar = 15, TwoStar = 17
+            },
+            new LevelData
+            {
+                Id = "6-4", Name = "Shifting Ascent", Objective = Objective.Combined, Transform = true, MapRows = 16,
+                StartCol = 2, StartRow = 14, GoalCol = 2, GoalRow = 1,
+                Enemies = new[] { new EnemySpec(PieceType.Rook, 2, 9, 0, 0), new EnemySpec(PieceType.Rook, 1, 12, 0, 1), new EnemySpec(PieceType.Bishop, 4, 7, -1, -1) },
+                Traps = new[] { new Int2(1,3), new Int2(3,3), new Int2(0,2), new Int2(4,2), new Int2(0,0), new Int2(4,0), new Int2(0,7), new Int2(2,11) },
+                Cracked = new[] { new Int2(1,5), new Int2(3,5), new Int2(0,11), new Int2(4,11), new Int2(1,13), new Int2(3,13) },
+                ThreeStar = 7, TwoStar = 9
+            },
+            new LevelData
+            {
+                Id = "6-5", Name = "Everything", Objective = Objective.Combined, Transform = true, MapRows = 18,
+                StartCol = 2, StartRow = 16, GoalCol = 2, GoalRow = 1,
+                Enemies = new[] { new EnemySpec(PieceType.Rook, 2, 7, 0, -1), new EnemySpec(PieceType.Bishop, 4, 11, -1, -1), new EnemySpec(PieceType.Rook, 1, 13, 0, 1) },
+                Traps = new[] { new Int2(1,3), new Int2(3,3), new Int2(0,2), new Int2(4,2), new Int2(0,0), new Int2(4,0), new Int2(0,9), new Int2(4,10), new Int2(2,12), new Int2(1,15), new Int2(3,15) },
+                Cracked = new[] { new Int2(1,5), new Int2(3,5), new Int2(0,7), new Int2(4,7), new Int2(1,11), new Int2(3,9), new Int2(2,13), new Int2(0,13), new Int2(4,13), new Int2(1,16), new Int2(3,16) },
+                ThreeStar = 10, TwoStar = 12
+            },
+            new LevelData
+            {
+                Id = "6-6", Name = "Apotheosis", Objective = Objective.Combined, Transform = true, MapRows = 20,
+                StartCol = 2, StartRow = 18, GoalCol = 2, GoalRow = 1,
+                Enemies = new[] { new EnemySpec(PieceType.Rook, 2, 8, 0, 0), new EnemySpec(PieceType.Bishop, 3, 12, -1, -1), new EnemySpec(PieceType.Rook, 1, 15, 0, 1), new EnemySpec(PieceType.Bishop, 0, 10, 1, -1) },
+                Traps = new[] { new Int2(1,3), new Int2(3,3), new Int2(0,2), new Int2(4,2), new Int2(0,0), new Int2(4,0), new Int2(0,6), new Int2(4,6), new Int2(0,14), new Int2(4,14), new Int2(1,5), new Int2(3,5) },
+                Cracked = new[] { new Int2(0,4), new Int2(4,4), new Int2(1,11), new Int2(3,11), new Int2(0,9), new Int2(4,9), new Int2(2,14), new Int2(1,17), new Int2(3,17), new Int2(0,16), new Int2(4,16), new Int2(1,7), new Int2(3,7) },
+                // 3-star relaxed to optimal+2 (14): the 12-move optimal ends on a full-length
+                // column slide that's fiddly to line up on the tall follow-camera, so give it
+                // a little slack rather than demanding frame-perfect routing.
+                ThreeStar = 14, TwoStar = 16
+            },
+
+            // ── World 7 : the crown, a three-phase queen boss ─────────────────
             // "The Queen" has 3 HP. Each phase she is shielded (uncapturable) by her
             // minions, ordinary pieces you must hunt down first. Clear the minions and
             // the shield drops; capture the queen to take a crown of health and get
@@ -305,7 +374,7 @@ namespace KnightsGauntlet.Core
             // play isn't the point. Surviving the escalation is.
             new LevelData
             {
-                Id = "6-1", Name = "Coronation", Objective = Objective.CaptureAll,
+                Id = "7-1", Name = "Coronation", Objective = Objective.CaptureAll,
                 ThreeStar = 40, TwoStar = 80,
                 Phases = new[]
                 {

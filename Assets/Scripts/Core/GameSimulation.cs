@@ -332,9 +332,21 @@ namespace KnightsGauntlet.Core
             CheckCollision();
         }
 
+        // The screen-Y window a move ray may extend over. Scrolling modes (Trap/Battle) keep
+        // the ±1 off-board margin. On a tall follow-camera adventure map the window is the
+        // whole map (in screen space), so slider reach follows the board, not the camera —
+        // FilterMapBounds then trims to the exact 0..MapRows-1 rows.
+        private void MoveRayBounds(out float lo, out float hi)
+        {
+            if (MapRows <= 0) { lo = -1f; hi = GameConfig.Rows + 1f; return; }
+            lo = ScrollCells - 0.5f;
+            hi = (MapRows - 1) + ScrollCells + 0.5f;
+        }
+
         public List<MoveTarget> GetValidMoves()
         {
-            var m = MoveRules.GetValidMoves(Pieces, PlayerCol, PlayerY, Mode, PlayerForm, AdvTransform);
+            MoveRayBounds(out float lo, out float hi);
+            var m = MoveRules.GetValidMoves(Pieces, PlayerCol, PlayerY, Mode, PlayerForm, AdvTransform, lo, hi);
             FilterMapBounds(m);
             return m;
         }
@@ -344,7 +356,8 @@ namespace KnightsGauntlet.Core
         private readonly List<MoveTarget> _movesBuffer = new List<MoveTarget>();
         public List<MoveTarget> GetValidMovesNonAlloc()
         {
-            MoveRules.Fill(_movesBuffer, Pieces, PlayerCol, PlayerY, Mode, PlayerForm, AdvTransform);
+            MoveRayBounds(out float lo, out float hi);
+            MoveRules.Fill(_movesBuffer, Pieces, PlayerCol, PlayerY, Mode, PlayerForm, AdvTransform, lo, hi);
             FilterMapBounds(_movesBuffer);
             return _movesBuffer;
         }
@@ -731,6 +744,7 @@ namespace KnightsGauntlet.Core
                 Score = _trapScore;
                 // Tetris-style progression: step up a level (and speed) once score
                 // crosses each threshold. Monotonic, so backtracking never slows it.
+                bool leveledUp = false;
                 if (!Tutorial && !Adventure)
                 {
                     int lvl = Score / GameConfig.TrapLevelInterval;
@@ -741,7 +755,7 @@ namespace KnightsGauntlet.Core
                         if (newSpeed > _speed) // only flash on a real increase (stops once capped)
                         {
                             _speed = newSpeed;
-                            OnTrapLevelUp?.Invoke(_trapLevel);
+                            leveledUp = true;
                         }
                     }
                 }
@@ -754,6 +768,9 @@ namespace KnightsGauntlet.Core
                 if (Trail.Count > 12) Trail.RemoveAt(0);
                 CollectPickups();
                 CheckCollision();
+                // Fire AFTER the knight has moved so listeners (e.g. the level-up burst) read
+                // the destination tile, not the one it left.
+                if (leveledUp) OnTrapLevelUp?.Invoke(_trapLevel);
                 return result;
             }
 

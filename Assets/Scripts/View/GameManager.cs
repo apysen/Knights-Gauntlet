@@ -22,6 +22,7 @@ namespace KnightsGauntlet.View
         private State _state = State.Menu;
 
         private bool _daily;
+        private bool _trapLeveledUpThisMove; // set by HandleTrapLevelUp during a move; suppresses that move's blip
         private int _reviveCount;
         private bool _adLifeUsed;    // one free ad revive per run
         private float _reviveCountdown;
@@ -30,6 +31,7 @@ namespace KnightsGauntlet.View
         private GameSimulation _sim;
         private BoardView _board;
         private GameView _view;
+        private CameraShake _shake;
         private UIManager _ui;
         private LeaderboardClient _lb;
         private LeaderboardScreen _lbScreen;
@@ -132,6 +134,8 @@ namespace KnightsGauntlet.View
                 var cgo = new GameObject("Main Camera") { tag = "MainCamera" };
                 cam = cgo.AddComponent<Camera>();
             }
+            _shake = cam.GetComponent<CameraShake>();
+            if (_shake == null) _shake = cam.gameObject.AddComponent<CameraShake>();
 
             var bgo = new GameObject("Board"); bgo.transform.SetParent(transform, false);
             _board = bgo.AddComponent<BoardView>();
@@ -187,6 +191,18 @@ namespace KnightsGauntlet.View
 
             CheckDailyReward();
         }
+
+        // A subtle camera kick on capture. The magnitude is scaled off the current
+        // orthographic size so it reads the same fraction of the screen on any device.
+        private void ShakeOnCapture()
+        {
+            if (_shake == null || cam == null || !SaveData.IsScreenShake()) return;
+            _shake.Shake(cam.orthographicSize * 0.012f, 0.18f);
+        }
+
+        // The tint the "disintegration" shards take. Battle passes the exact captured
+        // piece; adventure/boss don't carry the piece, so they pass a stand-in type.
+        private Color BurstColor(PieceType type) => theme != null ? theme.GetPiece(type).tint : Color.white;
 
         // ── Public API (called by UIManager) ─────────────────────────────────
         public void StartGame(GameMode mode, Difficulty difficulty)
@@ -699,10 +715,26 @@ namespace KnightsGauntlet.View
             _board.WashColor = UIFactory.Hex("#F0C040");
             _washPulse = 1f;
             _ui.ShowToast("Level " + level + "! Speeding up");
+            // Celebratory pixel burst from the knight (its destination tile) plus the same
+            // camera kick as a battle capture, tinted to the equipped skin so it reads as
+            // the knight powering up.
+            var tint = theme != null ? theme.GetSkinTint(CurrentSkin()) : Color.white;
+            _view.SpawnCaptureBurst(_sim.PlayerCol, _sim.PlayerY, tint);
+            ShakeOnCapture();
+            // The level-up sting replaces the normal move blip for this move (flag consumed
+            // in HandleInput), so the two don't play over each other.
+            SfxManager.Play(Sfx.TrapLevelUp);
+            _trapLeveledUpThisMove = true;
         }
 
         // ── Adventure mode (stationary puzzles, or scrolling survival) ────────
         private bool _advScrolling, _advTall, _advManualScroll;
+        // Swipe-to-scroll gesture state (tall maps): a press that drags past the threshold
+        // scrolls the view; one that doesn't becomes a tap-move on release.
+        private bool _advPointerDown, _advDragged;
+        private Vector2 _advPointerStart;
+        private float _advScrollAtPointerStart;
+        private const float SwipeThresholdPx = 12f;
         private int _lastAdvPct = -1, _lastAdvHudMoves = -1; // gate the scrolling HUD rebuild
         private int _bossPhase, _queenHealth; // queen-boss encounters (see LevelData.Phases)
         private bool _bossQueenDead;          // final queen down: now reach the flag to finish
@@ -791,7 +823,14 @@ namespace KnightsGauntlet.View
         private void HandleAdventureInput()
         {
             if (OverUI()) return;
-            if (GetTapDown(out Vector2 screenPos))
+            if (GetTapDown(out Vector2 screenPos)) PerformAdventureTap(screenPos);
+        }
+
+        // Applies a tap at the given screen position: the actual adventure move plus every
+        // consequence (sfx, capture vfx, boss phases, divine-path re-solve, win/fail). Split
+        // from input detection so tall maps can defer it to finger-up (swipe vs. tap).
+        private void PerformAdventureTap(Vector2 screenPos)
+        {
             {
                 Vector3 world = cam.ScreenToWorldPoint(
                     new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
@@ -807,7 +846,12 @@ namespace KnightsGauntlet.View
                 int enemiesBefore = _sim.AdvRemaining;
                 if (hasEnemies && _sim.AdventureAfterMove()) { AdventureFail(); return; } // an enemy caught you
                 // A move that removed an enemy is a capture; otherwise a plain move.
-                if (hasEnemies && _sim.AdvRemaining < enemiesBefore) SfxManager.Play(Sfx.PieceCapture);
+                if (hasEnemies && _sim.AdvRemaining < enemiesBefore)
+                {
+                    SfxManager.Play(Sfx.PieceCapture); ShakeOnCapture();
+                    // The captured enemy sat on the tile the knight just landed on.
+                    _view.SpawnCaptureBurst(_sim.PlayerCol, _sim.PlayerY, BurstColor(PieceType.Pawn));
+                }
                 else SfxManager.Play(Sfx.PieceMove);
 
                 _ui.SetAdventureHud(true, _advMoves, _advLevel.Name, AdvEnemiesLeft());
@@ -856,6 +900,8 @@ namespace KnightsGauntlet.View
         {
             _queenHealth = Mathf.Max(0, _queenHealth - 1);
             SfxManager.Play(Sfx.PieceCapture);
+            ShakeOnCapture();
+            _view.SpawnCaptureBurst(_sim.PlayerCol, _sim.PlayerY, BurstColor(PieceType.Queen));
             _ui.SetBossHud(true, _queenHealth, _advLevel.Phases.Length, _sim.QueenShielded);
             if (_queenHealth <= 0) { _bossQueenDead = true; return; } // now go reach the flag
             _bossPhase++;
@@ -945,20 +991,27 @@ namespace KnightsGauntlet.View
                 {
                     float span = Mathf.Max(1f, _advLayout.MapRows - GameConfig.Rows);
                     if (_ui.ConsumeTallScrollInput()) _advManualScroll = true; // user grabbed the bar
-                    if (_advManualScroll)
+                    // Swipe up/down on empty (non-movable) ground to scroll; presses on a
+                    // legal move tile fall through to the instant tap below. Returns true
+                    // while a scroll drag is in progress.
+                    bool dragging = HandleTallSwipe(span);
+                    if (!dragging)
                     {
-                        _sim.AdventureSetScroll(-_ui.TallScroll * span); // stays where you leave it
-                    }
-                    else
-                    {
-                        int pr = Mathf.RoundToInt(_sim.PlayerY - _sim.ScrollCells);
-                        float target = Mathf.Clamp(GameConfig.Rows * 0.5f - pr, GameConfig.Rows - _advLayout.MapRows, 0f);
-                        _sim.AdventureSetScroll(Mathf.Lerp(_sim.ScrollCells, target, 1f - Mathf.Exp(-9f * Time.deltaTime)));
-                        _ui.SetTallScroll(-_sim.ScrollCells / span); // reflect follow position in the bar
+                        if (_advManualScroll)
+                        {
+                            _sim.AdventureSetScroll(-_ui.TallScroll * span); // stays where you leave it
+                        }
+                        else
+                        {
+                            int pr = Mathf.RoundToInt(_sim.PlayerY - _sim.ScrollCells);
+                            float target = Mathf.Clamp(GameConfig.Rows * 0.5f - pr, GameConfig.Rows - _advLayout.MapRows, 0f);
+                            _sim.AdventureSetScroll(Mathf.Lerp(_sim.ScrollCells, target, 1f - Mathf.Exp(-9f * Time.deltaTime)));
+                            _ui.SetTallScroll(-_sim.ScrollCells / span); // reflect follow position in the bar
+                        }
                     }
                     _sim.AdventureFollowDerive();
                     _view.SetGoalFlag(_advGoalCol, _advGoalRow + _sim.ScrollCells);
-                    HandleAdventureInput(); // handles enemy resolution + objective-aware win
+                    if (!dragging) HandleAdventureInput(); // instant tap-move on a legal tile
                 }
                 else HandleAdventureInput();
             }
@@ -1025,20 +1078,23 @@ namespace KnightsGauntlet.View
                 Vector3 world = cam.ScreenToWorldPoint(
                     new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
                 var (col, simY) = _board.WorldToCell(world);
+                _trapLeveledUpThisMove = false; // set by HandleTrapLevelUp if this move levels up
                 var result = _sim.TryTap(col, simY);
                 if (!result.Moved) return;
 
                 _view.PlayMoveVfx();
                 _ach.OnMove(result);
-                // A capturing move plays the capture sound; any other move (trap or
-                // battle) plays the plain move sound.
+                // A capturing move plays the capture sound; any other move plays the plain
+                // move blip, unless this trap move triggered a level-up (its sting plays
+                // instead, so the two don't stack).
                 bool captured = result.Captures != null && result.Captures.Count > 0;
-                if (captured) SfxManager.Play(Sfx.PieceCapture);
-                else SfxManager.Play(Sfx.PieceMove);
+                if (captured) { SfxManager.Play(Sfx.PieceCapture); ShakeOnCapture(); }
+                else if (!_trapLeveledUpThisMove) SfxManager.Play(Sfx.PieceMove);
                 if (result.Captures != null)
                 {
                     foreach (var cap in result.Captures)
                     {
+                        _view.SpawnCaptureBurst(cap.Col, cap.Y, BurstColor(cap.Type));
                         _view.SpawnPopup(cap.Col, cap.Y - 0.42f, "+" + cap.PointsGained, PopupGain);
                         _view.SpawnPopup(cap.Col, cap.Y + 0.14f,
                             "X" + cap.NewMultiplier + " (+" + cap.MultiplierDelta + ")", PopupCombo);
@@ -1065,6 +1121,80 @@ namespace KnightsGauntlet.View
             if (!Achievements.Unlock(id)) return;
             if (Achievements.TryFind(id, out var def))
                 _ui.ShowToast(def.Name + " unlocked! " + def.SkinName + " skin earned");
+        }
+
+        // Drag up/down on a tall board's empty ground to scroll it (in addition to the
+        // scrollbar). A press that lands on a legal move tile is ignored here so the instant
+        // tap handler can move without delay. Returns true while a scroll drag is in progress,
+        // so the caller skips the follow camera / scrollbar drive for this frame.
+        private bool HandleTallSwipe(float span)
+        {
+            bool began, active, ended; Vector2 pos;
+            if (Input.touchCount > 0)
+            {
+                var t = Input.GetTouch(0); pos = t.position;
+                began = t.phase == TouchPhase.Began;
+                ended = t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled;
+                active = !ended;
+            }
+            else
+            {
+                pos = Input.mousePosition;
+                began = Input.GetMouseButtonDown(0);
+                ended = Input.GetMouseButtonUp(0);
+                active = Input.GetMouseButton(0);
+            }
+
+            if (began)
+            {
+                // Only start a scroll gesture from empty ground: a press on a legal move
+                // destination stays a tap (handled instantly by HandleAdventureInput), so
+                // moving never feels delayed. Scrolling is done from the non-movable space.
+                if (OverUI() || IsTapOnValidMove(pos)) { _advPointerDown = false; return false; }
+                _advPointerDown = true; _advDragged = false;
+                _advPointerStart = pos; _advScrollAtPointerStart = _sim.ScrollCells;
+                return false;
+            }
+            if (!_advPointerDown) return false;
+
+            if (active)
+            {
+                float dyPx = pos.y - _advPointerStart.y;
+                if (_advDragged || Mathf.Abs(dyPx) > SwipeThresholdPx)
+                {
+                    _advDragged = true; _advManualScroll = true;
+                    // Reversed / content-opposite: swipe DOWN to look UP the map, and up to
+                    // look down (hence -dCells).
+                    float worldPerPx = (2f * cam.orthographicSize) / Mathf.Max(1, Screen.height);
+                    float dCells = dyPx * worldPerPx / Mathf.Max(0.0001f, _board.cellSize);
+                    float target = Mathf.Clamp(_advScrollAtPointerStart - dCells, GameConfig.Rows - _advLayout.MapRows, 0f);
+                    _sim.AdventureSetScroll(target);
+                    _ui.SetTallScroll(-_sim.ScrollCells / span);
+                    return true;
+                }
+                return false; // pressed but not (yet) a drag
+            }
+
+            if (ended)
+            {
+                bool wasDrag = _advDragged;
+                _advPointerDown = false; _advDragged = false;
+                return wasDrag;
+            }
+            return false;
+        }
+
+        // Would a tap at this screen position land on a legal move? Mirrors TryTap's search
+        // (same column, nearest Y within 1.2 cells) without applying anything.
+        private bool IsTapOnValidMove(Vector2 screenPos)
+        {
+            Vector3 world = cam.ScreenToWorldPoint(
+                new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+            var (col, simY) = _board.WorldToCell(world);
+            var moves = _sim.GetValidMoves();
+            for (int i = 0; i < moves.Count; i++)
+                if (moves[i].Col == col && Mathf.Abs(moves[i].Y - simY) < 1.2f) return true;
+            return false;
         }
 
         private static bool OverUI()
