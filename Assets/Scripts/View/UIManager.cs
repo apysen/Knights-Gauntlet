@@ -132,6 +132,7 @@ namespace KnightsGauntlet.View
         private GameObject _xformBadge;
         private Button _cbToggle;
         private TMP_Text _cbToggleLabel;
+        private Button _shakeToggle, _pauseShakeToggle;
         private GameObject _tutorial, _tutContinueBtn, _tutPick;
         private TMP_Text _tutCaption;
         private TMP_Text _advMovesLabel, _advResultInfo, _advResultTitle;
@@ -282,7 +283,7 @@ namespace KnightsGauntlet.View
             _tallScrollbar.gameObject.SetActive(on);
             _tallScrollUserChanged = false;
         }
-        public void ShowPause(bool adventure = false) { HideAll(); _hud.SetActive(true); _pause.SetActive(true); if (_pauseLevelSelectBtn != null) _pauseLevelSelectBtn.SetActive(adventure); }
+        public void ShowPause(bool adventure = false) { HideAll(); _hud.SetActive(true); _pause.SetActive(true); if (_pauseLevelSelectBtn != null) _pauseLevelSelectBtn.SetActive(adventure); UpdateScreenShakeToggles(); }
         public void ShowGameOver(int score, bool isTrap, DeathAnalysis analysis, int runReward, int reviveCost, int shillings, bool adLife = false)
         {
             HideAll();
@@ -1005,8 +1006,10 @@ namespace KnightsGauntlet.View
             _pauseLevelSelectBtn = _ui.Button(col, "Level Select", () => _gm.ExitAdventureToLevelSelect(), UIFactory.Panel, UIFactory.Gold).gameObject;
             _pauseLevelSelectBtn.SetActive(false);
             _ui.Button(col, "How to Play", () => ShowHowTo(returnToPause: true), UIFactory.Panel, UIFactory.Gold);
+            _pauseShakeToggle = _ui.Button(col, "Screen Shake", () => ToggleScreenShake(), UIFactory.Panel, UIFactory.Gold);
             _ui.Button(col, "Restart", () => _gm.RestartGame(), UIFactory.Panel, UIFactory.Gold);
             _ui.Button(col, "Main Menu", () => _gm.ToMenu(), UIFactory.Panel, UIFactory.Gold);
+            UpdateScreenShakeToggles();
         }
 
         // ── Game over ────────────────────────────────────────────────────────
@@ -1171,6 +1174,8 @@ namespace KnightsGauntlet.View
             _cbToggle = _ui.Button(col, "Colorblind Mode", () => ToggleColorblind(), UIFactory.Panel, UIFactory.Gold);
             _cbToggleLabel = _cbToggle.GetComponentInChildren<TMP_Text>();
             UpdateColorblindLabel();
+            _shakeToggle = _ui.Button(col, "Screen Shake", () => ToggleScreenShake(), UIFactory.Panel, UIFactory.Gold);
+            UpdateScreenShakeToggles();
             _ui.Button(col, "Tutorial", () => ShowTutorialPick(), UIFactory.Panel, UIFactory.Gold);
             // Debug builds only: open the LevelPlay Test Suite to verify ad networks and
             // read this device's advertising ID. Stripped from release builds.
@@ -1189,7 +1194,20 @@ namespace KnightsGauntlet.View
             // the same way the menu's selected mode/difficulty buttons show selection.
             if (_cbToggle != null) UIFactory.StyleToggle(_cbToggle, SaveData.IsColorblind());
         }
-        private void ShowSettings() { HideAll(); _settings.SetActive(true); _gm.SetBanner(true); }
+        // Screen shake lives in both Settings and the Pause menu, so flipping it in one
+        // place restyles both toggles to keep them in sync.
+        private void ToggleScreenShake()
+        {
+            SaveData.SetScreenShake(!SaveData.IsScreenShake());
+            UpdateScreenShakeToggles();
+        }
+        private void UpdateScreenShakeToggles()
+        {
+            bool on = SaveData.IsScreenShake();
+            if (_shakeToggle != null) UIFactory.StyleToggle(_shakeToggle, on);
+            if (_pauseShakeToggle != null) UIFactory.StyleToggle(_pauseShakeToggle, on);
+        }
+        private void ShowSettings() { HideAll(); _settings.SetActive(true); _gm.SetBanner(true); UpdateScreenShakeToggles(); }
 
         // ── Report a Bug ─────────────────────────────────────────────────────
         // A pixel-styled feedback box. Whatever the player types is handed to
@@ -1308,15 +1326,15 @@ namespace KnightsGauntlet.View
             rt.sizeDelta = new Vector2(size, size); rt.anchoredPosition = Vector2.zero;
             var img = go.GetComponent<Image>(); img.sprite = sprite; img.color = color; img.raycastTarget = false;
         }
-        // "6-♔" tile label: "6-" in the UI font + the crown glyph in the pixel chess glyph
-        // font (same crown the leaderboard uses for the top ranks), both gold. Placed by
-        // hand (a layout group sizes by the glyph's advance and mis-centres it). Tune the
-        // two X offsets to shift the "6-" and the crown horizontally.
-        private const float CrownTileSixX = -7f;    // "6-" X offset; raise toward 0 to pull the 6 right
+        // "7-♔" tile label: "<world>-" in the UI font + the crown glyph in the pixel chess
+        // glyph font (same crown the leaderboard uses for the top ranks), both gold. Placed
+        // by hand (a layout group sizes by the glyph's advance and mis-centres it). Tune the
+        // two X offsets to shift the number and the crown horizontally.
+        private const float CrownTileSixX = -7f;    // number X offset; raise toward 0 to pull it right
         private const float CrownTileCrownX = 11f;  // crown X offset
-        private void BuildCrownTileLabel(Button btn)
+        private void BuildCrownTileLabel(Button btn, string world)
         {
-            var six = _ui.Label(btn.transform, "6-", 22, UIFactory.Gold, FontStyles.Normal, 84);
+            var six = _ui.Label(btn.transform, world + "-", 22, UIFactory.Gold, FontStyles.Normal, 84);
             var sRt = six.rectTransform;
             sRt.anchorMin = sRt.anchorMax = sRt.pivot = new Vector2(0.5f, 0.5f);
             sRt.sizeDelta = new Vector2(84, 84); sRt.anchoredPosition = new Vector2(CrownTileSixX, 0f);
@@ -1584,10 +1602,10 @@ namespace KnightsGauntlet.View
             _advPage = next;
             RenderLevelSelect();
         }
-        // TEMPORARY (closed beta): only the first two worlds ship in this build; World 3
-        // onwards unlocks in the full release. Raise this number (or remove the guard in
-        // IsWorldAvailable) to open the later worlds.
-        private const int BetaMaxWorld = 2;
+        // Highest world available to play. All seven worlds now ship; lower this to gate
+        // later worlds again (e.g. for a closed beta). Worlds still unlock strictly in
+        // order via the star chain (IsLevelUnlocked) up to this cap.
+        private const int BetaMaxWorld = 7;
 
         // Debug switch: unlocks every world and level (bypasses both the beta world gate
         // and the star-chain). Must stay false in any shipped build.
@@ -1652,9 +1670,9 @@ namespace KnightsGauntlet.View
                 var cell = _ui.Column(gridRow, 6f);
                 if (IsLevelUnlocked(lvl))
                 {
-                    // The queen-boss level shows "6-♔" (crown glyph, like the leaderboard).
+                    // The queen-boss level shows "<world>-♔" (crown glyph, like the leaderboard).
                     var lbtn = _ui.Button(cell, lvl.IsBoss() ? "" : lvl.Id, () => _gm.StartAdventureLevel(lvl), UIFactory.Panel, UIFactory.Gold, 84, 84, 22, clickSfx: Sfx.PlaySelect);
-                    if (lvl.IsBoss()) BuildCrownTileLabel(lbtn);
+                    if (lvl.IsBoss()) BuildCrownTileLabel(lbtn, WorldOf(lvl));
                     StarRow(cell, SaveData.GetStars(lvl.Id), 22f);
                 }
                 else

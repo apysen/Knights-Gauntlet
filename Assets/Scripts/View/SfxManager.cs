@@ -8,6 +8,7 @@ namespace KnightsGauntlet.View
     public enum Sfx
     {
         ShillingCollect, // trap mode: picked up a shilling
+        TrapLevelUp,     // trap mode: crossed a score threshold (speed level up)
         ShieldBreak,     // battle: a transform absorbed a hit
         PlaySelect,      // pressed Play, or picked an adventure level
         PieceMove,       // battle/adventure: moved without capturing
@@ -77,6 +78,7 @@ namespace KnightsGauntlet.View
         private static readonly Dictionary<Sfx, string> Files = new Dictionary<Sfx, string>
         {
             { Sfx.ShillingCollect, "SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 4 (Square)" },
+            { Sfx.TrapLevelUp,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 1 (Square)" },
             { Sfx.ShieldBreak,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 5 (Square)" },
             { Sfx.PlaySelect,      "SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square)" },
             { Sfx.PieceMove,       "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 3 (Square)" },

@@ -27,6 +27,8 @@ namespace KnightsGauntlet.View
         private float _coinAnimT;
         private const float CoinFps = 10f;
         private readonly List<PopupItem> _popups = new List<PopupItem>();
+        private readonly List<Particle> _particles = new List<Particle>();
+        private Transform _particlesRoot;
         private PieceView _player;
         private SpriteRenderer _playerGlow; // soft radial shine behind the knight
         private Transform _popupsRoot, _threatsRoot, _pickupsRoot;
@@ -83,6 +85,7 @@ namespace KnightsGauntlet.View
             _threatsRoot = new GameObject("ThreatTiles").transform; _threatsRoot.SetParent(transform, false);
             _pickupsRoot = new GameObject("Pickups").transform; _pickupsRoot.SetParent(transform, false);
             _popupsRoot = new GameObject("Popups").transform; _popupsRoot.SetParent(transform, false);
+            _particlesRoot = new GameObject("CaptureParticles").transform; _particlesRoot.SetParent(transform, false);
             _player = CreatePieceView("Player", _piecesRoot, pieceOrder: 10, glyphOrder: 11);
 
             // Soft radial glow behind the knight (the web's shadowBlur "shine"). Tinted
@@ -404,6 +407,7 @@ namespace KnightsGauntlet.View
             UpdateCoachMark();
             UpdateGoalFlag(dt);
             AnimatePopups(dt);
+            AnimateParticles(dt);
         }
 
         // Divine Path: the next tile of the solved optimal route (nextOnly), drawn with the
@@ -556,6 +560,95 @@ namespace KnightsGauntlet.View
         }
 
         private class PopupItem { public TextMeshPro tmp; public float alpha; public bool active; public Color color; }
+
+        // ── Capture particles (piece "disintegrates" into flying pixels) ──────
+        // On a capture we scatter a handful of tiny square shards, tinted to the
+        // captured piece, from its tile. They explode outward, arc under gravity,
+        // shrink, and fade. All pooled sprites, animated in AnimateParticles.
+        private const int CaptureBits = 28;          // shards per captured piece
+        private const float CaptureSpeedMin = 1.6f;  // outward speed, in cells/sec
+        private const float CaptureSpeedMax = 4.2f;
+        private const float CaptureUpBias = 0.4f;    // slight lift so they arc up before falling
+        private const float CaptureGravity = 9f;     // cells/sec^2 pull-down
+        private const float CaptureLifeMin = 0.35f;  // seconds before a shard vanishes
+        private const float CaptureLifeMax = 0.6f;
+
+        // Spawn a burst at (col, y), tinted to `color`. Safe to call every capture;
+        // shards are pooled so rapid combos never allocate.
+        public void SpawnCaptureBurst(int col, float y, Color color)
+        {
+            if (_board == null) return;
+            float cell = _board.cellSize;
+            Vector3 center = _board.CellToWorld(col, y);
+            for (int j = 0; j < CaptureBits; j++)
+            {
+                var p = GetParticle();
+                p.active = true;
+                // Start scattered within the piece's ink, not from a single point.
+                Vector2 jitter = Random.insideUnitCircle * (cell * 0.22f);
+                p.tr.position = center + new Vector3(jitter.x, jitter.y, 0f);
+
+                float ang = Random.value * Mathf.PI * 2f;
+                float speed = cell * Random.Range(CaptureSpeedMin, CaptureSpeedMax);
+                p.vel = new Vector3(Mathf.Cos(ang) * speed,
+                                    Mathf.Sin(ang) * speed + cell * CaptureUpBias, 0f);
+                p.spin = Random.Range(-360f, 360f);
+                p.maxLife = Random.Range(CaptureLifeMin, CaptureLifeMax);
+                p.life = p.maxLife;
+                p.size = cell * Random.Range(0.09f, 0.15f);
+
+                // Small per-shard colour variation so it reads as shattered pixels,
+                // not a flat blob.
+                float v = Random.Range(-0.12f, 0.12f);
+                p.color = new Color(Mathf.Clamp01(color.r + v), Mathf.Clamp01(color.g + v),
+                                    Mathf.Clamp01(color.b + v), 1f);
+                p.sr.color = p.color;
+                p.tr.localScale = new Vector3(p.size, p.size, 1f);
+                p.sr.gameObject.SetActive(true);
+            }
+        }
+
+        private void AnimateParticles(float dt)
+        {
+            if (_particles.Count == 0) return;
+            float g = (_board != null ? _board.cellSize : 1f) * CaptureGravity;
+            for (int i = 0; i < _particles.Count; i++)
+            {
+                var p = _particles[i];
+                if (!p.active) continue;
+                p.life -= dt;
+                if (p.life <= 0f) { p.active = false; p.sr.gameObject.SetActive(false); continue; }
+                p.vel.y -= g * dt;
+                p.tr.position += p.vel * dt;
+                p.tr.Rotate(0f, 0f, p.spin * dt);
+                float k = p.life / p.maxLife;               // 1 -> 0 over the shard's life
+                // Stay fully opaque for most of the life, then fade only over the last
+                // ~35%, so the shards read solid instead of ghostly.
+                var c = p.color; c.a = Mathf.Clamp01(k / 0.35f); p.sr.color = c;
+                float s = p.size * Mathf.Lerp(0.35f, 1f, k); // shrink as it dies
+                p.tr.localScale = new Vector3(s, s, 1f);
+            }
+        }
+
+        private Particle GetParticle()
+        {
+            for (int i = 0; i < _particles.Count; i++) if (!_particles[i].active) return _particles[i];
+            var go = new GameObject("CaptureBit");
+            go.transform.SetParent(_particlesRoot, false);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = BoardView.UnitSquare();
+            sr.sortingOrder = 15; // above pieces (10), below popups (20)
+            var item = new Particle { tr = go.transform, sr = sr };
+            _particles.Add(item);
+            return item;
+        }
+
+        private class Particle
+        {
+            public Transform tr; public SpriteRenderer sr;
+            public Vector3 vel; public float spin, life, maxLife, size;
+            public Color color; public bool active;
+        }
 
         // De-duplicated threat accumulator (rebuilt each frame). Keeps the exact
         // fractional Y of the first contributor so tiles still scroll smoothly with

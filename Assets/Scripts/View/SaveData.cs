@@ -41,6 +41,21 @@ namespace KnightsGauntlet.View
             PlayerPrefs.SetInt("kg_colorblind", _colorblindCache); PlayerPrefs.Save();
         }
 
+        // ── Screen shake (camera kick on capture) ────────────────────────────
+        // On by default. Read on every capture by GameManager, so it's cached the same
+        // way as colorblind; only the settings/pause toggle below ever changes it.
+        private static int _screenShakeCache = -1;
+        public static bool IsScreenShake()
+        {
+            if (_screenShakeCache < 0) _screenShakeCache = PlayerPrefs.GetInt("kg_screenshake", 1);
+            return _screenShakeCache == 1;
+        }
+        public static void SetScreenShake(bool on)
+        {
+            _screenShakeCache = on ? 1 : 0;
+            PlayerPrefs.SetInt("kg_screenshake", _screenShakeCache); PlayerPrefs.Save();
+        }
+
         // ── Adventure mode (best stars per level, 0..3) ──────────────────────
         public static int GetStars(string levelId) => PlayerPrefs.GetInt("kg_adv_" + levelId, 0);
         public static void SetStars(string levelId, int stars)
