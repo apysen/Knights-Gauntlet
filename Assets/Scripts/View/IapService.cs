@@ -48,10 +48,10 @@ namespace KnightsGauntlet.View
     {
         public static readonly IapBundle[] Shillings =
         {
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shillings5000",   Shillings = 5000,   FallbackPrice = "$0.99"  },
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shillings25000",  Shillings = 25000,  FallbackPrice = "$4.99"  },
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shillings50000",  Shillings = 50000,  FallbackPrice = "$9.99"  },
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shillings100000", Shillings = 100000, FallbackPrice = "$19.99" },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling5000",   Shillings = 5000,   FallbackPrice = "$0.99"  },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling25000",  Shillings = 25000,  FallbackPrice = "$4.99"  },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling50000",  Shillings = 50000,  FallbackPrice = "$9.99"  },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling100000", Shillings = 100000, FallbackPrice = "$19.99" },
         };
 
         // Shillings granted by a product id, or 0 if it isn't one of ours.
