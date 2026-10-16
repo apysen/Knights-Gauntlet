@@ -6,7 +6,51 @@ namespace KnightsGauntlet.View
     // outlines, dots) needs no art files. All cached after first use.
     public static class UISprites
     {
-        private static Sprite _fill, _border, _pixelBorder, _squareBorder, _circle, _glow, _softGlow, _star, _refresh, _cracked, _lock;
+        private static Sprite _royalFill, _royalBorder;
+
+        public static Sprite RoyalPanel(bool border = false)
+        {
+            if (border && _royalBorder != null) return _royalBorder;
+            if (!border && _royalFill != null) return _royalFill;
+            const int n = 64, corner = 10;
+            var texture = NewTex(n);
+            for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+            {
+                float xx = Mathf.Min(x,n-1-x), yy = Mathf.Min(y,n-1-y);
+                float edge = Mathf.Min(xx,yy,(xx+yy-corner)*.7071f);
+                float alpha = Mathf.Clamp01(edge+.5f);
+                if (border) alpha *= 1f-Mathf.Clamp01(edge-1.2f);
+                float shade = border ? 1f : Mathf.Lerp(.78f,1f,y/(float)n);
+                texture.SetPixel(x,y,new Color(shade,shade,shade,alpha));
+            }
+            texture.Apply();
+            var sprite = Sprite.Create(texture,new Rect(0,0,n,n),new Vector2(.5f,.5f),100f,
+                0,SpriteMeshType.FullRect,new Vector4(12,12,12,12));
+            if (border) _royalBorder = sprite; else _royalFill = sprite;
+            return sprite;
+        }
+        private static Sprite _fill, _border, _pixelBorder, _squareBorder, _circle, _glow, _softGlow, _star, _refresh, _cracked, _lock, _moveRing;
+
+        public static Sprite MoveRing()
+        {
+            if (_moveRing != null) return _moveRing;
+            const int n = 96;
+            var texture = NewTex(n);
+            for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+            {
+                float distance = Vector2.Distance(new Vector2(x + .5f, y + .5f), new Vector2(n * .5f, n * .5f));
+                float alpha = Mathf.Clamp01(2.2f - Mathf.Abs(distance - 42f));
+                float dx = Mathf.Abs(x+.5f-n*.5f), dy = Mathf.Abs(y+.5f-n*.5f);
+                float jewel = Mathf.Min(dx+Mathf.Abs(dy-42f),dy+Mathf.Abs(dx-42f));
+                alpha = Mathf.Max(alpha,Mathf.Clamp01(3.7f-jewel));
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+            texture.Apply();
+            _moveRing = Sprite.Create(texture, new Rect(0, 0, n, n), new Vector2(.5f, .5f), n);
+            return _moveRing;
+        }
 
         // Padlock (locked adventure levels/worlds): a rounded body plus a shackle
         // arc on top. Tint via Image color.
@@ -54,7 +98,7 @@ namespace KnightsGauntlet.View
         public static Sprite Cracked()
         {
             if (_cracked != null) return _cracked;
-            _cracked = Resources.Load<Sprite>("UI/Cracked Tile"); // pixel-art cracked tile
+            _cracked = Resources.Load<Sprite>("UI/Cracked Tile"); // bold comic-style board fracture
             if (_cracked != null) return _cracked;
             const int n = 48;
             float c = (n - 1) * 0.5f, rad = n * 0.44f, corner = n * 0.16f;
@@ -124,7 +168,7 @@ namespace KnightsGauntlet.View
         public static Sprite Refresh()
         {
             if (_refresh != null) return _refresh;
-            _refresh = Resources.Load<Sprite>("UI/Retry"); // pixel-art retry/reload icon
+            _refresh = RoyalIcons.Get("restart");
             if (_refresh != null) return _refresh;
             const int n = 64;
             float cx = (n - 1) * 0.5f, cy = (n - 1) * 0.5f;
@@ -189,7 +233,7 @@ namespace KnightsGauntlet.View
         public static Sprite RoundedBorder()
         {
             if (_border != null) return _border;
-            const int n = 48, r = 16, thickness = 4;
+            const int n = 48, r = 16, thickness = 2;
             var tex = NewTex(n);
             for (int y = 0; y < n; y++)
                 for (int x = 0; x < n; x++)
@@ -307,7 +351,7 @@ namespace KnightsGauntlet.View
         public static Sprite Circle()
         {
             if (_circle != null) return _circle;
-            const int n = 32;
+            const int n = 128;
             float c = (n - 1) * 0.5f, rad = n * 0.5f;
             var tex = NewTex(n);
             for (int y = 0; y < n; y++)
@@ -317,7 +361,7 @@ namespace KnightsGauntlet.View
                     tex.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(rad - d + 0.5f)));
                 }
             tex.Apply();
-            _circle = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 100f);
+            _circle = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 400f);
             return _circle;
         }
 

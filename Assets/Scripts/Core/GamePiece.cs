@@ -18,7 +18,7 @@ namespace KnightsGauntlet.Core
 
         // Battle-mode AI bookkeeping (unused in Trap mode; wired in Phase 2).
         public int Dir = 1;       // bishop diagonal direction
-        public int? PlanDC;       // pre-planned knight jump, shown as a threat tile
+        public int? PlanDC;       // committed next move delta (all moving battle types)
         public int? PlanDR;
 
         public GamePiece(PieceType type, int col, float y)

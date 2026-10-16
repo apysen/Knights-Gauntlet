@@ -40,6 +40,7 @@ namespace KnightsGauntlet.Core
         public int ComboMultiplier { get; private set; } = 1;
         public bool Alive { get; private set; }
         public float ScrollCells { get; private set; }
+        public float ElapsedTime => _time; // presentation timing for scrolling biome changes
 
         // Collectable shillings on the board, and the total collected this run.
         public readonly List<Pickup> Pickups = new List<Pickup>();
@@ -79,6 +80,9 @@ namespace KnightsGauntlet.Core
         public event System.Action<int> OnTrapLevelUp; // fired when trap speed steps up a level
         private float _playerBase; // grid-lock base for the player (Trap mode)
         private float _nextSpawnCells;
+        // Presentation can reserve hidden rows behind the curved entrance. Generated
+        // rows remain part of the same simulation and are never rerolled by the view.
+        public float IncomingRowLead { get; set; }
 
         // ── Interactive tutorial ─────────────────────────────────────────────
         // When Tutorial is true the board is frozen (no scroll/spawn/AI) so the
@@ -155,6 +159,7 @@ namespace KnightsGauntlet.Core
             Mode = mode;
             Difficulty = difficulty;
             Pieces.Clear();
+            _enemyAI.ClearPlans();
             Pickups.Clear();
             // Adventure state must be wiped too, otherwise a previous non-scrolling
             // adventure level's oscillating enemies (and fragile tiles) leak into the
@@ -210,7 +215,7 @@ namespace KnightsGauntlet.Core
                     _battleGen.SpawnRow(Pieces, PlayerY - r, difficulty, false);
                 // Keep the opening clear: drop anything not safely above the knight.
                 Pieces.RemoveAll(o => o.Y >= PlayerY - 2.5f);
-                _enemyAI.PlanKnightMoves(Pieces, PlayerCol, PlayerY, true);
+                _enemyAI.InitializePlans(Pieces, ScrollCells);
                 _nextSpawnCells = ScrollCells + 1f;
             }
         }
@@ -258,21 +263,32 @@ namespace KnightsGauntlet.Core
                 pu.Y = pu.Base + ScrollCells;
             }
 
-            bool spawnedRow = false;
-            while (ScrollCells >= _nextSpawnCells)
+            while (ScrollCells + Math.Max(0f, IncomingRowLead) >= _nextSpawnCells)
             {
+                int firstNewPiece = Pieces.Count;
                 if (Mode == GameMode.Trap)
-                    _trapGen.SpawnRow(Pieces, -1f, PlayerCol, ScrollCells);
+                    _trapGen.SpawnRow(Pieces, -1f, PlayerCol, _nextSpawnCells);
                 else
                     _battleGen.SpawnRow(Pieces, -1f, Difficulty, TransformActive);
                 TrySpawnPickup(-1f);
+                // Commit the incoming row to the shared grid in the same frame it is
+                // generated. Hitches/overshoot must not make it jump on its next tick.
+                float rowBase = -1f - _nextSpawnCells;
+                for (int i = firstNewPiece; i < Pieces.Count; i++)
+                {
+                    Pieces[i].Base = rowBase;
+                    Pieces[i].Y = rowBase + ScrollCells;
+                }
+                if (Mode == GameMode.Battle)
+                    _enemyAI.FilterNewSpawns(Pieces, firstNewPiece, ScrollCells);
+                for (int i = 0; i < Pickups.Count; i++)
+                    if (float.IsNaN(Pickups[i].Base))
+                    {
+                        Pickups[i].Base = rowBase;
+                        Pickups[i].Y = rowBase + ScrollCells;
+                    }
                 _nextSpawnCells += 1f;
-                spawnedRow = true;
             }
-            // Give newly-spawned enemy knights a planned jump right away, so their
-            // red threat tile shows before their first move (not a turn late).
-            if (spawnedRow && Mode == GameMode.Battle)
-                _enemyAI.PlanKnightMoves(Pieces, PlayerCol, PlayerY, false);
 
             // Trap keeps a long tail behind the knight for the death snapshot.
             float cullY = Mode == GameMode.Trap ? PlayerY + 26f : GameConfig.Rows + 1f;
@@ -304,7 +320,9 @@ namespace KnightsGauntlet.Core
                 if (_time - _lastBattleMove >= _battleMoveInterval)
                 {
                     _lastBattleMove = _time;
-                    if (_enemyAI.MoveEnemies(Pieces, PlayerCol, PlayerY))
+                    bool enemyHit = _enemyAI.MoveEnemies(Pieces, PlayerCol, PlayerY, ScrollCells);
+                    _hasBest = false; // the committed threats changed at this boundary
+                    if (enemyHit)
                     {
                         if (_time < _battleInvulnUntil)
                         {
@@ -321,10 +339,7 @@ namespace KnightsGauntlet.Core
                         }
                         else { Alive = false; OnDeath?.Invoke(); return; }
                     }
-                    // The AI shifted enemies by whole cells; re-anchor their grid
-                    // base so the derived scroll keeps them exactly on their squares.
-                    for (int i = 0; i < Pieces.Count; i++)
-                        Pieces[i].Base = (float)Math.Round(Pieces[i].Y - ScrollCells);
+                    // EnemyAI commits both Base and Y from the saved board-space plan.
                 }
             }
 
@@ -496,34 +511,33 @@ namespace KnightsGauntlet.Core
             return s;
         }
 
-        // Whether an alive battle enemy will strike (col, y) on its next move. Mirrors the
-        // threat tiles GameView draws so the hint agrees with what the player sees.
+        // The view reads the committed plan; it never guesses a direction or
+        // asks the planner to roll a destination while drawing a threat marker.
+        public bool TryGetBattleMove(GamePiece piece, out MoveTarget destination)
+        {
+            if (Mode == GameMode.Battle && _enemyAI.TryGetNextMove(piece, out var cell))
+            {
+                destination = new MoveTarget(cell.Col, cell.Row + ScrollCells);
+                return true;
+            }
+            destination = default;
+            return false;
+        }
+
+        // Keep the coach's danger evaluation in agreement with the committed
+        // movement markers and the queen's existing adjacent strike area.
         private bool IsBattleThreatened(int col, float y)
         {
             for (int i = 0; i < Pieces.Count; i++)
             {
                 var o = Pieces[i];
                 if (!o.Alive || o.Type == PieceType.Trap) continue;
-                switch (o.Type)
+                if (o.Type == PieceType.Queen)
                 {
-                    case PieceType.Rook:
-                        if (o.Col == col && Near(o.Y + 1f, y)) return true;
-                        break;
-                    case PieceType.Bishop:
-                        int dir = o.Dir != 0 ? o.Dir : 1;
-                        int bc = o.Col + dir;
-                        if (bc < 0 || bc >= GameConfig.Cols) bc = o.Col - dir;
-                        if (bc == col && Near(o.Y + 1f, y)) return true;
-                        break;
-                    case PieceType.Knight:
-                        if (o.PlanDC.HasValue && o.PlanDR.HasValue &&
-                            o.Col + o.PlanDC.Value == col && Near(o.Y + o.PlanDR.Value, y)) return true;
-                        break;
-                    case PieceType.Queen:
-                        foreach (var adj in GameConfig.QueenAdj)
-                            if (o.Col + adj.Col == col && Near(o.Y + adj.Row, y)) return true;
-                        break;
+                    foreach (var adj in GameConfig.QueenAdj)
+                        if (o.Col + adj.Col == col && Near(o.Y + adj.Row, y)) return true;
                 }
+                else if (TryGetBattleMove(o, out var move) && move.Col == col && Near(move.Y, y)) return true;
             }
             return false;
         }
@@ -546,6 +560,7 @@ namespace KnightsGauntlet.Core
         // ── Interactive tutorial API ─────────────────────────────────────────
         public void TutorialSetup(GameMode mode)
         {
+            Adventure = false;
             Mode = mode; Tutorial = true; Alive = true; MapRows = 0;
             AdvTransform = false; _advPips = 0;
             Difficulty = Difficulty.Medium; // consistent combo grace (2) for the miss lesson
@@ -715,6 +730,7 @@ namespace KnightsGauntlet.Core
 
         public MoveResult TryTap(int col, float y)
         {
+            if (!Alive) return new MoveResult { Moved = false, Captures = null };
             var moves = GetValidMoves();
             MoveTarget? best = null;
             float bestDist = 1.2f;

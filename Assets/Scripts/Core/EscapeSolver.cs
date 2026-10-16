@@ -38,15 +38,19 @@ namespace KnightsGauntlet.Core
     {
         private const int OnscreenBack = 4; // rows visible below the knight at death
         private const int MaxSteps = 70;
+        private struct Node
+        {
+            public int col, row, parent, depth, maxBack;
+        }
 
         public static (List<EscapeStep> path, bool escaped, EscapeReason reason) Compute(
             int pCol, List<(int col, int relRow)> traps)
         {
-            var occ = new HashSet<string>();
+            var occ = new HashSet<(int col, int row)>();
             int minTrapRel = int.MaxValue, maxTrapRel = int.MinValue;
             foreach (var t in traps)
             {
-                occ.Add(t.col + "," + t.relRow);
+                occ.Add((t.col, t.relRow));
                 if (t.relRow < minTrapRel) minTrapRel = t.relRow;
                 if (t.relRow > maxTrapRel) maxTrapRel = t.relRow;
             }
@@ -58,34 +62,39 @@ namespace KnightsGauntlet.Core
             int upLimit = escapeRel - 1;
             int downLimit = Math.Max(4, Math.Min(maxTrapRel, 22));
 
-            var visited = new HashSet<string> { pCol + ",0" };
-            var queue = new Queue<(int col, int rr, List<EscapeStep> path, int maxBack)>();
-            queue.Enqueue((pCol, 0, new List<EscapeStep>(), 0));
+            var visited = new HashSet<(int col, int row)> { (pCol, 0) };
+            // The growing list is both a FIFO queue and a predecessor table.
+            // Only the winning route is materialized, instead of copying a path
+            // for every explored square. Insertion order preserves tie-breaking.
+            var nodes = new List<Node>(128) { new Node { col = pCol, parent = -1 } };
 
-            while (queue.Count > 0)
+            for (int head = 0; head < nodes.Count; head++)
             {
-                var cur = queue.Dequeue();
-                if (cur.rr <= escapeRel)
+                var cur = nodes[head];
+                if (cur.row <= escapeRel)
                 {
                     var reason = cur.maxBack > OnscreenBack ? EscapeReason.DeepBack : EscapeReason.Forward;
-                    return (cur.path, true, reason);
+                    var path = new List<EscapeStep>(cur.depth);
+                    for (int index = head; nodes[index].parent >= 0; index = nodes[index].parent)
+                    {
+                        var step = nodes[index];
+                        path.Add(new EscapeStep { Col = step.col, RelRow = step.row,
+                            DRow = step.row - nodes[step.parent].row });
+                    }
+                    path.Reverse();
+                    return (path, true, reason);
                 }
-                if (cur.path.Count >= MaxSteps) continue;
+                if (cur.depth >= MaxSteps) continue;
 
                 foreach (var d in GameConfig.LDeltas)
                 {
                     int nc = cur.col + d.Col;
-                    int nr = cur.rr + d.Row;
+                    int nr = cur.row + d.Row;
                     if (nc < 0 || nc >= GameConfig.Cols || nr < upLimit || nr > downLimit) continue;
-                    string key = nc + "," + nr;
-                    if (visited.Contains(key) || occ.Contains(key)) continue;
-                    visited.Add(key);
-
-                    var path = new List<EscapeStep>(cur.path)
-                    {
-                        new EscapeStep { Col = nc, RelRow = nr, DRow = d.Row }
-                    };
-                    queue.Enqueue((nc, nr, path, Math.Max(cur.maxBack, nr)));
+                    var key = (nc, nr);
+                    if (occ.Contains(key) || !visited.Add(key)) continue;
+                    nodes.Add(new Node { col = nc, row = nr, parent = head,
+                        depth = cur.depth + 1, maxBack = Math.Max(cur.maxBack, nr) });
                 }
             }
 

@@ -58,6 +58,17 @@ namespace KnightsGauntlet.View
             _root.SetActive(false);
         }
 
+        public void RebuildPresentation(GameTheme theme)
+        {
+            if (_root != null)
+            {
+                _root.SetActive(false);
+                Destroy(_root);
+            }
+            _catBtns.Clear();
+            Init(theme, _client);
+        }
+
         public void Open(GameMode mode, Difficulty diff)
         {
             _source = "online";

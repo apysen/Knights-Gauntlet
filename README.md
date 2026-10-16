@@ -32,16 +32,23 @@ The scene is configured as the project's build scene. The game builds its board 
 
 ```text
 Assets/
-  Scenes/       Main playable scene
-  Scripts/Core/ Rules, simulation, AI, generators, and adventure solvers
-  Scripts/View/ Unity presentation, UI, persistence, and service integrations
-  Resources/    Runtime UI, audio, effects, and other game assets
-Packages/       Unity package manifest and lock file
-ProjectSettings/Unity project and build settings
-supabase/       Backend-related project files, if configured
+  Scenes/        Main playable scene
+  Scripts/Core/  Rules, simulation, AI, generators, and adventure solvers
+  Scripts/View/  Unity presentation, UI, persistence, and service integrations
+  Resources/     Game assets loaded by Resources.Load at runtime
+  Settings/      Render pipeline and build-profile assets
+  Editor/        Project-specific Unity editor scripts
+  ...            Imported plugins and art packs remain in their own folders
+ArtSource/       Original artwork and models kept outside Unity's import tree
+Tools/Art/       Scripts that generate or import game-ready art
+Packages/        Unity package manifest and lock file
+ProjectSettings/ Unity project and build settings
+supabase/        Backend-related project files, if configured
 ```
 
 The game logic is separated from the Unity view layer: `Assets/Scripts/Core` contains the board rules and simulation, while `Assets/Scripts/View` connects that logic to scenes, UI, saves, and platform services.
+
+Keep editable source art in `ArtSource/` and imported, game-ready assets in `Assets/`. This keeps large source models out of Unity's import process while leaving runtime-loaded content under `Assets/Resources/`. The chess-piece Blender sources and original archive are in `ArtSource/Models/ChessPieces/` and `ArtSource/Models/` respectively.
 
 ## Optional services
 

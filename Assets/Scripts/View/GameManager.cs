@@ -8,17 +8,49 @@ namespace KnightsGauntlet.View
     // The one component you add to the scene. Builds camera/board/renderers/UI at
     // runtime and runs the menu -> play -> pause -> game-over loop, with a shared
     // Supabase leaderboard (custom UI) and achievement tracking.
-    public class GameManager : MonoBehaviour
+    public partial class GameManager : MonoBehaviour
     {
+        public BoardBiome CurrentBiome => _board != null ? _board.CurrentBiome : BoardBiome.Grass;
+        public bool BoardHudAdventure => _state == State.Adventure || (_state == State.Paused && _prePause == State.Adventure);
+        public bool BoardHudTutorial => _state == State.Tutorial || (_state == State.Paused && _prePause == State.Tutorial);
+        public int BoardHudRun { get; private set; }
+        public int AdventureMoves => _advMoves;
+        public int ThreeStarLimit => _advLevel != null ? _advLevel.ThreeStar : 0;
+        public int TwoStarLimit => _advLevel != null ? _advLevel.TwoStar : 0;
+        public float SurvivalSeconds => _sim != null ? _sim.ElapsedTime : 0f;
+        public int ScoreMultiplier => _sim != null ? _sim.ComboMultiplier : 1;
+        public int TransformationCaptures => _sim != null ? _sim.CaptureChain : 0;
+        public float TransformationSeconds => _sim != null ? _sim.TransformRemaining : 0f;
+        public bool Legacy2DActive => _legacy2D;
+        private bool _legacy2D;
+        private float _trapBestSeconds;
+        public float TrapBestSeconds => _trapBestSeconds;
+        public string BoardObjective => _state == State.Tutorial ? "MASTER THE KNIGHT'S LEAP" :
+            _state == State.Adventure && _advLayout != null ?
+                (_advScrolling ? "SURVIVE TO THE FINISH" :
+                 _advLevel.IsBoss() && !_bossQueenDead ? "DEFEAT THE QUEEN" :
+                 _advLayout.Objective == Objective.CaptureAll ? "CAPTURE EVERY ENEMY" :
+                 _advLayout.Objective == Objective.Combined && !_bossQueenDead ? "CLEAR THE BOARD · REACH THE FLAG" :
+                 "REACH THE FLAG") :
+            CurrentMode == GameMode.Battle ? "CAPTURE · TRANSFORM · SURVIVE" : "STAY A STEP AHEAD";
         [Header("Setup")]
         public GameTheme theme;   // optional; a runtime default is made if null
         public Camera cam;        // optional; defaults to Camera.main
+
+
+        [Header("Piece Presentation")]
+        [Tooltip("Size of all chess pieces relative to their original size. 0.9 is 10% smaller. Updates live in Play mode.")]
+        [Range(0.5f, 1.25f)] public float pieceScale = 0.9f;
+        [Tooltip("Rotation of enemy models around their upright axis. Updates live in Play mode.")]
+        [Range(0f, 360f)] public float enemyPieceRotation = 180f;
+        [Tooltip("Rotation of the player's model around its upright axis.")]
+        [Range(0f, 360f)] public float playerPieceRotation = 0f;
 
         [Header("Links")]
         public string bugReportUrl = "";
         public string bugReportEmail = "apysen02@gmail.com";
 
-        private enum State { Menu, Playing, Paused, Dead, Reviving, Tutorial, Adventure }
+        private enum State { Menu, Playing, Paused, Dead, Reviving, Tutorial, Adventure, AdventureDeathBeat }
         private State _state = State.Menu;
 
         private bool _daily;
@@ -27,11 +59,13 @@ namespace KnightsGauntlet.View
         private bool _adLifeUsed;    // one free ad revive per run
         private float _reviveCountdown;
         private bool _runEnded;
+        private float _deathRevealRemaining;
 
         private GameSimulation _sim;
         private BoardView _board;
         private GameView _view;
         private CameraShake _shake;
+        private Vector2 _lastCaptureKickDirection;
         private UIManager _ui;
         private LeaderboardClient _lb;
         private LeaderboardScreen _lbScreen;
@@ -84,12 +118,15 @@ namespace KnightsGauntlet.View
         private string _lastRunCategory; private int _lastRunScore; private bool _lastRunDaily; private string _lastRunDay;
         private LevelData _advLevel;  // the selected level (the boss parent, for a boss)
         private LevelData _advLayout; // the layout actually on the board (a boss phase, or == _advLevel)
+        private BoardBiome? _adventureBiomeOverride;
         private int _advMoves, _advGoalCol, _advGoalRow;
         private State _prePause;
         private readonly System.Collections.Generic.List<TutStep> _tut = new System.Collections.Generic.List<TutStep>();
         private class TutStep { public string caption; public bool infoOnly; public System.Action setup; public int targetCol, targetRow; }
 
         public int Score => _sim != null ? _sim.Score : 0;
+        public GameMode CurrentMode => _sim != null ? _sim.Mode : GameMode.Trap;
+        public Difficulty CurrentDifficulty => _sim != null ? _sim.Difficulty : Difficulty.Medium;
 
         private static readonly Color PopupGain = new Color32(0x9B, 0xE8, 0xA0, 0xFF);
         private static readonly Color PopupCombo = new Color32(0xFF, 0xD0, 0x60, 0xFF);
@@ -110,23 +147,11 @@ namespace KnightsGauntlet.View
                           "(glyph graphics). Create one via Create > Knight's Gauntlet > Game Theme to add art.");
             }
 
-            // Use the Thaleah pixel font for all UI/HUD/popup text (any slot the
-            // theme leaves empty). The chess-glyph font is deliberately left alone,
-            // Thaleah has no chess glyphs.
-            var pixelFont = UIFactory.PixelFont();
-            if (pixelFont != null)
-            {
-                if (theme.uiFont == null) theme.uiFont = pixelFont;
-                if (theme.popupFont == null) theme.popupFont = pixelFont;
-                if (theme.hudFont == null) theme.hudFont = pixelFont;
-            }
-
-            // Pixel chess-piece font for every chess glyph (board pieces + UI). This
-            // OVERRIDES the theme's glyphFont (GameTheme.asset ships DejaVu, which also
-            // has chess glyphs, hence pieces looked unchanged until now). PixelChess
-            // carries a DejaVu fallback so the trap "✕" and any non-piece glyphs show.
-            var chessFont = UIFactory.ChessFont();
-            if (chessFont != null) theme.glyphFont = chessFont;
+            // The assigned theme is a runtime copy: presentation setup never alters the asset.
+            theme = Instantiate(theme);
+            _modernTheme = Instantiate(theme);
+            _legacy2D = PlayerPrefs.GetInt("kg_legacy_2d", 0) != 0;
+            ApplyPresentationTheme();
 
             if (cam == null) cam = Camera.main;
             if (cam == null)
@@ -144,11 +169,12 @@ namespace KnightsGauntlet.View
             var vgo = new GameObject("View"); vgo.transform.SetParent(transform, false);
             _view = vgo.AddComponent<GameView>();
             _view.Init(theme, _board);
+            _view.SetPiecePresentation(pieceScale, enemyPieceRotation, playerPieceRotation);
 
             var sfxGo = new GameObject("Sfx"); sfxGo.transform.SetParent(transform, false);
             sfxGo.AddComponent<SfxManager>();
 
-            _sim = new GameSimulation();
+            _sim = new GameSimulation { IncomingRowLead = _legacy2D ? 0f : 3f };
             _sim.OnFormChanged += form =>
             {
                 // Visual only. The transform sting loop is driven by the transformed-state
@@ -194,10 +220,19 @@ namespace KnightsGauntlet.View
 
         // A subtle camera kick on capture. The magnitude is scaled off the current
         // orthographic size so it reads the same fraction of the screen on any device.
-        private void ShakeOnCapture()
+        private Vector2 CaptureKickDirection(int fromCol, float fromY, int toCol, float toY)
         {
-            if (_shake == null || cam == null || !SaveData.IsScreenShake()) return;
-            _shake.Shake(cam.orthographicSize * 0.012f, 0.18f);
+            if (cam == null || _board == null) return Vector2.zero;
+            Vector3 from = cam.WorldToScreenPoint(_board.CellToWorld(fromCol, fromY));
+            Vector3 to = cam.WorldToScreenPoint(_board.CellToWorld(toCol, toY));
+            Vector2 travel = new Vector2(to.x - from.x, to.y - from.y);
+            return travel.sqrMagnitude > 0.001f ? -travel.normalized : Vector2.zero;
+        }
+
+        private void ShakeOnCapture(Vector2 kickDirection = default)
+        {
+            if (_shake == null || cam == null || !SaveData.IsScreenShake() || SaveData.IsReducedEffects()) return;
+            _shake.Shake(kickDirection, cam.orthographicSize * 0.009f, 0.16f);
         }
 
         // The tint the "disintegration" shards take. Battle passes the exact captured
@@ -205,8 +240,35 @@ namespace KnightsGauntlet.View
         private Color BurstColor(PieceType type) => theme != null ? theme.GetPiece(type).tint : Color.white;
 
         // ── Public API (called by UIManager) ─────────────────────────────────
+        public void ToggleLegacy2D()
+        {
+            _legacy2D = !_legacy2D;
+            PlayerPrefs.SetInt("kg_legacy_2d", _legacy2D ? 1 : 0);
+            PlayerPrefs.Save();
+            ApplyPresentationTheme();
+            if (_sim != null) _sim.IncomingRowLead = _legacy2D ? 0f : 3f;
+            _board?.SetLegacy2D(_legacy2D);
+            if (_view != null)
+            {
+                _view.SetLegacy2D(_legacy2D);
+                if (_sim != null) _view.SetPlayerForm(_sim.PlayerForm, CurrentSkin());
+            }
+            _ui?.RebuildPresentation();
+            _lbScreen?.RebuildPresentation(theme);
+            if (_board != null && _ui != null)
+                _board.FitCamera(cam, _ui.HudTopInsetFrac(), _ui.HudBottomInsetFrac());
+        }
+
         public void StartGame(GameMode mode, Difficulty difficulty)
         {
+            BoardHudRun++;
+            _trapBestSeconds = PlayerPrefs.GetFloat("kg_trap_best_seconds_" + difficulty, 0f);
+            _view.ResetComicPresentation();
+            _adventureBiomeOverride = null;
+            _board.ResetBackground();
+            _view.ClearCoachMark();
+            _ui.SetBossHud(false,0,0,false);
+            _deathRevealRemaining = 0f;
             _daily = false; _reviveCount = 0; _adLifeUsed = false; _runEnded = false;
             ResetPowerups();
             _ads.HideBanner();
@@ -222,6 +284,8 @@ namespace KnightsGauntlet.View
         // seeded board for everyone, 10 attempts/day, no pickups, no revives.
         public void StartDaily()
         {
+            BoardHudRun++;
+            _trapBestSeconds = PlayerPrefs.GetFloat("kg_daily_best_seconds", 0f);
             if (SaveData.DailyAttemptsLeft() <= 0)
             {
                 _ui.ShowToast("No daily attempts left. Resets tomorrow.");
@@ -229,6 +293,12 @@ namespace KnightsGauntlet.View
                 return;
             }
             SaveData.UseDailyAttempt();
+            _view.ResetComicPresentation();
+            _adventureBiomeOverride = null;
+            _board.ResetBackground();
+            _view.ClearCoachMark();
+            _ui.SetBossHud(false,0,0,false);
+            _deathRevealRemaining = 0f;
             _daily = true; _reviveCount = 0; _adLifeUsed = false; _runEnded = false;
             ResetPowerups();
             _ads.HideBanner();
@@ -261,7 +331,7 @@ namespace KnightsGauntlet.View
         }
         public void RestartGame()
         {
-            if (_state == State.Adventure || (_state == State.Paused && _prePause == State.Adventure)) { RetryAdventure(); return; }
+            if (_state == State.Adventure || _state == State.AdventureDeathBeat || (_state == State.Paused && _prePause == State.Adventure)) { RetryAdventure(); return; }
             FinalizeRun();
             if (_daily) StartDaily(); else StartGame(_sim.Mode, _sim.Difficulty);
         }
@@ -387,6 +457,12 @@ namespace KnightsGauntlet.View
         {
             if (_runEnded || _state != State.Dead) return;
             _runEnded = true;
+            if (_sim.Mode == GameMode.Trap && _sim.ElapsedTime > _trapBestSeconds)
+            {
+                _trapBestSeconds = _sim.ElapsedTime;
+                PlayerPrefs.SetFloat(_daily ? "kg_daily_best_seconds" : "kg_trap_best_seconds_" + _sim.Difficulty, _trapBestSeconds);
+                PlayerPrefs.Save();
+            }
             string today = DateTime.Now.ToString("yyyyMMdd");
             string category = _daily
                 ? "daily-" + today
@@ -549,6 +625,11 @@ namespace KnightsGauntlet.View
         public void StartBattleTutorial(Difficulty diff, bool replay) => StartTutorial(GameMode.Battle, diff, replay);
         private void StartTutorial(GameMode mode, Difficulty diff, bool replay)
         {
+            BoardHudRun++;
+            _view.ResetComicPresentation();
+            _ui.SetBossHud(false,0,0,false);
+            _adventureBiomeOverride = null;
+            _board.ResetBackground();
             SfxManager.StopMenuMusic();
             _tutMode = mode; _tutDiff = diff; _tutReplay = replay;
             _sim.TutorialSetup(mode);
@@ -614,7 +695,7 @@ namespace KnightsGauntlet.View
             });
             _tut.Add(new TutStep
             {
-                caption = "Capture again on your very next move to build a combo. The pips below you fill toward a transform, and each capture is worth more.",
+                caption = "Capture again on your very next move to build a combo. The dots under your chess icon fill toward a transform, and each capture is worth more.",
                 setup = () =>
                 {
                     _sim.TutorialClear(); _sim.TutorialSetPlayer(3, 4);
@@ -634,7 +715,7 @@ namespace KnightsGauntlet.View
             });
             _tut.Add(new TutStep
             {
-                caption = "Your pips survived, that was a free miss. But miss too often and your combo and pips reset to zero. So capture this piece for three in a row and transform!",
+                caption = "Your transformation progress survived that free miss. Miss too often and your combo and progress reset. Capture this piece to reach three captures and transform!",
                 setup = () =>
                 {
                     _sim.TutorialClear(); _sim.TutorialSetPlayer(4, 3);
@@ -684,11 +765,17 @@ namespace KnightsGauntlet.View
             if (OverUI()) return;
             if (GetTapDown(out Vector2 screenPos))
             {
-                Vector3 world = cam.ScreenToWorldPoint(
-                    new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+                Vector3 world = _board.ScreenToWorld(cam, screenPos);
                 var (col, simY) = _board.WorldToCell(world);
+                int fromCol = _sim.PlayerCol;
+                float fromY = _sim.PlayerY;
+                var fromForm = _sim.PlayerForm;
                 var result = _sim.TryTap(col, simY);
                 if (!result.Moved) return;
+                _lastCaptureKickDirection = CaptureKickDirection(fromCol, fromY, _sim.PlayerCol, _sim.PlayerY);
+                _shake?.Cancel();
+                _view.PlayComicMove(fromCol, fromY, fromForm, _sim);
+                _view.PlayMoveVfx();
                 var s = _tut[_tutStep];
                 if (!s.infoOnly && _sim.PlayerCol == s.targetCol && Mathf.RoundToInt(_sim.PlayerY) == s.targetRow)
                     TutorialAdvance();
@@ -741,8 +828,13 @@ namespace KnightsGauntlet.View
 
         public void StartAdventureLevel(LevelData lvl)
         {
+            BoardHudRun++;
+            _view.ResetComicPresentation();
+            _view.ClearCoachMark();
+            _deathRevealRemaining = 0f;
             SfxManager.StopMenuMusic();
             _advLevel = lvl;
+            _adventureBiomeOverride = AdventureBiome(lvl);
             _advMoves = 0;
             _bossQueenDead = false;
             if (lvl.IsBoss())
@@ -758,10 +850,22 @@ namespace KnightsGauntlet.View
             }
         }
 
+        private static BoardBiome AdventureBiome(LevelData level)
+        {
+            if (level == null || string.IsNullOrEmpty(level.Id)) return BoardBiome.Grass;
+            int dash = level.Id.IndexOf('-');
+            string worldText = dash >= 0 ? level.Id.Substring(0, dash) : level.Id;
+            if (!int.TryParse(worldText, out int world)) return BoardBiome.Grass;
+            if (world == 1) return BoardBiome.Grass;
+            if (world == 2) return BoardBiome.Drawbridge;
+            return BoardBiome.CastleStone;
+        }
+
         // Sets up the board from one layout (a stand-alone level, or one boss phase). Does
         // NOT reset _advMoves (so a boss's phases share one move total) or the boss state.
         private void LoadAdventureLayout(LevelData lvl)
         {
+            _board.ResetBackground();
             _advLayout = lvl;
             _divinePathActive = false; _divinePath = null;
             _advScrolling = lvl.ScrollSpeed > 0f;
@@ -832,11 +936,17 @@ namespace KnightsGauntlet.View
         private void PerformAdventureTap(Vector2 screenPos)
         {
             {
-                Vector3 world = cam.ScreenToWorldPoint(
-                    new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+                Vector3 world = _board.ScreenToWorld(cam, screenPos);
                 var (col, simY) = _board.WorldToCell(world);
+                int fromCol = _sim.PlayerCol;
+                float fromY = _sim.PlayerY;
+                PieceType fromForm = _sim.PlayerForm;
                 var result = _sim.TryTap(col, simY);
                 if (!result.Moved) return;
+                _lastCaptureKickDirection = CaptureKickDirection(fromCol, fromY, _sim.PlayerCol, _sim.PlayerY);
+                _shake?.Cancel();
+                _view.PlayComicMove(fromCol, fromY, fromForm, _sim);
+                _view.PlayMoveVfx();
                 _advMoves++;
 
                 if (_advScrolling) { SfxManager.Play(Sfx.PieceMove); _ui.SetAdventureHud(true, _advMoves, _advLevel.Name, -1); return; }
@@ -848,9 +958,10 @@ namespace KnightsGauntlet.View
                 // A move that removed an enemy is a capture; otherwise a plain move.
                 if (hasEnemies && _sim.AdvRemaining < enemiesBefore)
                 {
-                    SfxManager.Play(Sfx.PieceCapture); ShakeOnCapture();
+                    SfxManager.PlayCapture(1); ShakeOnCapture(_lastCaptureKickDirection);
                     // The captured enemy sat on the tile the knight just landed on.
-                    _view.SpawnCaptureBurst(_sim.PlayerCol, _sim.PlayerY, BurstColor(PieceType.Pawn));
+                    _view.SpawnCaptureVoxelBurst(_sim.PlayerCol, _sim.PlayerY, BurstColor(PieceType.Pawn), 1);
+                    _view.PlayComicCapture(_sim, 1);
                 }
                 else SfxManager.Play(Sfx.PieceMove);
 
@@ -899,9 +1010,10 @@ namespace KnightsGauntlet.View
         private void AdvanceBossPhase()
         {
             _queenHealth = Mathf.Max(0, _queenHealth - 1);
-            SfxManager.Play(Sfx.PieceCapture);
-            ShakeOnCapture();
-            _view.SpawnCaptureBurst(_sim.PlayerCol, _sim.PlayerY, BurstColor(PieceType.Queen));
+            SfxManager.PlayCapture(1);
+            ShakeOnCapture(_lastCaptureKickDirection);
+            _view.PlayComicCapture(_sim, 1);
+            _view.SpawnCaptureVoxelBurst(_sim.PlayerCol, _sim.PlayerY, BurstColor(PieceType.Queen), 1);
             _ui.SetBossHud(true, _queenHealth, _advLevel.Phases.Length, _sim.QueenShielded);
             if (_queenHealth <= 0) { _bossQueenDead = true; return; } // now go reach the flag
             _bossPhase++;
@@ -929,8 +1041,13 @@ namespace KnightsGauntlet.View
             _sim.TutorialEnd(); _sim.Adventure = false;
             _view.ClearCoachMark();
             _ui.SetAdventureHud(false, 0, "", -1); _ui.SetBossHud(false, 0, 0, false);
-            _state = State.Menu;
-            _ui.ShowAdventureFail(_advLevel);
+            if (theme.comicStyle)
+            {
+                _state = State.AdventureDeathBeat;
+                _view.PlayComicDefeat(_sim);
+                _deathRevealRemaining = SaveData.IsReducedEffects() ? 0.08f : 0.18f;
+            }
+            else { _state = State.Menu; _ui.ShowAdventureFail(_advLevel); }
         }
 
         public void RetryAdventure() { if (_advLevel != null) StartAdventureLevel(_advLevel); }
@@ -941,7 +1058,14 @@ namespace KnightsGauntlet.View
 
         private void Update()
         {
+            _view.SetPiecePresentation(pieceScale, enemyPieceRotation, playerPieceRotation);
             _board.FitCamera(cam, _ui.HudTopInsetFrac(), _ui.HudBottomInsetFrac());
+            if (MenuTransitionActive)
+            {
+                _board.SyncBackground(_sim.ScrollCells, _sim.ElapsedTime, _adventureBiomeOverride);
+                _view.Sync(_sim, false, 0f);
+                return;
+            }
 
             if (_state == State.Playing)
             {
@@ -968,6 +1092,17 @@ namespace KnightsGauntlet.View
                 int n = Mathf.CeilToInt(_reviveCountdown);
                 if (n <= 0) { _ui.HideCountdown(); _state = State.Playing; }
                 else _ui.SetCountdown(n);
+            }
+
+            if (_state == State.Dead && _deathRevealRemaining > 0f)
+            {
+                _deathRevealRemaining -= Time.deltaTime;
+                if (_deathRevealRemaining <= 0f) ShowRunResult();
+            }
+            if (_state == State.AdventureDeathBeat)
+            {
+                _deathRevealRemaining -= Time.deltaTime;
+                if (_deathRevealRemaining <= 0f) { _state = State.Menu; _ui.ShowAdventureFail(_advLevel); }
             }
 
             if (_state == State.Tutorial) HandleTutorialInput();
@@ -1049,13 +1184,19 @@ namespace KnightsGauntlet.View
                 else SfxManager.StopLoop();
                 _transformLooping = transformedNow;
             }
+            if (SaveData.IsReducedEffects()) _washPulse = 0f;
             if (_washPulse > 0f)
             {
                 _washPulse = Mathf.MoveTowards(_washPulse, 0f, Time.deltaTime / 0.7f);
                 _board.WashStrength = 0.30f * Mathf.Sin(Mathf.PI * (1f - _washPulse)); // rise then fall
             }
             else _board.WashStrength = 0f;
-            _board.SyncBackground(_sim.ScrollCells);
+            BoardBiome? biomeOverride = _adventureBiomeOverride;
+            if (_state == State.Playing || _state == State.Adventure || _state == State.Tutorial)
+                _board.TickScenery(Time.deltaTime);
+            _board.SetLevelEnd(biomeOverride.HasValue && _advLayout != null ?
+                (float?)(_advScrolling ? -_advLayout.FinishCells : 0f) : null);
+            _board.SyncBackground(_sim.ScrollCells, _sim.ElapsedTime, biomeOverride);
             bool showHints = _sim.Difficulty != Difficulty.Grandmaster && (_state == State.Playing || _state == State.Adventure);
             // Divine Intervention: while active, feed the view the single best move to glow green.
             KnightsGauntlet.Core.MoveTarget? bestMove = null;
@@ -1070,17 +1211,22 @@ namespace KnightsGauntlet.View
 
         private void HandleInput()
         {
-            if (_state != State.Playing) return;
+            if (_state != State.Playing || !_sim.Alive) return;
             if (OverUI()) return;
 
             if (GetTapDown(out Vector2 screenPos))
             {
-                Vector3 world = cam.ScreenToWorldPoint(
-                    new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+                Vector3 world = _board.ScreenToWorld(cam, screenPos);
                 var (col, simY) = _board.WorldToCell(world);
                 _trapLeveledUpThisMove = false; // set by HandleTrapLevelUp if this move levels up
+                int fromCol = _sim.PlayerCol;
+                float fromY = _sim.PlayerY;
+                PieceType fromForm = _sim.PlayerForm;
                 var result = _sim.TryTap(col, simY);
                 if (!result.Moved) return;
+
+                _shake?.Cancel();
+                _view.PlayComicMove(fromCol, fromY, fromForm, _sim);
 
                 _view.PlayMoveVfx();
                 _ach.OnMove(result);
@@ -1088,15 +1234,23 @@ namespace KnightsGauntlet.View
                 // move blip, unless this trap move triggered a level-up (its sting plays
                 // instead, so the two don't stack).
                 bool captured = result.Captures != null && result.Captures.Count > 0;
-                if (captured) { SfxManager.Play(Sfx.PieceCapture); ShakeOnCapture(); }
+                int captureMultiplier = 1;
+                if (captured)
+                    foreach (var cap in result.Captures)
+                        captureMultiplier = Mathf.Max(captureMultiplier, cap.NewMultiplier);
+                Vector2 captureKick = CaptureKickDirection(fromCol, fromY, _sim.PlayerCol, _sim.PlayerY);
+                if (captured) { SfxManager.PlayCapture(captureMultiplier); ShakeOnCapture(captureKick); }
                 else if (!_trapLeveledUpThisMove) SfxManager.Play(Sfx.PieceMove);
                 if (result.Captures != null)
                 {
                     foreach (var cap in result.Captures)
                     {
-                        _view.SpawnCaptureBurst(cap.Col, cap.Y, BurstColor(cap.Type));
-                        _view.SpawnPopup(cap.Col, cap.Y - 0.42f, "+" + cap.PointsGained, PopupGain);
-                        _view.SpawnPopup(cap.Col, cap.Y + 0.14f,
+                        int impactCol = _legacy2D ? cap.Col : _sim.PlayerCol;
+                        float impactY = _legacy2D ? cap.Y : _sim.PlayerY;
+                        _view.PlayComicCapture(_sim, cap.NewMultiplier);
+                        _view.SpawnCaptureVoxelBurst(impactCol, impactY, BurstColor(cap.Type), cap.NewMultiplier);
+                        _view.SpawnPopup(impactCol, impactY - 0.42f, "+" + cap.PointsGained, PopupGain);
+                        _view.SpawnPopup(impactCol, impactY + 0.14f,
                             "X" + cap.NewMultiplier + " (+" + cap.MultiplierDelta + ")", PopupCombo);
                     }
                 }
@@ -1106,6 +1260,17 @@ namespace KnightsGauntlet.View
         private void EnterDead()
         {
             _state = State.Dead;
+            if (theme.comicStyle)
+            {
+                _view.PlayComicDefeat(_sim);
+                _deathRevealRemaining = SaveData.IsReducedEffects() ? 0.08f : 0.18f;
+            }
+            else ShowRunResult();
+        }
+
+        private void ShowRunResult()
+        {
+            _deathRevealRemaining = 0f;
             bool isTrap = _sim.Mode == GameMode.Trap;
             DeathAnalysis analysis = default;
             if (isTrap) analysis = _sim.BuildDeathAnalysis();
@@ -1166,7 +1331,7 @@ namespace KnightsGauntlet.View
                     // Reversed / content-opposite: swipe DOWN to look UP the map, and up to
                     // look down (hence -dCells).
                     float worldPerPx = (2f * cam.orthographicSize) / Mathf.Max(1, Screen.height);
-                    float dCells = dyPx * worldPerPx / Mathf.Max(0.0001f, _board.cellSize);
+                    float dCells = dyPx * worldPerPx / Mathf.Max(0.0001f, _board.cellSize * Mathf.Cos(BoardView.CameraTilt * Mathf.Deg2Rad));
                     float target = Mathf.Clamp(_advScrollAtPointerStart - dCells, GameConfig.Rows - _advLayout.MapRows, 0f);
                     _sim.AdventureSetScroll(target);
                     _ui.SetTallScroll(-_sim.ScrollCells / span);
@@ -1188,8 +1353,7 @@ namespace KnightsGauntlet.View
         // (same column, nearest Y within 1.2 cells) without applying anything.
         private bool IsTapOnValidMove(Vector2 screenPos)
         {
-            Vector3 world = cam.ScreenToWorldPoint(
-                new Vector3(screenPos.x, screenPos.y, -cam.transform.position.z));
+            Vector3 world = _board.ScreenToWorld(cam, screenPos);
             var (col, simY) = _board.WorldToCell(world);
             var moves = _sim.GetValidMoves();
             for (int i = 0; i < moves.Count; i++)

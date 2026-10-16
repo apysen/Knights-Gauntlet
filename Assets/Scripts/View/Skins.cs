@@ -22,7 +22,7 @@ namespace KnightsGauntlet.View
     public static class Skins
     {
         public static readonly SkinInfo Default =
-            new SkinInfo { Id = "gold", Name = "Classic Gold", Color = Hex("#F0C040"), Source = SkinSource.Default };
+            new SkinInfo { Id = "gold", Name = "Classic Gold", Color = Hex("#EFB000"), Source = SkinSource.Default };
 
         // Earned via achievements (colours mirror Achievements.All).
         public static readonly SkinInfo[] Achievement =

@@ -18,9 +18,7 @@ namespace KnightsGauntlet.View
         Transform,          // battle/adventure: took on a captured piece's form (legacy pop)
         Untransform,        // form ran out when the timer expired
         Transformation,     // battle/adventure: a NEW transform begins (fires once per nightrider)
-        AdventureNextLevel, // adventure: reached the level goal
-        LootboxOpen,        // pressed Open on a lootbox
-        LootboxScroll       // the reveal screen scrolls in (pauses music, fades it back after)
+        AdventureNextLevel // adventure: reached the level goal
     }
 
     // One shared AudioSource that plays short UI/gameplay sounds. Clips live in
@@ -35,6 +33,13 @@ namespace KnightsGauntlet.View
         private AudioSource _src;
         private AudioSource _music;
         private AudioSource _loopSrc; // a single looping gameplay sound (e.g. the transform buff)
+        private AudioSource[] _captureSources;
+        private int _captureSourceIndex;
+        private readonly List<AudioClip> _captureClips = new List<AudioClip>();
+        private int _lastCaptureClip = -1;
+        private AudioClip _legacyCaptureClip;
+        private const string LegacyCapturePath = "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square)";
+        private float _lastCaptureHapticTime = -1f;
         private AudioClip _menuTheme;
         private readonly Dictionary<Sfx, AudioClip> _clips = new Dictionary<Sfx, AudioClip>();
 
@@ -82,15 +87,13 @@ namespace KnightsGauntlet.View
             { Sfx.ShieldBreak,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 5 (Square)" },
             { Sfx.PlaySelect,      "SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square)" },
             { Sfx.PieceMove,       "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 3 (Square)" },
-            { Sfx.PieceCapture,    "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square)" },
+            { Sfx.PieceCapture,    "SFX/Capture Slash" },
             { Sfx.TabSelect,       "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square)" },
             { Sfx.PageTurn,        "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square)" },
             { Sfx.Transform,       "SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 4 (Square)" },
             { Sfx.Untransform,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 5 (Square)" },
             { Sfx.Transformation,     "SFX/Transformation" },
             { Sfx.AdventureNextLevel, "SFX/Adventure Mode Next Level" },
-            { Sfx.LootboxOpen,        "SFX/Lootbox Open" },
-            { Sfx.LootboxScroll,      "SFX/Lootbox Scroll" },
         };
 
         // Global mute, backed by a pref so a future Settings toggle can flip it.
@@ -119,11 +122,29 @@ namespace KnightsGauntlet.View
             _loopSrc.loop = true;
             _loopSrc.spatialBlend = 0f;
 
+            // Separate voices let fast capture chains rise in pitch without
+            // retuning a sound that is still ringing from the previous hit.
+            _captureSources = new AudioSource[4];
+            for (int i = 0; i < _captureSources.Length; i++)
+            {
+                _captureSources[i] = gameObject.AddComponent<AudioSource>();
+                _captureSources[i].playOnAwake = false;
+                _captureSources[i].spatialBlend = 0f;
+            }
+
             foreach (var kv in Files)
             {
                 var clip = Resources.Load<AudioClip>(kv.Value);
                 if (clip != null) _clips[kv.Key] = clip;
                 else Debug.LogWarning("[SFX] Missing clip, add it at Assets/Resources/" + kv.Value + ".<ext>");
+            }
+
+            _legacyCaptureClip = Resources.Load<AudioClip>(LegacyCapturePath);
+            if (_clips.TryGetValue(Sfx.PieceCapture, out var captureClip)) _captureClips.Add(captureClip);
+            for (int i = 2; i <= 3; i++)
+            {
+                var variant = Resources.Load<AudioClip>("SFX/Capture Slash " + i);
+                if (variant != null) _captureClips.Add(variant);
             }
 
             _menuTheme = Resources.Load<AudioClip>(MenuThemePath);
@@ -135,9 +156,67 @@ namespace KnightsGauntlet.View
 
         public static void Play(Sfx id)
         {
+            if (id == Sfx.PieceCapture) { PlayCapture(1); return; }
             if (_instance == null || Muted) return;
             if (_instance._clips.TryGetValue(id, out var clip) && clip != null)
-                _instance._src.PlayOneShot(clip, SfxVolume);
+                _instance._src.PlayOneShot(clip,
+                    SfxVolume * (id == Sfx.PieceMove && !UIFactory.LegacyStyle ? 0.68f : 1f));
+        }
+
+        public static void PlayCapture(int comboMultiplier)
+        {
+            if (_instance == null) return;
+            float combo = Mathf.InverseLerp(1f, 6f, Mathf.Max(1, comboMultiplier));
+            if (!Muted && UIFactory.LegacyStyle)
+            {
+                // Legacy keeps the original pixel capture sound at its original pitch and level.
+                if (_instance._legacyCaptureClip != null)
+                    _instance._src.PlayOneShot(_instance._legacyCaptureClip, SfxVolume);
+            }
+            else if (!Muted && _instance._captureClips.Count > 0)
+            {
+                int count = _instance._captureClips.Count;
+                int clipIndex = Random.Range(0, count - (count > 1 && _instance._lastCaptureClip >= 0 ? 1 : 0));
+                if (count > 1 && _instance._lastCaptureClip >= 0 && clipIndex >= _instance._lastCaptureClip) clipIndex++;
+                _instance._lastCaptureClip = clipIndex;
+                var clip = _instance._captureClips[clipIndex];
+                int voice = _instance._captureSourceIndex++ % _instance._captureSources.Length;
+                var source = _instance._captureSources[voice];
+                source.pitch = Mathf.Lerp(0.98f, 1.10f, combo);
+                source.PlayOneShot(clip, SfxVolume * Mathf.Lerp(1.00f, 1.35f, combo));
+            }
+            _instance.PulseCaptureHaptic();
+        }
+
+        private void PulseCaptureHaptic()
+        {
+            if (!Application.isMobilePlatform || !SaveData.IsCaptureHaptics()) return;
+            if (Time.unscaledTime - _lastCaptureHapticTime < 0.10f) return;
+            _lastCaptureHapticTime = Time.unscaledTime;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+                using (var vibrator = activity.Call<AndroidJavaObject>("getSystemService", "vibrator"))
+                using (var version = new AndroidJavaClass("android.os.Build$VERSION"))
+                {
+                    if (vibrator == null) return;
+                    int sdk = version.GetStatic<int>("SDK_INT");
+                    if (sdk >= 26)
+                    {
+                        using (var effectClass = new AndroidJavaClass("android.os.VibrationEffect"))
+                        using (var effect = effectClass.CallStatic<AndroidJavaObject>("createOneShot", 28L, 110))
+                            vibrator.Call("vibrate", effect);
+                    }
+                    else vibrator.Call("vibrate", 28L);
+                }
+            }
+            catch { Handheld.Vibrate(); }
+#elif UNITY_IOS && !UNITY_EDITOR
+            Handheld.Vibrate();
+#endif
         }
 
         // Loops a gameplay sound until StopLoop is called (used for the transform buff,
@@ -169,7 +248,7 @@ namespace KnightsGauntlet.View
             var m = _instance._music;
             if (m == null || _instance._menuTheme == null) return;
             if (m.isPlaying && m.clip == _instance._menuTheme) return;
-            m.volume = MusicVolume; // heal any volume a lootbox-scroll fade left partway
+            m.volume = MusicVolume;
             m.clip = _instance._menuTheme;
             m.Play();
         }
@@ -180,46 +259,5 @@ namespace KnightsGauntlet.View
             _instance._music.Stop();
         }
 
-        // Plays the lootbox scroll sting over a screen transition: the menu music pauses
-        // while it plays, then fades back in once the scroll clip finishes so the sting
-        // is heard cleanly. If the music wasn't playing, it simply plays the sting.
-        private Coroutine _scrollCo;
-        public static void PlayLootboxScroll()
-        {
-            if (_instance == null || Muted) return;
-            if (_instance._scrollCo != null) _instance.StopCoroutine(_instance._scrollCo);
-            _instance._scrollCo = _instance.StartCoroutine(_instance.ScrollThenFadeMusic());
-        }
-
-        private System.Collections.IEnumerator ScrollThenFadeMusic()
-        {
-            bool musicWasPlaying = _music != null && _music.isPlaying;
-            if (musicWasPlaying) _music.Pause();
-
-            float clipLen = 0f;
-            if (_clips.TryGetValue(Sfx.LootboxScroll, out var clip) && clip != null)
-            {
-                clipLen = clip.length;
-                _src.PlayOneShot(clip, SfxVolume);
-            }
-            yield return new WaitForSecondsRealtime(clipLen);
-
-            if (musicWasPlaying && _music != null && !Muted)
-            {
-                float target = MusicVolume;
-                _music.volume = 0f;
-                _music.UnPause();
-                const float fade = 0.8f;
-                float t = 0f;
-                while (t < fade)
-                {
-                    t += Time.unscaledDeltaTime;
-                    _music.volume = Mathf.Lerp(0f, target, t / fade);
-                    yield return null;
-                }
-                _music.volume = target;
-            }
-            _scrollCo = null;
-        }
     }
 }

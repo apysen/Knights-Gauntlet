@@ -1,0 +1,308 @@
+# Game regression run
+
+2026-10-16T02:04:56.2035059-07:00
+
+Completed: 289 passed, 9 failed
+
+- PASS Escape solver matches all 1,000 original routes/outcomes
+- FAIL Only incoming row changes at grass/bridge threshold
+- FAIL Scenery transition follows the same moving row boundary
+- FAIL Three biome regions coexist by row
+- FAIL Rewind preserves terrain history
+- PASS New round clears terrain history
+- PASS 3D cosmetic accent applies and resets: emerald
+- PASS 3D cosmetic accent applies and resets: silver
+- PASS 3D cosmetic accent applies and resets: crimson
+- PASS 3D cosmetic accent applies and resets: gold
+- PASS Movement VFX asset loads
+- PASS Movement effect naturally destroys itself
+- PASS Reusable movement effect cancels without destruction
+- PASS Movement effect reuses the same object
+- PASS Reusable movement effect finishes and becomes inactive
+- PASS Piece transformation reuses cached knight model
+- PASS Mobile triangle budget: knight (11999)
+- PASS Mobile triangle budget: rook (6500)
+- PASS Mobile triangle budget: bishop (8000)
+- PASS Mobile triangle budget: queen (10000)
+- PASS Mobile triangle budget: pawn (4999)
+- PASS Repeated legal move 1
+- PASS Hop starts on move 1
+- PASS Hop lands cleanly 1
+- PASS Player keeps configured facing 1
+- PASS Repeated legal move 2
+- PASS Hop starts on move 2
+- PASS Hop lands cleanly 2
+- PASS Player keeps configured facing 2
+- PASS Repeated legal move 3
+- PASS Hop starts on move 3
+- PASS Hop lands cleanly 3
+- PASS Player keeps configured facing 3
+- PASS Repeated legal move 4
+- PASS Hop starts on move 4
+- PASS Hop lands cleanly 4
+- PASS Player keeps configured facing 4
+- PASS Repeated legal move 5
+- PASS Hop starts on move 5
+- PASS Hop lands cleanly 5
+- PASS Player keeps configured facing 5
+- PASS Repeated legal move 6
+- PASS Hop starts on move 6
+- PASS Hop lands cleanly 6
+- PASS Player keeps configured facing 6
+- PASS Repeated legal move 7
+- PASS Hop starts on move 7
+- PASS Hop lands cleanly 7
+- PASS Player keeps configured facing 7
+- PASS Repeated legal move 8
+- PASS Hop starts on move 8
+- PASS Hop lands cleanly 8
+- PASS Player keeps configured facing 8
+- PASS Enemy knight keeps configured facing after moving up
+- PASS Rapid moves start from the current visible position
+- PASS Adventure flag cleared when starting survival
+- PASS Boss HUD cleared when starting survival
+- PASS Goal flag survives coach-mark cleanup
+- PASS Natural death: Trap/Easy
+- PASS Dead simulation rejects movement: Trap/Easy
+- PASS Game-over screen visible: Trap/Easy
+- PASS Game-over restart button exists
+- PASS Restart after death: Trap/Easy
+- PASS Pause Trap/Easy
+- PASS Resume Trap/Easy
+- PASS Switch mode after completed round: Trap/Easy
+- PASS Natural death: Trap/Medium
+- PASS Dead simulation rejects movement: Trap/Medium
+- PASS Game-over screen visible: Trap/Medium
+- PASS Game-over restart button exists
+- PASS Restart after death: Trap/Medium
+- PASS Pause Trap/Medium
+- PASS Resume Trap/Medium
+- PASS Switch mode after completed round: Trap/Medium
+- PASS Natural death: Trap/Hard
+- PASS Dead simulation rejects movement: Trap/Hard
+- PASS Game-over screen visible: Trap/Hard
+- PASS Game-over restart button exists
+- PASS Restart after death: Trap/Hard
+- PASS Pause Trap/Hard
+- PASS Resume Trap/Hard
+- PASS Switch mode after completed round: Trap/Hard
+- PASS Natural death: Trap/Grandmaster
+- PASS Dead simulation rejects movement: Trap/Grandmaster
+- PASS Game-over screen visible: Trap/Grandmaster
+- PASS Game-over restart button exists
+- PASS Restart after death: Trap/Grandmaster
+- PASS Pause Trap/Grandmaster
+- PASS Resume Trap/Grandmaster
+- PASS Switch mode after completed round: Trap/Grandmaster
+- PASS Natural death: Battle/Easy
+- PASS Dead simulation rejects movement: Battle/Easy
+- PASS Game-over screen visible: Battle/Easy
+- PASS Game-over restart button exists
+- PASS Restart after death: Battle/Easy
+- PASS Pause Battle/Easy
+- PASS Resume Battle/Easy
+- PASS Switch mode after completed round: Battle/Easy
+- PASS Natural death: Battle/Medium
+- PASS Dead simulation rejects movement: Battle/Medium
+- PASS Game-over screen visible: Battle/Medium
+- PASS Game-over restart button exists
+- PASS Restart after death: Battle/Medium
+- PASS Pause Battle/Medium
+- PASS Resume Battle/Medium
+- PASS Switch mode after completed round: Battle/Medium
+- PASS Natural death: Battle/Hard
+- PASS Dead simulation rejects movement: Battle/Hard
+- PASS Game-over screen visible: Battle/Hard
+- PASS Game-over restart button exists
+- PASS Restart after death: Battle/Hard
+- PASS Pause Battle/Hard
+- PASS Resume Battle/Hard
+- PASS Switch mode after completed round: Battle/Hard
+- PASS Natural death: Battle/Grandmaster
+- PASS Dead simulation rejects movement: Battle/Grandmaster
+- PASS Game-over screen visible: Battle/Grandmaster
+- PASS Game-over restart button exists
+- PASS Restart after death: Battle/Grandmaster
+- PASS Pause Battle/Grandmaster
+- PASS Resume Battle/Grandmaster
+- PASS Switch mode after completed round: Battle/Grandmaster
+- PASS HUD fits 1-1 First Steps
+- PASS Pause preserves biome 1-1
+- PASS Resume adventure 1-1
+- PASS Replay complete route 1-1 First Steps (5 moves)
+- PASS HUD fits 1-2 Squeeze
+- PASS Pause preserves biome 1-2
+- PASS Resume adventure 1-2
+- PASS Replay complete route 1-2 Squeeze (7 moves)
+- PASS HUD fits 1-3 Gauntlet
+- PASS Pause preserves biome 1-3
+- PASS Resume adventure 1-3
+- PASS Replay complete route 1-3 Gauntlet (9 moves)
+- PASS HUD fits 1-4 Threadneedle
+- PASS Pause preserves biome 1-4
+- PASS Resume adventure 1-4
+- PASS Replay complete route 1-4 Threadneedle (9 moves)
+- PASS HUD fits 1-5 Switchback
+- PASS Pause preserves biome 1-5
+- PASS Resume adventure 1-5
+- PASS Replay complete route 1-5 Switchback (11 moves)
+- PASS HUD fits 1-6 The Long Way
+- PASS Pause preserves biome 1-6
+- PASS Resume adventure 1-6
+- PASS Replay complete route 1-6 The Long Way (11 moves)
+- PASS HUD fits 2-1 First Capture
+- PASS Pause preserves biome 2-1
+- PASS Resume adventure 2-1
+- PASS Replay complete route 2-1 First Capture (4 moves)
+- PASS HUD fits 2-2 Crossfire
+- PASS Pause preserves biome 2-2
+- PASS Resume adventure 2-2
+- PASS Replay complete route 2-2 Crossfire (6 moves)
+- PASS HUD fits 2-3 Roundup
+- PASS Pause preserves biome 2-3
+- PASS Resume adventure 2-3
+- PASS Replay complete route 2-3 Roundup (8 moves)
+- PASS HUD fits 2-4 Escort
+- PASS Pause preserves biome 2-4
+- PASS Resume adventure 2-4
+- PASS Replay complete route 2-4 Escort (9 moves)
+- PASS HUD fits 2-5 Sweep and Clear
+- PASS Pause preserves biome 2-5
+- PASS Resume adventure 2-5
+- PASS Replay complete route 2-5 Sweep and Clear (9 moves)
+- PASS HUD fits 2-6 No Survivors
+- PASS Pause preserves biome 2-6
+- PASS Resume adventure 2-6
+- PASS Replay complete route 2-6 No Survivors (13 moves)
+- PASS HUD fits 3-1 The Climb
+- PASS Pause preserves biome 3-1
+- PASS Resume adventure 3-1
+- PASS Replay complete route 3-1 The Climb (11 moves)
+- PASS HUD fits 3-2 Ascent
+- PASS Pause preserves biome 3-2
+- PASS Resume adventure 3-2
+- PASS Replay complete route 3-2 Ascent (11 moves)
+- PASS HUD fits 3-3 Vertigo
+- PASS Pause preserves biome 3-3
+- PASS Resume adventure 3-3
+- PASS Replay complete route 3-3 Vertigo (13 moves)
+- PASS HUD fits 3-4 High Ground
+- PASS Pause preserves biome 3-4
+- PASS Resume adventure 3-4
+- PASS Replay complete route 3-4 High Ground (13 moves)
+- PASS HUD fits 3-5 Skyfall
+- PASS Pause preserves biome 3-5
+- PASS Resume adventure 3-5
+- PASS Replay complete route 3-5 Skyfall (15 moves)
+- PASS HUD fits 3-6 Summit
+- PASS Pause preserves biome 3-6
+- PASS Resume adventure 3-6
+- PASS Replay complete route 3-6 Summit (17 moves)
+- PASS HUD fits 4-1 Fragile Footing
+- PASS Pause preserves biome 4-1
+- PASS Resume adventure 4-1
+- PASS Replay complete route 4-1 Fragile Footing (7 moves)
+- PASS HUD fits 4-2 One Way Up
+- PASS Pause preserves biome 4-2
+- PASS Resume adventure 4-2
+- PASS Replay complete route 4-2 One Way Up (7 moves)
+- PASS HUD fits 4-3 Thin Ice
+- PASS Pause preserves biome 4-3
+- PASS Resume adventure 4-3
+- PASS Replay complete route 4-3 Thin Ice (9 moves)
+- PASS HUD fits 4-4 Collapse
+- PASS Pause preserves biome 4-4
+- PASS Resume adventure 4-4
+- PASS Replay complete route 4-4 Collapse (13 moves)
+- PASS HUD fits 4-5 Crumbling Heights
+- PASS Pause preserves biome 4-5
+- PASS Resume adventure 4-5
+- PASS Replay complete route 4-5 Crumbling Heights (15 moves)
+- PASS HUD fits 4-6 Last Stand
+- PASS Pause preserves biome 4-6
+- PASS Resume adventure 4-6
+- PASS Replay complete route 4-6 Last Stand (17 moves)
+- PASS HUD fits 5-1 Metamorphosis
+- PASS Pause preserves biome 5-1
+- PASS Resume adventure 5-1
+- PASS Replay complete route 5-1 Metamorphosis (3 moves)
+- PASS HUD fits 5-2 The Bishop's Path
+- PASS Pause preserves biome 5-2
+- PASS Resume adventure 5-2
+- PASS Replay complete route 5-2 The Bishop's Path (5 moves)
+- PASS HUD fits 5-3 Moving Targets
+- PASS Pause preserves biome 5-3
+- PASS Resume adventure 5-3
+- PASS Replay complete route 5-3 Moving Targets (6 moves)
+- PASS HUD fits 5-4 Shifting Diagonals
+- PASS Pause preserves biome 5-4
+- PASS Resume adventure 5-4
+- PASS Replay complete route 5-4 Shifting Diagonals (6 moves)
+- PASS HUD fits 5-5 Three Forms
+- PASS Pause preserves biome 5-5
+- PASS Resume adventure 5-5
+- PASS Replay complete route 5-5 Three Forms (8 moves)
+- PASS HUD fits 5-6 Ascension
+- PASS Pause preserves biome 5-6
+- PASS Resume adventure 5-6
+- PASS Replay complete route 5-6 Ascension (11 moves)
+- PASS HUD fits 6-1 Convergence
+- PASS Pause preserves biome 6-1
+- PASS Resume adventure 6-1
+- PASS Replay complete route 6-1 Convergence (9 moves)
+- PASS HUD fits 6-2 Brittle Crown
+- PASS Pause preserves biome 6-2
+- PASS Resume adventure 6-2
+- PASS Replay complete route 6-2 Brittle Crown (5 moves)
+- PASS HUD fits 6-3 The Long Climb
+- PASS Pause preserves biome 6-3
+- PASS Resume adventure 6-3
+- PASS Replay complete route 6-3 The Long Climb (15 moves)
+- PASS HUD fits 6-4 Shifting Ascent
+- PASS Pause preserves biome 6-4
+- PASS Resume adventure 6-4
+- PASS Replay complete route 6-4 Shifting Ascent (7 moves)
+- PASS HUD fits 6-5 Everything
+- PASS Pause preserves biome 6-5
+- PASS Resume adventure 6-5
+- PASS Replay complete route 6-5 Everything (10 moves)
+- PASS HUD fits 6-6 Apotheosis
+- PASS Pause preserves biome 6-6
+- PASS Resume adventure 6-6
+- PASS Replay complete route 6-6 Apotheosis (12 moves)
+- PASS HUD fits 7-1 Coronation
+- PASS Pause preserves biome 7-1
+- PASS Resume adventure 7-1
+- PASS Replay complete route   (7 moves)
+- PASS Replay complete route   (14 moves)
+- PASS Replay complete route   (13 moves)
+- FAIL Grass and bridge coexist during scroll transition
+- PASS Transition continues across board
+- FAIL Bridge replaces grass after full board length
+- FAIL Bridge and castle coexist during scroll transition
+- FAIL Castle replaces bridge after full board length
+- PASS HUD biome updates without a screen resize
+- PASS No rendered tiles beyond perimeter at fractional scroll 0
+- PASS No rendered tiles beyond perimeter at fractional scroll 0.25
+- PASS No rendered tiles beyond perimeter at fractional scroll 0.5
+- PASS No rendered tiles beyond perimeter at fractional scroll 0.75
+- PASS No rendered tiles beyond perimeter at fractional scroll 0.999
+- FAIL All 50 projected cell targets round-trip
+- PASS Trap tutorial resets adventure state
+- PASS Battle tutorial opens
+- PASS UI navigation ShowSettings
+- PASS UI navigation ShowMarketplace
+- PASS UI navigation ShowCustomization
+- PASS UI navigation ShowAchievements
+- PASS UI navigation ShowBugReport
+- PASS UI navigation ShowTutorialPick
+- PASS Level selection opens
+- PASS Daily seeded rules are deterministic without consuming attempts
+- PASS Battle capture chain transforms player
+- PASS Battle transformation expires
+- PASS Revive grants grace and safe footing
+- PASS No game runtime exceptions (0)
+
+## Scope
+
+Real GameManager/UI restart and pause flows; rendered board clipping; repeated movement and expired VFX; all adventure paths replayed in isolated simulations. Live billing, ad delivery, leaderboard submission and daily attempt consumption are excluded.

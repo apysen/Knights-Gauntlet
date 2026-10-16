@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "name": "knight",
+      "baseRatio": 0.6396467734860016,
+      "baseCenterX": -0.02268925971003174,
+      "baseCenterY": 0.0
+    },
+    {
+      "name": "rook",
+      "baseRatio": 0.8610085992992604,
+      "baseCenterX": -0.004383006765397313,
+      "baseCenterY": 0.008678856191694697
+    },
+    {
+      "name": "bishop",
+      "baseRatio": 0.9698718330346658,
+      "baseCenterX": 0.018275294799124465,
+      "baseCenterY": 0.0
+    },
+    {
+      "name": "queen",
+      "baseRatio": 0.9592769190954427,
+      "baseCenterX": -0.020361540452278667,
+      "baseCenterY": 0.0
+    },
+    {
+      "name": "pawn",
+      "baseRatio": 0.8001090603574145,
+      "baseCenterX": 0.09856277679001986,
+      "baseCenterY": 0.0
+    }
+  ]
+}

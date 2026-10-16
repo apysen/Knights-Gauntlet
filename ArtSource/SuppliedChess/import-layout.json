@@ -1,0 +1,158 @@
+[
+  {
+    "piece": "king",
+    "facing": "front",
+    "bounds": {
+      "left": 207,
+      "top": 10,
+      "width": 486,
+      "height": 1059
+    },
+    "outputWidth": 209,
+    "outputHeight": 456,
+    "baseY": 476
+  },
+  {
+    "piece": "king",
+    "facing": "back",
+    "bounds": {
+      "left": 755,
+      "top": 10,
+      "width": 486,
+      "height": 1059
+    },
+    "outputWidth": 209,
+    "outputHeight": 456,
+    "baseY": 476
+  },
+  {
+    "piece": "queen",
+    "facing": "front",
+    "bounds": {
+      "left": 206,
+      "top": 11,
+      "width": 495,
+      "height": 1063
+    },
+    "outputWidth": 209,
+    "outputHeight": 448,
+    "baseY": 476
+  },
+  {
+    "piece": "queen",
+    "facing": "back",
+    "bounds": {
+      "left": 745,
+      "top": 11,
+      "width": 496,
+      "height": 1063
+    },
+    "outputWidth": 209,
+    "outputHeight": 448,
+    "baseY": 476
+  },
+  {
+    "piece": "bishop",
+    "facing": "front",
+    "bounds": {
+      "left": 244,
+      "top": 25,
+      "width": 461,
+      "height": 1047
+    },
+    "outputWidth": 190,
+    "outputHeight": 432,
+    "baseY": 476
+  },
+  {
+    "piece": "bishop",
+    "facing": "back",
+    "bounds": {
+      "left": 744,
+      "top": 25,
+      "width": 458,
+      "height": 1047
+    },
+    "outputWidth": 189,
+    "outputHeight": 432,
+    "baseY": 476
+  },
+  {
+    "piece": "rook",
+    "facing": "front",
+    "bounds": {
+      "left": 133,
+      "top": 29,
+      "width": 550,
+      "height": 1036
+    },
+    "outputWidth": 221,
+    "outputHeight": 416,
+    "baseY": 476
+  },
+  {
+    "piece": "rook",
+    "facing": "back",
+    "bounds": {
+      "left": 765,
+      "top": 29,
+      "width": 551,
+      "height": 1036
+    },
+    "outputWidth": 221,
+    "outputHeight": 416,
+    "baseY": 476
+  },
+  {
+    "piece": "pawn",
+    "facing": "front",
+    "bounds": {
+      "left": 119,
+      "top": 79,
+      "width": 537,
+      "height": 944
+    },
+    "outputWidth": 215,
+    "outputHeight": 379,
+    "baseY": 476
+  },
+  {
+    "piece": "pawn",
+    "facing": "back",
+    "bounds": {
+      "left": 790,
+      "top": 78,
+      "width": 536,
+      "height": 947
+    },
+    "outputWidth": 215,
+    "outputHeight": 380,
+    "baseY": 476
+  },
+  {
+    "piece": "knight",
+    "facing": "front",
+    "bounds": {
+      "left": 153,
+      "top": 7,
+      "width": 526,
+      "height": 1073
+    },
+    "outputWidth": 216,
+    "outputHeight": 440,
+    "baseY": 476
+  },
+  {
+    "piece": "knight",
+    "facing": "back",
+    "bounds": {
+      "left": 783,
+      "top": 7,
+      "width": 528,
+      "height": 1073
+    },
+    "outputWidth": 217,
+    "outputHeight": 440,
+    "baseY": 476
+  }
+]

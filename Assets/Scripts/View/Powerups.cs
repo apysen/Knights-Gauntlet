@@ -52,18 +52,17 @@ namespace KnightsGauntlet.View
              : id == PowerupId.DivineIntervention ? DivineIntervention
              : DivinePath;
 
-        // Icons live at Assets/Resources/Powerups/<file>.png. Cached per key.
+        // The shop and HUD share the same line icon family.
         private static readonly System.Collections.Generic.Dictionary<string, Sprite> _icons =
             new System.Collections.Generic.Dictionary<string, Sprite>();
         public static Sprite IconOf(string key)
         {
-            if (_icons.TryGetValue(key, out var s)) return s;
-            string file = key == "chronokinesis" ? "Powerups/Chronokinesis"
-                        : key == "divine_path" ? "Powerups/Pathfinder"
-                        : "Powerups/Holy Cross";
-            s = Resources.Load<Sprite>(file);
-            if (s == null) Debug.LogWarning("[Powerups] Missing icon at Assets/Resources/" + file + ".png");
-            _icons[key] = s;
+            string cacheKey = (UIFactory.LegacyStyle ? "legacy:" : "modern:") + key;
+            if (_icons.TryGetValue(cacheKey, out var s)) return s;
+            s = UIFactory.LegacyStyle ? Resources.Load<Sprite>("LegacyUI/" +
+                (key == "chronokinesis" ? "Chronokinesis" : key == "divine_path" ? "Pathfinder" : "Holy Cross")) :
+                RoyalIcons.Get(key == "chronokinesis" ? "time" : key == "divine_path" ? "path" : "shield");
+            _icons[cacheKey] = s;
             return s;
         }
     }

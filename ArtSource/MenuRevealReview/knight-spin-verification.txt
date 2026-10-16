@@ -1,0 +1,2 @@
+yaw=True; pitch=True; roll=True; touch target=True; returns upright=True
+PLAY completes from held rotation=True

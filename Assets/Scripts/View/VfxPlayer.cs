@@ -70,26 +70,39 @@ namespace KnightsGauntlet.View
         // Spawn a one-shot VFX parented to `parent` (so it follows the knight and
         // doesn't drift as the board scrolls), at `localPos` in the parent's local
         // space, sized to `localSize` (parent-local units), on `sortingOrder`.
-        public static void Play(VfxInfo v, Transform parent, Vector3 localPos, float localSize, int sortingOrder)
+        public static VfxPlayer Play(VfxInfo v, Transform parent, Vector3 localPos, float localSize, int sortingOrder,
+            VfxPlayer reuse = null, bool retain = false)
         {
             var frames = Frames(v);
-            if (frames == null || frames.Length == 0) return;
-            var go = new GameObject("Vfx_" + v.Id);
+            if (frames == null || frames.Length == 0) return null;
+            var go = reuse != null ? reuse.gameObject : new GameObject("Vfx_" + v.Id);
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPos;
-            var sr = go.AddComponent<SpriteRenderer>();
+            var sr = reuse != null ? reuse._sr : go.AddComponent<SpriteRenderer>();
             sr.sprite = frames[0];
             sr.sortingOrder = sortingOrder;
             var size = frames[0].bounds.size;
             float m = Mathf.Max(size.x, size.y, 0.0001f);
             go.transform.localScale = Vector3.one * (localSize * Mathf.Max(0.01f, v.Scale) / m);
-            go.AddComponent<VfxPlayer>().Init(sr, frames, v.Fps);
+            var player = reuse != null ? reuse : go.AddComponent<VfxPlayer>();
+            player._retain = retain;
+            player.Init(sr, frames, v.Fps);
+            go.SetActive(true);
+            return player;
+        }
+
+        public void Cancel()
+        {
+            if (this == null) return;
+            if (gameObject.activeSelf) gameObject.SetActive(false);
+            if (!_retain) Destroy(gameObject);
         }
 
         private SpriteRenderer _sr;
         private Sprite[] _frames;
         private float _fps, _t;
         private int _shown;
+        private bool _retain;
 
         private void Init(SpriteRenderer sr, Sprite[] frames, float fps)
         {
@@ -100,7 +113,7 @@ namespace KnightsGauntlet.View
         {
             _t += Time.deltaTime;
             int idx = (int)(_t * _fps);
-            if (idx >= _frames.Length) { Destroy(gameObject); return; }
+            if (idx >= _frames.Length) { Cancel(); return; }
             if (idx != _shown) { _shown = idx; _sr.sprite = _frames[idx]; }
         }
     }

@@ -12,19 +12,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da45c3445c6b55b4d8c953868b0ec466, type: 3}
   m_Name: GameTheme
   m_EditorClassIdentifier: Assembly-CSharp::KnightsGauntlet.View.GameTheme
+  comicStyle: 1
+  ceramicPiecePrototype: 1
+  inkPorcelainPieces: 1
   cellSprite: {fileID: 0}
-  cellColorA: {r: 0.176, g: 0.176, b: 0.306, a: 1}
-  cellColorB: {r: 0.118, g: 0.118, b: 0.208, a: 1}
+  cellColorA: {r: 0.9529, g: 0.9137, b: 0.8471, a: 1}
+  cellColorB: {r: 0.8706, g: 0.8235, b: 0.7333, a: 1}
   gridLineColor: {r: 1, g: 1, b: 1, a: 0.05}
   pieces: []
   pieceBackingSprite: {fileID: 0}
   pieceBackingAlpha: 0.35
   hintSprite: {fileID: 0}
   hintDotSprite: {fileID: 0}
-  hintColor: {r: 0.941, g: 0.753, b: 0.251, a: 0.25}
+  hintColor: {r: 0.57, g: 0.44, b: 0.106, a: 0.14}
   threatSprite: {fileID: 0}
-  threatFill: {r: 0.353, g: 0.078, b: 0.078, a: 0.55}
-  threatStroke: {r: 0.588, g: 0.157, b: 0.157, a: 0.55}
+  threatFill: {r: 0.812, g: 0.208, b: 0.141, a: 0.16}
+  threatStroke: {r: 0.812, g: 0.208, b: 0.141, a: 0.85}
+  pickupSprite: {fileID: 0}
+  pickupColor: {r: 0.95, g: 0.78, b: 0.25, a: 1}
+  uiPanelSprite: {fileID: 0}
+  uiBorderSprite: {fileID: 0}
+  uiCircleSprite: {fileID: 0}
+  uiButtonSprite: {fileID: 0}
   skins: []
   hudFont: {fileID: 0}
   popupFont: {fileID: 0}

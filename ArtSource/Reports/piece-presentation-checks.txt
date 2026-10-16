@@ -1,0 +1,4 @@
+PASS Live scale updates player and enemies
+PASS Live enemy rotation updates existing models
+PASS Hazard plaques retain their tile-marker size
+PASS Fresh models normalize equally at different Inspector scales

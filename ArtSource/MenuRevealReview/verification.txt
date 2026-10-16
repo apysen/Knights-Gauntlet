@@ -1,0 +1,5 @@
+Final normal transition: single start=True; timer frozen=True; synchronized fades=True; tilt sampled=True; move sampled=True; expansion sampled=True; hero restored=True; overlay cleaned=True
+First-time tutorial: single start=True; timer frozen=True; synchronized fades=True; tilt sampled=True; move sampled=True; expansion sampled=True; hero restored=True; overlay cleaned=True
+Reduced effects: PASS
+Equipped-skin preview refresh: PASS
+First-frame placement: canvas scale=2.656934; menu scale=2.656934; corner displacement=0.0001220703px

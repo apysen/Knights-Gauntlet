@@ -88,9 +88,8 @@ namespace KnightsGauntlet.Core
             && (phase == 0 ? e.HomeRow : e.HomeRow + e.OffRow) == row;
 
         // Would this route step onto ground it already burnt? Replays the path applying
-        // the collapse rule. (Only knight levels have cracked tiles, so landing cells are
-        // the whole story: no ray needs to pass over a collapsed tile.)
-        private static bool CollapseSafe(int startCol, int startRow, List<Int2> path, IReadOnlyList<Int2> cracked)
+        // Transform levels can slide through intervening cells as well as land on them.
+        private static bool CollapseSafe(int startCol, int startRow, List<Int2> path, IReadOnlyList<Int2> cracked, bool sliders = false)
         {
             long coll = 0L;
             int c = startCol, r = startRow;
@@ -98,6 +97,16 @@ namespace KnightsGauntlet.Core
             {
                 int j = CrackIndex(cracked, path[i].Col, path[i].Row);
                 if (j >= 0 && (coll & (1L << j)) != 0) return false;  // lands on ground it collapsed
+                int dc = path[i].Col - c, dr = path[i].Row - r;
+                if (sliders && (dc == 0 || dr == 0 || System.Math.Abs(dc) == System.Math.Abs(dr)))
+                {
+                    int length = System.Math.Max(System.Math.Abs(dc), System.Math.Abs(dr));
+                    for (int step = 1; step < length; step++)
+                    {
+                        int crack = CrackIndex(cracked,c + System.Math.Sign(dc)*step,r + System.Math.Sign(dr)*step);
+                        if (crack >= 0 && (coll & (1L << crack)) != 0) return false;
+                    }
+                }
                 coll = Collapse(c, r, cracked, coll);
                 c = path[i].Col; r = path[i].Row;
             }
@@ -119,14 +128,14 @@ namespace KnightsGauntlet.Core
             var plain = SolveCore(startCol, startRow, startPhase, enemies, isTrap, maxRow,
                                   hasGoal, goalCol, goalRow, transform, startForm, startPips, null, int.MaxValue);
             if (cracked == null || cracked.Count == 0) return plain;
-            if (plain != null && CollapseSafe(startCol, startRow, plain, cracked)) return plain;
+            if (plain != null && CollapseSafe(startCol, startRow, plain, cracked, transform)) return plain;
 
             // The cheap route would collapse under itself, so search properly, under a node
-            // budget so a pathological board can't stall the game. If the budget runs out
-            // we fall back to the plain route: it may dead-end, but it's better than no hint.
+            // budget so a pathological board can't stall the game. An unsafe route
+            // must never be sold as a hint; a null result lets the caller refund it.
             var aware = SolveCore(startCol, startRow, startPhase, enemies, isTrap, maxRow,
                                   hasGoal, goalCol, goalRow, transform, startForm, startPips, cracked, NodeBudget);
-            return aware ?? plain;
+            return aware;
         }
 
         // Expanded-node ceiling for the collapse-aware search, so the worst case stays a
@@ -263,7 +272,7 @@ namespace KnightsGauntlet.Core
             if (plain != null && CollapseSafe(startCol, startRow, plain, cracked)) return plain;
             var aware = SolveBossCore(startCol, startRow, startPhase, enemies, isTrap, maxRow,
                                       requireGoal, goalCol, goalRow, cracked, NodeBudget);
-            return aware ?? plain;
+            return aware;
         }
 
         private static List<Int2> SolveBossCore(

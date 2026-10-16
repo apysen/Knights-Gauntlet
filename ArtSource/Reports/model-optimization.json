@@ -1,0 +1,32 @@
+[
+  {
+    "name": "knight",
+    "originalTriangles": 525439,
+    "triangles": 11999,
+    "budget": 12000
+  },
+  {
+    "name": "rook",
+    "originalTriangles": 487960,
+    "triangles": 6500,
+    "budget": 6500
+  },
+  {
+    "name": "bishop",
+    "originalTriangles": 573914,
+    "triangles": 8000,
+    "budget": 8000
+  },
+  {
+    "name": "queen",
+    "originalTriangles": 436860,
+    "triangles": 10000,
+    "budget": 10000
+  },
+  {
+    "name": "pawn",
+    "originalTriangles": 378811,
+    "triangles": 4999,
+    "budget": 5000
+  }
+]

@@ -18,18 +18,32 @@ namespace KnightsGauntlet.View
         private float _duration;
         private float _magnitude;
         private bool _active;
+        private Vector2 _kickDirection;
 
         // magnitude is the peak offset in world units; duration is the total time to
         // decay back to zero. A later Shake overrides an in-flight one so rapid
         // captures don't stack into a violent wobble.
         public void Shake(float magnitude, float duration)
+            => Shake(Vector2.zero, magnitude, duration);
+
+        public void Shake(Vector2 kickDirection, float magnitude, float duration)
         {
             if (magnitude <= 0f || duration <= 0f) return;
             if (!_active) _rest = transform.localPosition; // true rest, captured only when settled
             _active = true;
+            _kickDirection = kickDirection.sqrMagnitude > 0.001f ? kickDirection.normalized : Vector2.zero;
             _magnitude = magnitude;
             _duration = duration;
             _timer = duration;
+        }
+
+        // A new player move takes visual priority over an unfinished impact shake.
+        public void Cancel()
+        {
+            if (!_active) return;
+            _timer = 0f;
+            _active = false;
+            transform.localPosition = _rest;
         }
 
         private void LateUpdate()
@@ -47,7 +61,7 @@ namespace KnightsGauntlet.View
 
             float k = _timer / _duration;          // 1 -> 0 over the shake
             float amp = _magnitude * k * k;         // ease out so it settles softly
-            Vector2 off = Random.insideUnitCircle * amp;
+            Vector2 off = _kickDirection * amp + Random.insideUnitCircle * (amp * 0.12f);
             transform.localPosition = _rest + new Vector3(off.x, off.y, 0f);
         }
     }

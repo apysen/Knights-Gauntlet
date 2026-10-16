@@ -388,6 +388,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KnightsGauntlet.View.GameManager
   theme: {fileID: 11400000, guid: 06e80473eb7dbdd4298b65a983bec141, type: 2}
   cam: {fileID: 0}
+  pieceScale: 0.9
+  enemyPieceRotation: 180
+  playerPieceRotation: 0
+  bugReportUrl: 
+  bugReportEmail: apysen02@gmail.com
 --- !u!4 &996864122
 Transform:
   m_ObjectHideFlags: 0

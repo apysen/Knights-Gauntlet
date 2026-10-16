@@ -1,0 +1,20 @@
+[
+  {
+    "name": "knight",
+    "triangles": 2164,
+    "height": 1.1491,
+    "diameter": 0.72
+  },
+  {
+    "name": "rook",
+    "triangles": 3612,
+    "height": 0.96,
+    "diameter": 0.72
+  },
+  {
+    "name": "bishop",
+    "triangles": 2896,
+    "height": 1.56,
+    "diameter": 0.72
+  }
+]

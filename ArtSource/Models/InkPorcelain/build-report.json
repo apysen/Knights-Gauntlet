@@ -1,0 +1,37 @@
+[
+  {
+    "name": "knight",
+    "triangles": 4456,
+    "materials": 4,
+    "height": 1.195,
+    "diameter": 0.724
+  },
+  {
+    "name": "rook",
+    "triangles": 6008,
+    "materials": 4,
+    "height": 1.015,
+    "diameter": 0.724
+  },
+  {
+    "name": "bishop",
+    "triangles": 7124,
+    "materials": 4,
+    "height": 1.39,
+    "diameter": 0.724
+  },
+  {
+    "name": "pawn",
+    "triangles": 5980,
+    "materials": 4,
+    "height": 0.9917,
+    "diameter": 0.724
+  },
+  {
+    "name": "queen",
+    "triangles": 8372,
+    "materials": 4,
+    "height": 1.494,
+    "diameter": 0.724
+  }
+]

@@ -8,34 +8,32 @@ namespace KnightsGauntlet.View
 {
     // Helpers for building uGUI screens in code, now with rounded sprites and a
     // gold-outline toggle state to match the web look. Fonts funnel through Font.
-    public class UIFactory
+    public partial class UIFactory
     {
         public TMP_FontAsset Font;
         public Sprite PanelSprite, BorderSprite, CircleSprite, ButtonSprite;
+        public readonly System.Collections.Generic.List<Canvas> Canvases = new System.Collections.Generic.List<Canvas>();
 
-        // Global multiplier on every label's point size. A light bump so the pixel
-        // font reads a touch larger across the whole UI.
+        // Shared size adjustment for the display and body typefaces.
         public const float FontScale = 1.12f;
-
-        // DEVNIK "2D UI Pixel Buttons": the neutral, text-free bar used as the
-        // 9-sliced background for every labelled button. Loaded once from Resources
-        // (the sheet lives at Assets/Resources/UI/…), tinted to the game's palette
-        // by the caller so the pixel look adopts our gold/dark scheme.
-        private static Sprite _pixelButton;
-        private static bool _pixelButtonTried;
 
         // "Pixel Font by Thaleah": a TMP font asset built once at runtime from the
         // bundled TTF (there is no pre-baked .asset for it). Shared by every screen.
         private static TMP_FontAsset _pixelFont;
         private static bool _pixelFontTried;
 
-        public static readonly Color Gold = Hex("#F0C040");
-        public static readonly Color Bg = Hex("#1A1A2E");
-        public static readonly Color Panel = Hex("#16213E");
-        public static readonly Color Muted = Hex("#9098AD");
-        public static readonly Color Text = Hex("#EEEEEE");
+        public static Color Gold => LegacyStyle ? new Color32(0xF0,0xC0,0x40,255) : new Color32(0xDD,0xBA,0x68,255);
+        public static Color Bg => LegacyStyle ? new Color32(0x1A,0x1A,0x2E,255) : new Color32(0x08,0x0E,0x1D,255);
+        public static Color Panel => LegacyStyle ? new Color32(0x16,0x21,0x3E,255) : new Color32(0x14,0x27,0x46,255);
+        public static Color Muted => LegacyStyle ? new Color32(0x90,0x98,0xAD,255) : new Color32(0xA9,0xB5,0xCC,255);
+        public static Color Text => LegacyStyle ? new Color32(0xEE,0xEE,0xEE,255) : new Color32(0xF6,0xED,0xD6,255);
         public static readonly Color Amber = Hex("#FFB454");
-        public static readonly Color Error = Hex("#E05050");
+        public static Color Error => LegacyStyle ? new Color32(0xE0,0x50,0x50,255) : new Color32(0xB5,0x53,0x49,255);
+        private static TMP_FontAsset _comicFont, _bodyFont;
+        public static TMP_FontAsset ComicFont() => _comicFont != null ? _comicFont :
+            (_comicFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/Bangers SDF") ?? TMP_Settings.defaultFontAsset);
+        public static TMP_FontAsset BodyFont() => _bodyFont != null ? _bodyFont :
+            (_bodyFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/Roboto-Bold SDF") ?? TMP_Settings.defaultFontAsset);
 
         public UIFactory(TMP_FontAsset font, Sprite panel = null, Sprite border = null,
                          Sprite circle = null, Sprite button = null)
@@ -48,23 +46,15 @@ namespace KnightsGauntlet.View
 
         // Sprite resolvers: use the theme's custom art if provided, else the
         // procedurally generated default. Everything visual is overridable.
-        public Sprite Fill() => PanelSprite != null ? PanelSprite : UISprites.RoundedFill();
-        public Sprite Border() => BorderSprite != null ? BorderSprite : UISprites.PixelBorder();
+        public Sprite Fill() => PanelSprite != null ? PanelSprite : LegacyStyle ? UISprites.RoundedFill() : UISprites.RoyalPanel();
+        public Sprite Border() => BorderSprite != null ? BorderSprite : LegacyStyle ? UISprites.PixelBorder() : UISprites.RoyalPanel(true);
         public Sprite Circle() => CircleSprite != null ? CircleSprite : UISprites.Circle();
 
-        // Background for labelled buttons: theme override → DEVNIK pixel bar → the
-        // procedural rounded fill (so the game still builds if the art is missing).
+        // Theme override or an antialiased outlined panel.
         public Sprite ButtonBg()
         {
-            if (ButtonSprite != null) return ButtonSprite;
-            if (!_pixelButtonTried)
-            {
-                _pixelButtonTried = true;
-                var all = Resources.LoadAll<Sprite>("UI/UI SIMPLE PIXEL UNSPLIT");
-                foreach (var s in all)
-                    if (s.name == "BAR1") { _pixelButton = s; break; }
-            }
-            return _pixelButton != null ? _pixelButton : Fill();
+            if (LegacyStyle) return LegacyButtonBg();
+            return ButtonSprite != null ? ButtonSprite : Fill();
         }
 
         // The Thaleah pixel TMP font, generated on first use from the bundled TTF in
@@ -81,13 +71,10 @@ namespace KnightsGauntlet.View
             return _pixelFont;
         }
 
-        // The font every UI label should use: an explicit theme font if set, else
-        // the Thaleah pixel font.
-        public TMP_FontAsset ResolveFont() => Font != null ? Font : PixelFont();
+        // Explicit theme font or the bundled display face.
+        public TMP_FontAsset ResolveFont() => Font != null ? Font : LegacyStyle ? PixelFont() : ComicFont();
 
-        // The pixel chess-piece TMP font (PixelChess.ttf), built once at runtime.
-        // DejaVu is wired in as a fallback so glyphs PixelChess lacks (notably the
-        // trap "✕") still render. Used for every chess-piece glyph in the game.
+        // Smooth chess glyphs for small UI symbols and missing custom sprites.
         private static TMP_FontAsset _chessFont;
         private static bool _chessFontTried;
         public static TMP_FontAsset ChessFont()
@@ -95,21 +82,10 @@ namespace KnightsGauntlet.View
             if (!_chessFontTried)
             {
                 _chessFontTried = true;
-                var ttf = Resources.Load<Font>("Fonts/PixelChess");
+                var ttf = Resources.Load<Font>("Fonts/DejaVuSans-Bold");
                 if (ttf != null)
                 {
                     _chessFont = TMP_FontAsset.CreateFontAsset(ttf);
-                    var fbTtf = Resources.Load<Font>("Fonts/DejaVuSans-Bold");
-                    if (_chessFont != null && fbTtf != null)
-                    {
-                        var fb = TMP_FontAsset.CreateFontAsset(fbTtf);
-                        if (fb != null)
-                        {
-                            _chessFont.fallbackFontAssetTable ??=
-                                new System.Collections.Generic.List<TMP_FontAsset>();
-                            _chessFont.fallbackFontAssetTable.Add(fb);
-                        }
-                    }
                 }
             }
             return _chessFont;
@@ -139,6 +115,7 @@ namespace KnightsGauntlet.View
             scaler.referenceResolution = referenceResolution ?? new Vector2(533, 948);
             scaler.matchWidthOrHeight = 0.5f;
             go.AddComponent<GraphicRaycaster>();
+            Canvases.Add(canvas);
             return canvas;
         }
 
@@ -161,6 +138,9 @@ namespace KnightsGauntlet.View
             v.childControlWidth = true; v.childControlHeight = true;
             v.childForceExpandWidth = false; v.childForceExpandHeight = false;
             AddFitter(go);
+            if (!LegacyStyle && parent.name == "Screen" && parent.parent != null &&
+                parent.parent.GetComponent<Canvas>() != null && parent.parent.name != "Trapped")
+                go.AddComponent<UIScreenFit>();
             return rt;
         }
 
@@ -180,7 +160,7 @@ namespace KnightsGauntlet.View
         {
             var go = NewUI("Label", parent);
             var t = go.AddComponent<TextMeshProUGUI>();
-            var font = ResolveFont();
+            var font = LegacyStyle ? ResolveFont() : size < 28f ? BodyFont() : ResolveFont();
             if (font) t.font = font;
             t.text = text; t.fontSize = size * FontScale; t.color = color; t.fontStyle = style;
             t.alignment = TextAlignmentOptions.Center;
@@ -190,9 +170,8 @@ namespace KnightsGauntlet.View
             return t;
         }
 
-        // pixel: use the DEVNIK pixel-bar background (default). Pass false for the
-        // small square icon/grid tiles (restart, pause, level cells, skin swatches)
-        // that read better with the plain rounded fill.
+        // The legacy pixel argument selects the themed button sprite; false uses
+        // the plain panel for compact icon and customization cells.
         // clickSfx: the sound played when the button is pressed. Defaults to the UI
         // "click" (Cursor 1) so every button is audible; pass a different Sfx for
         // special buttons (Play, adventure level, page turns) or null for silence.
@@ -202,14 +181,17 @@ namespace KnightsGauntlet.View
                              bool outline = false, bool pixel = true,
                              Sfx? clickSfx = Sfx.TabSelect)
         {
+            if (LegacyStyle) return LegacyButton(parent, text, onClick, fill, textColor, width, height, fontSize, outline, pixel, clickSfx);
             var go = NewUI("Button", parent);
             var img = go.AddComponent<Image>();
             img.sprite = pixel ? ButtonBg() : Fill(); img.type = Image.Type.Sliced;
             img.color = fill ?? Gold;
-            // Draw the pixel bar's 9-slice at 2x pixels-per-unit so its baked black
-            // outline (and corners) render at roughly half thickness. The sprite's
-            // outline looked too heavy at 1:1.
-            if (pixel) img.pixelsPerUnitMultiplier = 2f;
+            var inkOutline = go.AddComponent<Outline>();
+            inkOutline.effectColor = Hex("#111210");
+            inkOutline.effectDistance = new Vector2(1f, -1f);
+            inkOutline.useGraphicAlpha = false;
+            // Smooth nine-sliced panel with a constant ink outline.
+            img.pixelsPerUnitMultiplier = 1f;
             var btn = go.AddComponent<Button>();
             btn.targetGraphic = img;
             var le = go.AddComponent<LayoutElement>();
@@ -221,23 +203,30 @@ namespace KnightsGauntlet.View
             var bimg = border.AddComponent<Image>();
             bimg.sprite = Border(); bimg.type = Image.Type.Sliced;
             bimg.color = Gold; bimg.raycastTarget = false;
-            // Match the pixel bg's 9-slice scale so the gold selection outline is the
-            // same thickness/corner as the button's baked black border.
-            if (pixel) bimg.pixelsPerUnitMultiplier = 2f;
+            // The selection ring uses the same corner geometry as the panel.
+            bimg.pixelsPerUnitMultiplier = 1f;
             border.SetActive(outline);
 
+            var fillet = NewUI("GoldFillet", go.transform);
+            Stretch(fillet.GetComponent<RectTransform>());
+            var filletImage = fillet.AddComponent<Image>();
+            filletImage.sprite = Border(); filletImage.type = Image.Type.Sliced;
+            filletImage.color = new Color(Gold.r,Gold.g,Gold.b,.30f);
+            filletImage.raycastTarget = false;
+
             var label = Label(go.transform, text, fontSize, textColor ?? Bg, FontStyles.Normal, width);
+            label.font = BodyFont();
+            label.textWrappingMode = TextWrappingModes.NoWrap;
             var labelRt = label.rectTransform;
             Stretch(labelRt);
-            // Inset from the pixel border so glyphs don't touch the edge.
+            // Keep lettering clear of the border.
             labelRt.offsetMin = new Vector2(12f, 4f);
             labelRt.offsetMax = new Vector2(-12f, -4f);
             label.GetComponent<LayoutElement>().ignoreLayout = true;
-            // The Thaleah pixel font is chunky; auto-shrink (never grow past the
-            // requested size) so any label fits within its button.
+            // Shrink only when a translated or long label needs the space.
             label.enableAutoSizing = true;
             label.fontSizeMax = fontSize * FontScale;
-            label.fontSizeMin = Mathf.Max(6f, fontSize * FontScale * 0.4f);
+            label.fontSizeMin = Mathf.Max(12f, fontSize * FontScale * 0.75f);
 
             btn.onClick.AddListener(() =>
             {
@@ -247,15 +236,13 @@ namespace KnightsGauntlet.View
             return btn;
         }
 
-        // A horizontal 0..1 slider styled with the DEVNIK pixel assets: a dark pixel-bar
-        // track, a gold pixel-bar fill, and a light pixel-bar handle with a gold border,
-        // all drawn at 2x pixels-per-unit to match the buttons. onChange fires
-        // continuously as the player drags.
+        // Horizontal 0..1 slider using the same panel art and palette as the buttons.
         public UnityEngine.UI.Slider Slider(Transform parent, float value, Action<float> onChange,
                              float width = 300f, float height = 36f)
         {
-            float hw = height * 0.85f;      // handle width
-            float trackH = height;          // track fills the full height (no vertical padding)
+            if (LegacyStyle) return LegacySlider(parent, value, onChange, width, height);
+            float hw = height * 0.75f;
+            float trackH = 6f;
 
             var go = NewUI("Slider", parent);
             var le = go.AddComponent<LayoutElement>();
@@ -270,7 +257,7 @@ namespace KnightsGauntlet.View
             bgRt.anchorMin = new Vector2(0f, 0.5f); bgRt.anchorMax = new Vector2(1f, 0.5f);
             bgRt.pivot = new Vector2(0.5f, 0.5f); bgRt.sizeDelta = new Vector2(0f, trackH);
             var bgImg = bg.AddComponent<Image>();
-            bgImg.sprite = ButtonBg(); bgImg.type = Image.Type.Sliced; bgImg.color = Panel; bgImg.pixelsPerUnitMultiplier = 2f;
+            bgImg.sprite = BoardView.UnitSquare(); bgImg.color = Hex("#2A3D59");
 
             // Fill Area spans the full track width so a maxed slider fully covers it
             // (no leftover track showing at the ends).
@@ -283,22 +270,23 @@ namespace KnightsGauntlet.View
             fillRt.anchorMin = Vector2.zero; fillRt.anchorMax = Vector2.one;
             fillRt.offsetMin = Vector2.zero; fillRt.offsetMax = Vector2.zero;
             var fillImg = fill.AddComponent<Image>();
-            fillImg.sprite = ButtonBg(); fillImg.type = Image.Type.Sliced; fillImg.color = Gold; fillImg.pixelsPerUnitMultiplier = 2f;
+            fillImg.sprite = BoardView.UnitSquare(); fillImg.color = Gold;
 
             var handleArea = NewUI("Handle Slide Area", go.transform);
             var haRt = handleArea.GetComponent<RectTransform>();
-            haRt.anchorMin = Vector2.zero; haRt.anchorMax = Vector2.one;
+            haRt.anchorMin = new Vector2(0, .5f); haRt.anchorMax = new Vector2(1, .5f);
             haRt.pivot = new Vector2(0.5f, 0.5f); haRt.sizeDelta = new Vector2(-hw, 0f);
             var handle = NewUI("Handle", handleArea.transform);
             var hRt = handle.GetComponent<RectTransform>();
-            hRt.sizeDelta = new Vector2(hw, 0f);
+            hRt.anchorMin = hRt.anchorMax = new Vector2(0, .5f);
+            hRt.sizeDelta = new Vector2(hw, hw);
             var hImg = handle.AddComponent<Image>();
-            hImg.sprite = ButtonBg(); hImg.type = Image.Type.Sliced; hImg.color = Text; hImg.pixelsPerUnitMultiplier = 2f;
+            hImg.sprite = Circle(); hImg.color = Gold;
             // Gold pixel border on the knob, matching the buttons.
             var hBorder = NewUI("Border", handle.transform);
             Stretch(hBorder.GetComponent<RectTransform>());
             var hbImg = hBorder.AddComponent<Image>();
-            hbImg.sprite = Border(); hbImg.type = Image.Type.Sliced; hbImg.color = Gold;
+            hbImg.sprite = Circle(); hbImg.color = Gold;
             hbImg.pixelsPerUnitMultiplier = 2f; hbImg.raycastTarget = false;
 
             slider.fillRect = fillRt;

@@ -8,17 +8,20 @@ namespace KnightsGauntlet.View
     // Reads the simulation each frame and renders it: enemy/trap pieces (pooled),
     // the player piece, and move-hint highlights. Builds all GameObjects at
     // runtime so no prefab authoring is required to get moving.
-    public class GameView : MonoBehaviour
+    public partial class GameView : MonoBehaviour
     {
         private GameTheme _theme;
+        private float _pieceScale = 0.9f, _enemyRotation = 180f, _playerRotation;
         private BoardView _board;
+        private bool _legacy2D;
         private Transform _piecesRoot, _hintsRoot;
 
         private readonly List<PieceView> _piecePool = new List<PieceView>();
         private readonly List<HintCell> _hintPool = new List<HintCell>();
         private readonly List<ThreatCell> _threatPool = new List<ThreatCell>();
         private readonly List<SpriteRenderer> _pickupPool = new List<SpriteRenderer>();
-        private readonly List<SpriteRenderer> _crackedPool = new List<SpriteRenderer>();
+        private readonly List<Transform> _crackedPool = new List<Transform>();
+        private GameObject _crackedAsset;
 
         // Animated silver-coin pickup (Trap mode). Frames load once from Resources;
         // all coins share one clock so they spin in sync.
@@ -29,10 +32,23 @@ namespace KnightsGauntlet.View
         private readonly List<PopupItem> _popups = new List<PopupItem>();
         private readonly List<Particle> _particles = new List<Particle>();
         private Transform _particlesRoot;
+        private readonly List<VoxelParticle> _voxelParticles = new List<VoxelParticle>();
+        private Transform _voxelParticlesRoot;
+        private static Mesh _voxelCubeMesh;
+        private static Material _voxelMaterial;
+        private static readonly int VoxelColorId = Shader.PropertyToID("_BaseColor");
+        private MaterialPropertyBlock _voxelProperties;
         private PieceView _player;
+        public Rect MenuPlayerRect(Camera camera) => MenuKnightPreview.ProjectedRect(_player, camera);
+        public void SetMenuPlayerVisible(bool visible)
+        {
+            foreach (var renderer in _player.GetComponentsInChildren<Renderer>(true)) renderer.forceRenderingOff = !visible;
+            if (_playerGlow != null) _playerGlow.forceRenderingOff = !visible;
+        }
+        private VfxPlayer _activeMoveVfx;
+        private VfxPlayer _moveVfxSlot;
         private SpriteRenderer _playerGlow; // soft radial shine behind the knight
         private Transform _popupsRoot, _threatsRoot, _pickupsRoot;
-        private SpriteRenderer _xformBarBg, _xformBarFill;
         private readonly SpriteRenderer[] _pips = new SpriteRenderer[GameConfig.TransformTrigger];
         private int _pCol, _pRow;
         private bool _colorblind;
@@ -56,36 +72,34 @@ namespace KnightsGauntlet.View
         private const float BubbleDownPixels = 4f;     // nudge the bubble down this many art pixels
         private const float BubbleFramePixels = 28f;   // bubble frame height (px), for the nudge
         private bool _coachOn; private int _coachCol; private float _coachRow;
-        // Animated goal flag (adventure goal tiles). Replaces the coach ring there.
-        private SpriteRenderer _goalFlag;
-        private Sprite[] _flagFrames;
-        private float _flagUnitH = 0.52f, _flagAnimT;
-        private const float FlagFps = 8f;
+        // Low-poly 3D goal flag (adventure goal tiles). Replaces the coach ring there.
+        private GoalFlag3D _goalFlag;
+        private SpriteRenderer _legacyGoalFlag;
+        private Sprite[] _legacyGoalFlagFrames;
         private bool _flagOn; private int _flagCol; private float _flagRow;
         private static readonly Color CoachGold = new Color(0.941f, 0.753f, 0.251f, 1f);
 
-        private static readonly Color XformBlue = new Color(0.561f, 0.878f, 1f, 1f);   // #8FE0FF
-        private static readonly Color XformGold = new Color(1f, 0.816f, 0.376f, 1f);   // #FFD060
-        private static readonly Color XformRed  = new Color(1f, 0.439f, 0.314f, 1f);   // #FF7050
-        private static readonly Color XformBg   = new Color(0f, 0f, 0f, 0.45f);
         private static readonly Color PipOn  = new Color(0.941f, 0.753f, 0.251f, 0.95f); // filled, gold
         private static readonly Color PipOff = new Color(1f, 1f, 1f, 0.20f);             // empty, dim
 
         // Don't render pieces well outside the viewport (traps linger off-screen
         // for the death snapshot but shouldn't be drawn).
-        private const float VisibleLo = -1.5f;
-        private static readonly float VisibleHi = GameConfig.Rows + 1.5f;
+        private const float VisibleLo = -0.5f;
+        private static readonly float VisibleHi = GameConfig.Rows - 0.5f;
 
         public void Init(GameTheme theme, BoardView board)
         {
             _theme = theme;
             _board = board;
+            _legacy2D = theme != null && !theme.comicStyle;
+            _crackedAsset = Resources.Load<GameObject>("BoardModels/CrackedTile");
             _piecesRoot = new GameObject("EnemyPieces").transform; _piecesRoot.SetParent(transform, false);
             _hintsRoot = new GameObject("MoveHints").transform; _hintsRoot.SetParent(transform, false);
             _threatsRoot = new GameObject("ThreatTiles").transform; _threatsRoot.SetParent(transform, false);
             _pickupsRoot = new GameObject("Pickups").transform; _pickupsRoot.SetParent(transform, false);
             _popupsRoot = new GameObject("Popups").transform; _popupsRoot.SetParent(transform, false);
             _particlesRoot = new GameObject("CaptureParticles").transform; _particlesRoot.SetParent(transform, false);
+            _voxelParticlesRoot = new GameObject("CaptureVoxels").transform; _voxelParticlesRoot.SetParent(transform, false);
             _player = CreatePieceView("Player", _piecesRoot, pieceOrder: 10, glyphOrder: 11);
 
             // Soft radial glow behind the knight (the web's shadowBlur "shine"). Tinted
@@ -94,12 +108,11 @@ namespace KnightsGauntlet.View
             var glowGo = new GameObject("PlayerGlow");
             glowGo.transform.SetParent(_piecesRoot, false);
             _playerGlow = glowGo.AddComponent<SpriteRenderer>();
-            _playerGlow.sprite = UISprites.Glow();
+            _playerGlow.sprite = _legacy2D ? UISprites.Glow() : UISprites.MoveRing();
             _playerGlow.sortingOrder = 8; // behind the knight AND behind a behind-knight VFX (order 9)
             _playerGlow.color = new Color(0.941f, 0.753f, 0.251f, 0.15f); // gold until a skin sets it
+            ClipBoardSprite(_playerGlow);
 
-            _xformBarBg = MakeBar("XformBarBg", 12, XformBg);
-            _xformBarFill = MakeBar("XformBarFill", 13, XformBlue);
             for (int p = 0; p < _pips.Length; p++) _pips[p] = MakePip("XformPip" + p);
 
             _coachFill = MakeBar("CoachFill", 8, CoachGold);
@@ -123,9 +136,15 @@ namespace KnightsGauntlet.View
 
             var flagGo = new GameObject("GoalFlag");
             flagGo.transform.SetParent(transform, false);
-            _goalFlag = flagGo.AddComponent<SpriteRenderer>();
-            _goalFlag.sortingOrder = 3; // above the board, below the pieces/knight
+            _goalFlag = flagGo.AddComponent<GoalFlag3D>();
+            _goalFlag.Initialize(sortingOrder: 3); // above the board, below the pieces/knight
             flagGo.SetActive(false);
+            _legacyGoalFlagFrames = Resources.LoadAll<Sprite>("Flag/flag animation");
+            var legacyFlagGo = new GameObject("Legacy2DGoalFlag");
+            legacyFlagGo.transform.SetParent(transform, false);
+            _legacyGoalFlag = legacyFlagGo.AddComponent<SpriteRenderer>();
+            _legacyGoalFlag.sortingOrder = 3;
+            legacyFlagGo.SetActive(false);
         }
 
         public void SetPlayerForm(PieceType form, string skinId)
@@ -135,16 +154,40 @@ namespace KnightsGauntlet.View
             {
                 // Glow colour follows the skin, except the secret black knight glows red.
                 var glow = Skins.GlowOf(skinId ?? "gold");
-                float a = skinId == Skins.Secret.Id ? 0.22f : 0.15f; // a touch stronger for the red eye
+                float a = skinId == Skins.Secret.Id ? 0.75f : 0.65f;
                 _playerGlow.color = new Color(glow.r, glow.g, glow.b, a);
             }
         }
 
-        // Keeps the piece/glyph square (1:1) so it never looks stretched, while
-        // widening only the translucent cell backing to fill the (stretched) cell.
-        private void ScalePiece(PieceView pv)
+        public void SetLegacy2D(bool enabled)
         {
-            pv.transform.localScale = Vector3.one * _board.cellSize;
+            if (_legacy2D == enabled) return;
+            _legacy2D = enabled;
+            _enemyMotions.Clear();
+            CancelTransientAnimations();
+            RefreshBoardSpriteClipping();
+            _playerGlow.sprite = enabled ? UISprites.Glow() : UISprites.MoveRing();
+            foreach (var hint in _hintPool) ConfigureHintVisual(hint);
+            foreach (var popup in _popups)
+                if (popup.tmp != null && _theme.popupFont != null) popup.tmp.font = _theme.popupFont;
+            foreach (var cracked in _crackedPool) ConfigureCrackedVisual(cracked);
+            if (_player != null) _player.InvalidateAppearance();
+            foreach (var piece in _piecePool) piece.InvalidateAppearance();
+        }
+
+        // Keep pieces and their translucent backings aligned to the square cell
+        // footprint; the surrounding side margins belong to the environment.
+        public void SetPiecePresentation(float size, float enemyRotation, float playerRotation)
+        {
+            _pieceScale = Mathf.Clamp(size, .5f, 1.25f);
+            _enemyRotation = enemyRotation;
+            _playerRotation = playerRotation;
+        }
+
+        private void ScalePiece(PieceView pv, PieceType type, bool isPlayer = false)
+        {
+            pv.transform.localScale = Vector3.one * (_board.cellSize * (_legacy2D || type == PieceType.Trap ? 1f : _pieceScale));
+            pv.SetModelRotation(type == PieceType.Trap ? 0f : isPlayer ? _playerRotation : _enemyRotation);
             if (pv.backing != null)
                 pv.backing.transform.localScale =
                     new Vector3(_board.cellW / Mathf.Max(0.0001f, _board.cellSize), 1f, 1f);
@@ -155,6 +198,7 @@ namespace KnightsGauntlet.View
         // BehindKnight effects draw between the board and the knight; the rest on top.
         public void PlayMoveVfx()
         {
+            if (SaveData.IsReducedEffects()) return;
             string id = SaveData.GetVfx();
             if (id == Vfx.NoneId || _player == null) return;
             var v = Vfx.Find(id);
@@ -162,24 +206,31 @@ namespace KnightsGauntlet.View
             int order = v.BehindKnight ? 9 : 15; // glow=8, VFX=9, knight piece=10, glyph=11
             // Parent is the player piece (localScale = cellSize), so local units are
             // cell units: sit ~0.32 cells below centre, ~1.13 cells across.
-            VfxPlayer.Play(v, _player.transform, new Vector3(0f, 0f, 0f), 1.13f, order);
+            _moveVfxSlot = VfxPlayer.Play(v, _player.transform, Vector3.zero, 1.13f, order, _moveVfxSlot, true);
+            _activeMoveVfx = _moveVfxSlot;
         }
 
         public void Sync(GameSimulation sim, bool showHints, float dt, MoveTarget? bestMove = null, IReadOnlyList<Int2> advPath = null, bool advPathNextOnly = false)
         {
             _colorblind = SaveData.IsColorblind();
+            BeginEnemyMotionFrame(sim);
             // Enemy / trap pieces.
             int p = 0;
             var pieces = sim.Pieces;
             for (int i = 0; i < pieces.Count; i++)
             {
                 var piece = pieces[i];
-                if (!piece.Alive || piece.Y < VisibleLo || piece.Y > VisibleHi) continue;
+                // Submit hidden rows behind the crest. The same rolling surface
+                // deforms tiles and pieces; the opaque drum hides their return.
+                float low = _legacy2D ? VisibleLo : -4.5f;
+                float high = _legacy2D ? VisibleHi : GameConfig.Rows + 1.5f;
+                if (!piece.Alive || piece.Y < low || piece.Y > high) continue;
                 var pv = GetPiece(p++);
                 pv.gameObject.SetActive(true);
                 pv.Apply(_theme, piece.Type);
-                pv.transform.position = _board.CellToWorld(piece.Col, piece.Y);
-                ScalePiece(pv);
+                ScalePiece(pv, piece.Type);
+                PositionEnemy(pv, piece, piece.Col, piece.Y - sim.ScrollCells, piece.Type, sim.ScrollCells, dt);
+                UpdateComicEnemy(pv, piece.Col, piece.Y, piece.Type, sim);
             }
             // Adventure oscillating enemies (drawn with the piece pool).
             var adv = sim.AdvEnemies;
@@ -193,11 +244,13 @@ namespace KnightsGauntlet.View
                 if (ey < VisibleLo || ey > VisibleHi) continue;
                 var pv = GetPiece(p++);
                 pv.gameObject.SetActive(true);
-                pv.Apply(_theme, e.Type);
-                pv.transform.position = _board.CellToWorld(e.Col, ey);
-                ScalePiece(pv);
+                pv.Apply(_theme, e.Type, boss: e.Hunter && e.Type == PieceType.Queen);
+                ScalePiece(pv, e.Type);
+                PositionEnemy(pv, e, e.Col, e.Row, e.Type, sim.ScrollCells, dt);
+                UpdateComicEnemy(pv, e.Col, ey, e.Type, sim);
             }
             for (int k = p; k < _piecePool.Count; k++) _piecePool[k].gameObject.SetActive(false);
+            EndEnemyMotionFrame();
 
             // Threat tiles: red cells showing where each enemy strikes next. Cells are
             // de-duplicated and COUNTED first, so a square threatened by two pieces (a
@@ -210,26 +263,14 @@ namespace KnightsGauntlet.View
                 {
                     var o = pieces[i];
                     if (!o.Alive || o.Type == PieceType.Trap || o.Y < VisibleLo || o.Y > VisibleHi) continue;
-                    switch (o.Type)
+                    if (o.Type == PieceType.Queen)
                     {
-                        case PieceType.Rook:
-                            AddThreat(o.Col, o.Y + 1f);
-                            break;
-                        case PieceType.Bishop:
-                            int dir = o.Dir != 0 ? o.Dir : 1;
-                            int bc = o.Col + dir;
-                            if (bc < 0 || bc >= GameConfig.Cols) bc = o.Col - dir;
-                            AddThreat(bc, o.Y + 1f);
-                            break;
-                        case PieceType.Knight:
-                            if (o.PlanDC.HasValue && o.PlanDR.HasValue)
-                                AddThreat(o.Col + o.PlanDC.Value, o.Y + o.PlanDR.Value);
-                            break;
-                        case PieceType.Queen:
-                            foreach (var adj in GameConfig.QueenAdj)
-                                AddThreat(o.Col + adj.Col, o.Y + adj.Row);
-                            break;
+                        // Queens strike every adjacent cell before moving. This
+                        // attack area is separate from their committed travel.
+                        foreach (var adj in GameConfig.QueenAdj)
+                            AddThreat(o.Col + adj.Col, o.Y + adj.Row);
                     }
+                    else if (sim.TryGetBattleMove(o, out var move)) AddThreat(move.Col, move.Y);
                 }
             }
             // Adventure telegraph: outline where each oscillating enemy moves next; for a
@@ -272,8 +313,10 @@ namespace KnightsGauntlet.View
                 if (sy < VisibleLo || sy > VisibleHi) continue;
                 var cc = GetCracked(ck++);
                 cc.gameObject.SetActive(true);
-                cc.transform.position = _board.CellToWorld(crackedCells[i].Col, sy);
-                cc.transform.localScale = _board.CellScale(0.94f);
+                Vector3 crackedPosition = _board.CellToWorld(crackedCells[i].Col, sy);
+                crackedPosition.z = 0f;
+                cc.position = crackedPosition;
+                cc.localScale = _legacy2D ? _board.CellScale() : Vector3.one * _board.cellSize;
             }
             for (int k = ck; k < _crackedPool.Count; k++) _crackedPool[k].gameObject.SetActive(false);
 
@@ -281,16 +324,23 @@ namespace KnightsGauntlet.View
             // Rendered as an animated silver coin, held centred on its tile.
             int pk = 0;
             var pickups = sim.Pickups;
-            var coin = CoinFrames();
+            var coin = _theme.comicStyle ? System.Array.Empty<Sprite>() : CoinFrames();
             _coinAnimT += dt;
             int coinIdx = coin.Length > 0 ? (int)(_coinAnimT * CoinFps) % coin.Length : 0;
             for (int i = 0; i < pickups.Count; i++)
             {
                 var pu = pickups[i];
-                if (!pu.Alive || pu.Y < VisibleLo || pu.Y > VisibleHi) continue;
+                if (!pu.Alive || pu.Y < (_legacy2D ? VisibleLo : -4.5f) || pu.Y > VisibleHi) continue;
                 var sr = GetPickup(pk++);
                 sr.gameObject.SetActive(true);
-                if (coin.Length > 0)
+                if (_theme.comicStyle)
+                {
+                    sr.sprite = _theme.pickupSprite != null ? _theme.pickupSprite : ComicArt.Load("comic-coin");
+                    ClipBoardSprite(sr);
+                    sr.color = UIFactory.Gold;
+                    sr.transform.localScale = Vector3.one * (_board.cellSize * 0.56f);
+                }
+                else if (coin.Length > 0)
                 {
                     // Full-colour coin frame (no tint), scaled so its constant-height
                     // frames read at ~0.54 of a cell. Centre pivots keep the spinning
@@ -311,41 +361,22 @@ namespace KnightsGauntlet.View
             // Player.
             _player.gameObject.SetActive(true);
             _player.transform.position = _board.CellToWorld(sim.PlayerCol, sim.PlayerY);
-            ScalePiece(_player);
+            ScalePiece(_player, sim.PlayerForm, true);
+            _player.SetFacing(_playerFacing);
+            _player.RefreshPose();
             if (_playerGlow != null)
             {
                 _playerGlow.transform.position = _board.CellToWorld(sim.PlayerCol, sim.PlayerY);
-                _playerGlow.transform.localScale = _board.CellScale(1f); // fills the cell, clipped at its edges
+                _playerGlow.transform.localScale = _board.CellScale(_legacy2D ? 1f : _player.BaseDiameter * 1.1f * _pieceScale);
             }
 
-            // Transformation timer bar, just under the player (battle only).
-            bool showBar = sim.Mode == GameMode.Battle && sim.TransformActive;
-            _xformBarBg.gameObject.SetActive(showBar);
-            _xformBarFill.gameObject.SetActive(showBar);
-            if (showBar)
-            {
-                float cw = _board.cellW, ch = _board.cellSize;
-                Vector3 c = _board.CellToWorld(sim.PlayerCol, sim.PlayerY);
-                float barW = cw * 0.66f, barH = ch * 0.06f;
-                float barY = c.y - ch * 0.52f;
-                float frac = Mathf.Clamp01(sim.TransformRemaining / GameConfig.TransformSeconds);
-
-                _xformBarBg.transform.position = new Vector3(c.x, barY, 0f);
-                _xformBarBg.transform.localScale = new Vector3(barW, barH, 1f);
-
-                float fillW = Mathf.Max(0.0001f, barW * frac);
-                _xformBarFill.transform.position = new Vector3(c.x - barW * 0.5f + fillW * 0.5f, barY, 0f);
-                _xformBarFill.transform.localScale = new Vector3(fillW, barH, 1f);
-                _xformBarFill.color = frac > 0.4f ? XformBlue : (frac > 0.2f ? XformGold : XformRed);
-            }
 
             // Capture-progress pips: in Battle they fill toward the transform, then
             // hand off to the timer bar once it triggers. Adventure's transformation
             // world reuses them with a shorter (2-pip) track that persists across
             // misses, shown only until the knight has transformed.
-            bool battlePips = sim.Mode == GameMode.Battle && !sim.TransformActive;
             bool advPips = sim.AdvTransform && sim.PlayerForm == PieceType.Knight;
-            bool showPips = battlePips || advPips;
+            bool showPips = advPips;
             int pipCount = advPips ? GameConfig.AdventureTransformPips : _pips.Length;
             int pipFilled = advPips ? sim.AdvPips : sim.CaptureChain;
             for (int pi = 0; pi < _pips.Length; pi++)
@@ -358,7 +389,7 @@ namespace KnightsGauntlet.View
                 float mid = (pipCount - 1) * 0.5f;
                 for (int pi = 0; pi < pipCount; pi++)
                 {
-                    _pips[pi].transform.position = new Vector3(pc.x + (pi - mid) * gap, py, 0f);
+                    _pips[pi].transform.position = new Vector3(pc.x + (pi - mid) * gap, py, BoardView.SurfaceOverlayZ);
                     _pips[pi].transform.localScale = Vector3.one * size; // round (1:1)
                     _pips[pi].color = pi < pipFilled ? PipOn : PipOff;
                 }
@@ -377,12 +408,17 @@ namespace KnightsGauntlet.View
                     hint.go.SetActive(true);
                     // Web "danger" gradient: gold (#f0c040) up top, blending toward white
                     // the lower the tile, i.e. a cream in between, never pure white.
-                    float danger = Mathf.Clamp01(m.Y / GameConfig.Rows);
-                    var c = new Color(Mathf.Lerp(240f, 255f, danger) / 255f,
-                                      Mathf.Lerp(192f, 255f, danger) / 255f,
-                                      Mathf.Lerp(64f, 255f, danger) / 255f, 1f);
-                    hint.fill.color = new Color(c.r, c.g, c.b, 0.125f);
-                    hint.dot.color = new Color(c.r, c.g, c.b, 0.72f);
+                    var c = UIFactory.Gold;
+                    if (_legacy2D)
+                    {
+                        float danger = Mathf.Clamp01(m.Y / GameConfig.Rows);
+                        c = new Color(Mathf.Lerp(240,255,danger)/255f,
+                            Mathf.Lerp(192,255,danger)/255f, Mathf.Lerp(64,255,danger)/255f);
+                    }
+                    c.a = _legacy2D ? .125f : .045f;
+                    hint.fill.color = c;
+                    c.a = _legacy2D ? .72f : .8f;
+                    hint.dot.color = c;
                     hint.go.transform.position = _board.CellToWorld(m.Col, m.Y);
                     hint.go.transform.localScale = _board.CellScale();
                 }
@@ -405,9 +441,11 @@ namespace KnightsGauntlet.View
             DrawAdvPath(sim, advPath, advPathNextOnly);
             UpdateQueenShield(sim, dt);
             UpdateCoachMark();
-            UpdateGoalFlag(dt);
+            UpdateGoalFlag();
             AnimatePopups(dt);
             AnimateParticles(dt);
+            AnimateVoxelParticles();
+            AnimateComicEffects(sim, dt);
         }
 
         // Divine Path: the next tile of the solved optimal route (nextOnly), drawn with the
@@ -490,7 +528,15 @@ namespace KnightsGauntlet.View
             // Nudge down by BubbleDownPixels art pixels (a cell = one row; the bubble is
             // BubbleFramePixels tall, drawn at BubbleSize cells). Larger row = lower on screen.
             float ey = queen.Row + sim.ScrollCells + BubbleDownPixels / BubbleFramePixels * BubbleSize;
-            _queenShield.transform.position = _board.CellToWorld(queen.Col, ey);
+            Vector3 shieldPosition = _board.CellToWorld(queen.Col, ey);
+            if (_enemyMotions.TryGetValue(queen, out var motion))
+            {
+                shieldPosition = _board.CellToWorld(0, motion.current.y + sim.ScrollCells +
+                    BubbleDownPixels / BubbleFramePixels * BubbleSize);
+                shieldPosition.x += motion.current.x * _board.cellW;
+                shieldPosition.z -= motion.lift;
+            }
+            _queenShield.transform.position = shieldPosition;
             _queenShield.transform.localScale = _board.CellScale(BubbleSize); // see BubbleSize to resize
             var c = _queenShield.color; c.a = BubbleOpacity; _queenShield.color = c;
         }
@@ -546,8 +592,7 @@ namespace KnightsGauntlet.View
             var tmp = go.AddComponent<TextMeshPro>();
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontStyle = FontStyles.Normal;
-            // Halved vs the original: the pixel popup font renders far chunkier, so
-            // +score / xCombo were overwhelming the board.
+            // Keep score lettering compact enough to leave the next move visible.
             tmp.enableAutoSizing = true; tmp.fontSizeMin = 1; tmp.fontSizeMax = 4.5f;
             tmp.rectTransform.sizeDelta = new Vector2(8f, 1f);
             if (_theme != null && _theme.popupFont != null) tmp.font = _theme.popupFont;
@@ -560,6 +605,136 @@ namespace KnightsGauntlet.View
         }
 
         private class PopupItem { public TextMeshPro tmp; public float alpha; public bool active; public Color color; }
+
+        // Captured pieces break into tiny 3D cubes. The old 2D burst remains for
+        // non-capture events such as Trap mode level-ups.
+        public void SpawnCaptureVoxelBurst(int col, float y, Color color, int comboMultiplier = 1)
+        {
+            if (_legacy2D) { SpawnCaptureBurst(col, y, color); return; }
+            if (_board == null) return;
+            if (!EnsureVoxelAssets()) return;
+
+            bool reduced = SaveData.IsReducedEffects();
+            float comboStrength = Mathf.InverseLerp(1f, 6f, Mathf.Max(1, comboMultiplier));
+            int count = Mathf.RoundToInt(Mathf.Lerp(reduced ? 7 : 24, reduced ? 14 : 42, comboStrength));
+            float cell = _board.cellSize;
+            Vector3 center = _board.CellToWorld(col, y);
+            center.z -= cell * 0.32f; // the voxel shader also bypasses depth to stay visible over board geometry
+            for (int i = 0; i < count; i++)
+            {
+                var voxel = GetVoxelParticle();
+                voxel.active = true;
+                voxel.age = 0f;
+                float force = 1f + comboStrength * 0.30f;
+                voxel.life = (reduced ? Random.Range(0.28f, 0.38f) : Random.Range(0.46f, 0.72f)) *
+                    (1f + comboStrength * 0.12f);
+                voxel.size = cell * Random.Range(reduced ? 0.09f : 0.11f, reduced ? 0.15f : 0.21f) *
+                    (1f + comboStrength * 0.22f);
+
+                Vector2 jitter = Random.insideUnitCircle * (cell * 0.22f);
+                voxel.tr.position = center + new Vector3(jitter.x, jitter.y, Random.Range(-0.035f, 0.035f) * cell);
+                float angle = Random.value * Mathf.PI * 2f;
+                float speed = cell * Random.Range(reduced ? 1.7f : 2.2f, reduced ? 2.8f : 4.5f) * force;
+                voxel.velocity = new Vector3(Mathf.Cos(angle) * speed,
+                    Mathf.Sin(angle) * speed + cell * (reduced ? 0.9f : 1.25f) * force,
+                    reduced ? Random.Range(-0.3f, 0.3f) * cell : Random.Range(-1.1f, 1.1f) * cell);
+                voxel.angularVelocity = reduced
+                    ? Random.insideUnitSphere * 420f * force
+                    : Random.insideUnitSphere * 1080f * force;
+                voxel.tr.localScale = Vector3.one * voxel.size;
+                voxel.tr.rotation = Random.rotationUniform;
+
+                Color shade = Random.value < 0.28f
+                    ? Color.Lerp(color, Color.white, 0.42f)
+                    : Random.value < 0.35f ? color * 0.62f : Color.Lerp(color, Color.white, 0.08f);
+                shade.a = 1f;
+                voxel.color = shade;
+                var block = _voxelProperties ?? (_voxelProperties = new MaterialPropertyBlock());
+                block.SetColor(VoxelColorId, shade);
+                voxel.renderer.SetPropertyBlock(block);
+                voxel.tr.gameObject.SetActive(true);
+            }
+        }
+
+        private bool EnsureVoxelAssets()
+        {
+            if (_voxelCubeMesh == null)
+            {
+                var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                var filter = cube.GetComponent<MeshFilter>();
+                _voxelCubeMesh = filter != null ? filter.sharedMesh : null;
+                Destroy(cube);
+            }
+            if (_voxelMaterial == null)
+            {
+                var shader = Resources.Load<Shader>("CaptureVoxel") ?? Shader.Find("KnightsGauntlet/CaptureVoxel");
+                if (shader == null || _voxelCubeMesh == null) return false;
+                _voxelMaterial = new Material(shader) { name = "Capture Voxels (Unlit)" };
+                _voxelMaterial.color = Color.white;
+                _voxelMaterial.renderQueue = 3100;
+            }
+            return _voxelCubeMesh != null;
+        }
+
+        private VoxelParticle GetVoxelParticle()
+        {
+            for (int i = 0; i < _voxelParticles.Count; i++)
+                if (!_voxelParticles[i].active) return _voxelParticles[i];
+            if (_voxelParticles.Count >= 48)
+            {
+                var oldest = _voxelParticles[0];
+                foreach (var item in _voxelParticles) if (item.age > oldest.age) oldest = item;
+                return oldest;
+            }
+
+            var go = new GameObject("CaptureVoxel");
+            go.transform.SetParent(_voxelParticlesRoot, false);
+            var filter = go.AddComponent<MeshFilter>();
+            filter.sharedMesh = _voxelCubeMesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = _voxelMaterial;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            if (_player != null && _player.spriteRenderer != null)
+            {
+                renderer.sortingLayerID = _player.spriteRenderer.sortingLayerID;
+                renderer.sortingOrder = _player.spriteRenderer.sortingOrder + 8;
+            }
+            var voxel = new VoxelParticle { tr = go.transform, renderer = renderer };
+            _voxelParticles.Add(voxel);
+            return voxel;
+        }
+
+        private void AnimateVoxelParticles()
+        {
+            if (_voxelParticles.Count == 0) return;
+            float dt = Time.unscaledDeltaTime;
+            float gravity = (_board != null ? _board.cellSize : 1f) * 4.2f;
+            for (int i = 0; i < _voxelParticles.Count; i++)
+            {
+                var voxel = _voxelParticles[i];
+                if (!voxel.active) continue;
+                voxel.age += dt;
+                float t = voxel.age / voxel.life;
+                if (t >= 1f)
+                {
+                    voxel.active = false;
+                    voxel.tr.gameObject.SetActive(false);
+                    continue;
+                }
+
+                voxel.velocity.y -= gravity * dt;
+                voxel.tr.position += voxel.velocity * dt;
+                voxel.tr.Rotate(voxel.angularVelocity * dt, Space.Self);
+                float shrink = t < 0.74f ? 1f : Mathf.Lerp(1f, 0f, Mathf.InverseLerp(0.74f, 1f, t));
+                voxel.tr.localScale = Vector3.one * (voxel.size * shrink);
+                Color color = voxel.color;
+                color.a = 1f - Mathf.SmoothStep(0.55f, 1f, t);
+                var block = _voxelProperties ?? (_voxelProperties = new MaterialPropertyBlock());
+                block.SetColor(VoxelColorId, color);
+                voxel.renderer.SetPropertyBlock(block);
+            }
+        }
 
         // ── Capture particles (piece "disintegrates" into flying pixels) ──────
         // On a capture we scatter a handful of tiny square shards, tinted to the
@@ -577,10 +752,11 @@ namespace KnightsGauntlet.View
         // shards are pooled so rapid combos never allocate.
         public void SpawnCaptureBurst(int col, float y, Color color)
         {
-            if (_board == null) return;
+            if (_board == null || SaveData.IsReducedEffects()) return;
             float cell = _board.cellSize;
             Vector3 center = _board.CellToWorld(col, y);
-            for (int j = 0; j < CaptureBits; j++)
+            int bits = _theme.comicStyle ? 8 : CaptureBits;
+            for (int j = 0; j < bits; j++)
             {
                 var p = GetParticle();
                 p.active = true;
@@ -597,8 +773,7 @@ namespace KnightsGauntlet.View
                 p.life = p.maxLife;
                 p.size = cell * Random.Range(0.09f, 0.15f);
 
-                // Small per-shard colour variation so it reads as shattered pixels,
-                // not a flat blob.
+                // A few short-lived ink fragments accompany the held impact pose.
                 float v = Random.Range(-0.12f, 0.12f);
                 p.color = new Color(Mathf.Clamp01(color.r + v), Mathf.Clamp01(color.g + v),
                                     Mathf.Clamp01(color.b + v), 1f);
@@ -650,6 +825,16 @@ namespace KnightsGauntlet.View
             public Color color; public bool active;
         }
 
+        private sealed class VoxelParticle
+        {
+            public Transform tr;
+            public MeshRenderer renderer;
+            public Vector3 velocity, angularVelocity;
+            public Color color;
+            public float age, life, size;
+            public bool active;
+        }
+
         // De-duplicated threat accumulator (rebuilt each frame). Keeps the exact
         // fractional Y of the first contributor so tiles still scroll smoothly with
         // the board, while Count drives how dark a multiply-threatened cell renders.
@@ -670,6 +855,7 @@ namespace KnightsGauntlet.View
 
         private int DrawThreat(int i, ThreatAgg agg)
         {
+            if (_legacy2D) return DrawLegacyThreat(i, agg);
             var tc = GetThreat(i);
             tc.go.SetActive(true);
             bool onPlayer = (agg.Col == _pCol && agg.Row == _pRow);
@@ -682,15 +868,16 @@ namespace KnightsGauntlet.View
             tc.fillSR.enabled = true;
             tc.borderSR.enabled = true;
 
-            float a = Mathf.Min(0.85f, 1f - Mathf.Pow(1f - 0.55f, agg.Count));
-            tc.fillSR.color = new Color(0.353f, 0.078f, 0.078f, a);
-            tc.borderSR.color = _colorblind ? new Color(0.95f, 0.32f, 0.32f, 1f)
-                                            : new Color(0.588f, 0.157f, 0.157f, 0.55f);
+            var fill = _theme.threatFill;
+            fill.a = Mathf.Min(0.18f, 0.075f + agg.Count * 0.025f);
+            tc.fillSR.color = fill;
+            tc.borderSR.color = _colorblind ? UIFactory.Hex("#FFB454") : UIFactory.Hex("#C65B66");
             if (onPlayer)
             {
                 // Pulse the outline on the knight's own square so an incoming hit reads.
-                float pulse = 0.55f + 0.45f * Mathf.PingPong(Time.time * 3f, 1f);
-                tc.borderSR.color = new Color(1f, 0.45f, 0.45f, pulse);
+                var warning = tc.borderSR.color;
+                warning.a = SaveData.IsReducedEffects() ? 1f : 0.6f + 0.4f * Mathf.PingPong(Time.time * 2f, 1f);
+                tc.borderSR.color = warning;
             }
             return i + 1;
         }
@@ -705,11 +892,13 @@ namespace KnightsGauntlet.View
                 var fillSR = go.AddComponent<SpriteRenderer>();
                 fillSR.sprite = _theme != null && _theme.threatSprite != null ? _theme.threatSprite : BoardView.UnitSquare();
                 fillSR.sortingOrder = 3;
+                ClipBoardSprite(fillSR);
                 var bgo = new GameObject("Border");
                 bgo.transform.SetParent(go.transform, false);
                 var borderSR = bgo.AddComponent<SpriteRenderer>();
                 borderSR.sprite = UISprites.SquareBorder(); // straight-edged, not a rounded ring
                 borderSR.sortingOrder = 4;
+                ClipBoardSprite(borderSR);
                 _threatPool.Add(new ThreatCell { go = go, fillSR = fillSR, borderSR = borderSR });
             }
             return _threatPool[i];
@@ -759,42 +948,44 @@ namespace KnightsGauntlet.View
             if (_goalFlag != null) _goalFlag.gameObject.SetActive(false);
         }
 
-        private Sprite[] FlagFrames()
+        private void UpdateGoalFlag()
         {
-            if (_flagFrames != null) return _flagFrames;
-            var sprites = Resources.LoadAll<Sprite>("Flag/flag animation");
-            if (sprites != null && sprites.Length > 0)
+            if (!_flagOn)
             {
-                var list = new List<Sprite>(sprites);
-                list.Sort((a, b) => VfxPlayer.NaturalCompare(a.name, b.name));
-                _flagFrames = list.ToArray();
-                _flagUnitH = Mathf.Max(0.0001f, _flagFrames[0].bounds.size.y);
+                if (_goalFlag != null && _goalFlag.gameObject.activeSelf) _goalFlag.gameObject.SetActive(false);
+                if (_legacyGoalFlag != null && _legacyGoalFlag.gameObject.activeSelf) _legacyGoalFlag.gameObject.SetActive(false);
+                return;
             }
-            else _flagFrames = new Sprite[0];
-            return _flagFrames;
-        }
-
-        private void UpdateGoalFlag(float dt)
-        {
-            if (!_flagOn) { if (_goalFlag != null && _goalFlag.gameObject.activeSelf) _goalFlag.gameObject.SetActive(false); return; }
-            var frames = FlagFrames();
-            if (frames.Length == 0) { _goalFlag.gameObject.SetActive(false); return; }
-            _flagAnimT += dt;
-            var sprite = frames[(int)(_flagAnimT * FlagFps) % frames.Length];
+            if (_legacy2D)
+            {
+                if (_goalFlag != null && _goalFlag.gameObject.activeSelf) _goalFlag.gameObject.SetActive(false);
+                if (_legacyGoalFlag != null)
+                {
+                    _legacyGoalFlag.gameObject.SetActive(true);
+                    _legacyGoalFlag.transform.position = _board.CellToWorld(_flagCol, _flagRow);
+                    _legacyGoalFlag.transform.localScale = Vector3.one * (_board.cellSize * 0.72f);
+                    if (_legacyGoalFlagFrames != null && _legacyGoalFlagFrames.Length > 0)
+                    {
+                        int frame = Mathf.FloorToInt(Time.time * 7f) % _legacyGoalFlagFrames.Length;
+                        _legacyGoalFlag.sprite = _legacyGoalFlagFrames[frame];
+                    }
+                }
+                return;
+            }
+            if (_legacyGoalFlag != null && _legacyGoalFlag.gameObject.activeSelf) _legacyGoalFlag.gameObject.SetActive(false);
             _goalFlag.gameObject.SetActive(true);
-            _goalFlag.sprite = sprite;
-            _goalFlag.color = Color.white;
-            // Frames are sliced to uniform cells with a fixed bottom pivot at the flag's
-            // centre, so every frame aligns with no left/right jitter. Plant it standing up
-            // from the bottom of the goal cell, ~0.95 cell tall.
-            float scale = _board.cellSize * 0.95f / _flagUnitH;
-            _goalFlag.transform.localScale = Vector3.one * scale;
             Vector3 center = _board.CellToWorld(_flagCol, _flagRow);
-            _goalFlag.transform.position = new Vector3(center.x, center.y - _board.cellSize * 0.5f, 0f);
+            _goalFlag.transform.position = center;
+            _goalFlag.SetCellSize(_board.cellSize);
         }
         private void UpdateCoachMark()
         {
-            if (!_coachOn) { if (_coachFill.gameObject.activeSelf) ClearCoachMark(); return; }
+            if (!_coachOn)
+            {
+                _coachFill.gameObject.SetActive(false);
+                _coachRing.gameObject.SetActive(false);
+                return;
+            }
             float pulse = Mathf.PingPong(Time.time * 2f, 1f);
             Vector3 pos = _board.CellToWorld(_coachCol, _coachRow);
             _coachFill.gameObject.SetActive(true);
@@ -807,18 +998,35 @@ namespace KnightsGauntlet.View
             _coachRing.color = new Color(CoachGold.r, CoachGold.g, CoachGold.b, 0.6f + 0.4f * pulse);
         }
 
-        private SpriteRenderer GetCracked(int i)
+        private Transform GetCracked(int i)
         {
             while (i >= _crackedPool.Count)
             {
-                var go = new GameObject("Cracked");
+                var go = new GameObject("FragileStone");
                 go.transform.SetParent(transform, false);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = UISprites.Cracked();
-                sr.sortingOrder = 2; // floor tile: under pieces/knight, over the board
-                _crackedPool.Add(sr);
+                var modeled = new GameObject("ModeledCracked");
+                modeled.transform.SetParent(go.transform, false);
+                modeled.transform.localRotation = BoardView.SurfaceOrientation;
+                if (_crackedAsset != null)
+                {
+                    var model = Instantiate(_crackedAsset, modeled.transform, false);
+                    _board.ConfigureModelRenderers(model.GetComponentsInChildren<Renderer>(true), -10);
+                }
+                var flat = new GameObject("LegacyCracked");
+                flat.transform.SetParent(go.transform, false);
+                var sprite = flat.AddComponent<SpriteRenderer>();
+                sprite.sprite = Resources.Load<Sprite>("LegacyUI/Cracked Tile");
+                sprite.sortingOrder = 2;
+                ConfigureCrackedVisual(go.transform);
+                _crackedPool.Add(go.transform);
             }
             return _crackedPool[i];
+        }
+
+        private void ConfigureCrackedVisual(Transform cracked)
+        {
+            cracked.Find("ModeledCracked").gameObject.SetActive(!_legacy2D);
+            cracked.Find("LegacyCracked").gameObject.SetActive(_legacy2D);
         }
         // Silver-coin frames for the pickup, loaded once from Resources and sorted
         // naturally (0,1,…,10). Caches an empty array on miss so we don't re-hit disk.
@@ -870,18 +1078,28 @@ namespace KnightsGauntlet.View
                 go.transform.SetParent(_hintsRoot, false);
                 go.transform.localScale = Vector3.one * _board.cellSize;
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = _theme != null && _theme.hintSprite != null ? _theme.hintSprite : BoardView.UnitSquare();
+                sr.sprite = BoardView.UnitSquare();
                 sr.sortingOrder = 1;
+                ClipBoardSprite(sr);
                 // Centre dot (mirrors the web hint marker); slightly bigger than the web's.
                 var dot = new GameObject("Dot");
                 dot.transform.SetParent(go.transform, false);
-                dot.transform.localScale = Vector3.one * 0.22f;
+                dot.transform.localScale = Vector3.one * 0.55f;
                 var dsr = dot.AddComponent<SpriteRenderer>();
-                dsr.sprite = _theme != null && _theme.hintDotSprite != null ? _theme.hintDotSprite : UISprites.Circle();
+                dsr.sprite = UISprites.MoveRing();
                 dsr.sortingOrder = 2;
-                _hintPool.Add(new HintCell { go = go, fill = sr, dot = dsr });
+                ClipBoardSprite(dsr);
+                var hint = new HintCell { go = go, fill = sr, dot = dsr };
+                ConfigureHintVisual(hint);
+                _hintPool.Add(hint);
             }
             return _hintPool[i];
+        }
+
+        private void ConfigureHintVisual(HintCell hint)
+        {
+            hint.dot.sprite = _legacy2D ? UISprites.Circle() : UISprites.MoveRing();
+            hint.dot.transform.localScale = Vector3.one * (_legacy2D ? .22f : .55f);
         }
 
         // Builds a piece GameObject: SpriteRenderer + a translucent backing + a

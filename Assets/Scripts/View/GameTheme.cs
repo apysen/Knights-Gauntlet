@@ -20,8 +20,15 @@ namespace KnightsGauntlet.View
         public struct PieceVisual
         {
             public PieceType type;
-            public Sprite sprite;   // leave null to fall back to the glyph
+            public Sprite sprite;   // null uses the bundled graphic chess art
             public Color tint;      // applied to the sprite OR the glyph
+            public Sprite attackSprite;
+            public Sprite hitSprite;
+            public Sprite backSprite;
+            public Sprite backAttackSprite;
+            public Sprite backHitSprite;
+            public bool comicPalette; // retain black shadows and ivory highlights when tinted
+            public bool paintedColors; // full-color source, white renderer tint preserves the artwork
         }
 
         [Serializable]
@@ -33,11 +40,18 @@ namespace KnightsGauntlet.View
             public Sprite overrideSprite; // null = just recolor the default form art
         }
 
+        [Header("Art direction")]
+        public bool comicStyle = true;
+        [Tooltip("Art exploration: use the separate matte ceramic knight, rook and bishop models in 3D mode.")]
+        public bool ceramicPiecePrototype;
+        [Tooltip("Use the complete ink-painted porcelain chess set in 3D mode.")]
+        public bool inkPorcelainPieces = true;
+
         [Header("Board tiles")]
         [Tooltip("Square sprite for a board cell. Null = a solid filled square.")]
         public Sprite cellSprite;
-        public Color cellColorA = new Color(0.176f, 0.176f, 0.306f); // #2d2d4e
-        public Color cellColorB = new Color(0.118f, 0.118f, 0.208f); // #1e1e35
+        public Color cellColorA = new Color32(0xF3, 0xE9, 0xD8, 255);
+        public Color cellColorB = new Color32(0xDE, 0xD2, 0xBB, 255);
         public Color gridLineColor = new Color(1f, 1f, 1f, 0.05f);
 
         [Header("Pieces")]
@@ -50,12 +64,12 @@ namespace KnightsGauntlet.View
         [Header("Move hints")]
         public Sprite hintSprite;    // null = solid square
         public Sprite hintDotSprite; // null = generated circle
-        public Color hintColor = new Color(0.941f, 0.753f, 0.251f, 0.25f); // #f0c040 @ .25
+        public Color hintColor = new Color(0.57f, 0.44f, 0.106f, 0.14f);
 
         [Header("Threat tiles (battle)")]
         public Sprite threatSprite;
-        public Color threatFill = new Color(0.353f, 0.078f, 0.078f, 0.55f);
-        public Color threatStroke = new Color(0.588f, 0.157f, 0.157f, 0.55f);
+        public Color threatFill = new Color(0.812f, 0.208f, 0.141f, 0.16f);
+        public Color threatStroke = new Color(0.812f, 0.208f, 0.141f, 0.85f);
 
         [Header("Pickups (shillings)")]
         [Tooltip("Coin/shilling sprite. null = generated gold circle.")]
@@ -89,14 +103,29 @@ namespace KnightsGauntlet.View
         // These never throw and always return something usable: if a slot is
         // unset, the value is synthesized from the Core defaults.
 
-        public PieceVisual GetPiece(PieceType type)
+        public PieceVisual GetPiece(PieceType type, bool boss = false)
         {
+            PieceVisual v = default;
+            bool found = false;
             if (pieces != null)
                 for (int i = 0; i < pieces.Length; i++)
-                    if (pieces[i].type == type) return pieces[i];
+                    if (pieces[i].type == type) { v = pieces[i]; found = true; break; }
 
-            var v = new PieceVisual { type = type, sprite = null };
-            ColorUtility.TryParseHtmlString(GameConfig.PieceColorHex(type), out v.tint);
+            if (found && v.sprite != null) return v;
+            v.type = type;
+            if (comicStyle)
+            {
+                v.sprite = ComicArt.Piece(type, boss: boss);
+                v.attackSprite = ComicArt.Piece(type, ComicPose.Attack, boss: boss);
+                v.hitSprite = ComicArt.Piece(type, ComicPose.Hit, boss: boss);
+                v.backSprite = ComicArt.Piece(type, ComicPose.Idle, PieceFacing.Back, boss);
+                v.backAttackSprite = ComicArt.Piece(type, ComicPose.Attack, PieceFacing.Back, boss);
+                v.backHitSprite = ComicArt.Piece(type, ComicPose.Hit, PieceFacing.Back, boss);
+                v.paintedColors = type != PieceType.Trap && v.sprite != null;
+                v.comicPalette = !v.paintedColors && v.sprite != null;
+                v.tint = boss && type == PieceType.Queen ? UIFactory.Hex("#CF1819") : ComicArt.ColorOf(type);
+            }
+            else if (!found) ColorUtility.TryParseHtmlString(GameConfig.PieceColorHex(type), out v.tint);
             return v;
         }
 

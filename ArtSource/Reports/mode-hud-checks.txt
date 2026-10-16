@@ -1,0 +1,15 @@
+PASS Adventure starts with three stars
+PASS Three-star threshold is inclusive
+PASS Crossing threshold starts third-star pop
+PASS Lost third star disappears after pop
+PASS Two-star threshold is inclusive
+PASS Crossing second threshold pops second star
+PASS Restart restores all three stars
+PASS Pause/resume keeps rating
+PASS Garden progress halfway at 30s
+PASS Bridge progress halfway at 75s
+PASS Castle shows survival clock
+PASS Battle starts at actual multiplier
+PASS Battle mirrors multiplier and capture progress
+PASS Transformed piece icon and countdown ring match live form/time
+PASS Expiry restores capture progress

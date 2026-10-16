@@ -56,6 +56,31 @@ namespace KnightsGauntlet.View
             PlayerPrefs.SetInt("kg_screenshake", _screenShakeCache); PlayerPrefs.Save();
         }
 
+        private static int _captureHapticsCache = -1;
+        public static bool IsCaptureHaptics()
+        {
+            if (_captureHapticsCache < 0) _captureHapticsCache = PlayerPrefs.GetInt("kg_capture_haptics", 1);
+            return _captureHapticsCache == 1;
+        }
+        public static void SetCaptureHaptics(bool on)
+        {
+            _captureHapticsCache = on ? 1 : 0;
+            PlayerPrefs.SetInt("kg_capture_haptics", _captureHapticsCache); PlayerPrefs.Save();
+        }
+
+        private static int _reducedEffectsCache = -1;
+        public static bool IsReducedEffects()
+        {
+            if (_reducedEffectsCache < 0) _reducedEffectsCache = PlayerPrefs.GetInt("kg_reduced_effects", 0);
+            return _reducedEffectsCache == 1;
+        }
+        public static void SetReducedEffects(bool on)
+        {
+            _reducedEffectsCache = on ? 1 : 0;
+            PlayerPrefs.SetInt("kg_reduced_effects", _reducedEffectsCache);
+            PlayerPrefs.Save();
+        }
+
         // ── Adventure mode (best stars per level, 0..3) ──────────────────────
         public static int GetStars(string levelId) => PlayerPrefs.GetInt("kg_adv_" + levelId, 0);
         public static void SetStars(string levelId, int stars)
@@ -137,7 +162,7 @@ namespace KnightsGauntlet.View
             }
         }
 
-        // ── Movement VFX (equipped + unlocked; lootbox-only) ─────────────────
+        // ── Movement VFX (equipped + purchased) ──────────────────────────────
         public static string GetVfx() => PlayerPrefs.GetString(VfxKey, "none");
         public static void SetVfx(string id) { PlayerPrefs.SetString(VfxKey, id); PlayerPrefs.Save(); }
         public static HashSet<string> GetOwnedVfx()
