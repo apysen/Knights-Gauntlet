@@ -70,12 +70,13 @@ namespace KnightsGauntlet.View
         private LeaderboardClient _lb;
         private LeaderboardScreen _lbScreen;
         private AchievementTracker _ach;
-        // Ads via LevelPlay. Values are from the LevelPlay dashboard (App Key per platform,
-        // plus the Banner and Rewarded Ad Unit IDs per platform). If a key is blank, init
-        // fails gracefully and no ads show. Swap to `new NoOpAdService()` to disable ads.
-        // Ads are LIVE. Register your test devices (GAID/IDFA) in the LevelPlay dashboard so
-        // you only ever serve test ads to yourself. See LevelPlayAdService for the privacy
-        // (COPPA/GDPR) and iOS ATT setup.
+        // The iOS TestFlight build currently crashes inside Google's AdMob SDK during
+        // LevelPlay startup because this project has no AdMob application ID configured
+        // for the iOS Info.plist. Keep ads disabled on iOS until that ID is supplied and
+        // injected at build time. Android continues using the configured LevelPlay setup.
+#if UNITY_IOS
+        private IAdService _ads = new NoOpAdService();
+#else
         private IAdService _ads = new LevelPlayAdService(
             androidAppKey:     "271f04335",
             iosAppKey:         "271f07cbd",
@@ -83,7 +84,7 @@ namespace KnightsGauntlet.View
             iosBannerId:       "a084z73cm679qdqn",
             androidRewardedId: "kgkds0l2ryp0s481",
             iosRewardedId:     "x0cmcsjtmgf87urv");
-        // private IAdService _ads = new NoOpAdService();
+#endif
 
         // In-app purchases (consumable shilling bundles). Same pattern as ads: the game
         // talks only to IIapService. LIVE via UnityIapService against the real store
