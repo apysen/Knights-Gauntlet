@@ -15,6 +15,14 @@ namespace KnightsGauntlet.View
         private static readonly int SlashSeedId = Shader.PropertyToID("_Seed");
         private static readonly int SlashVariantId = Shader.PropertyToID("_Variant");
         private static readonly int SlashComboId = Shader.PropertyToID("_Combo");
+        private static readonly int SlashReducedId = Shader.PropertyToID("_ReducedEffects");
+        private static Texture2D _slashFlowNoise;
+        [Header("Capture slash")]
+        [SerializeField] private Color slashWakeColor = new Color(1f, 0.65f, 0.16f);
+        [SerializeField] private Color slashEdgeColor = new Color(1f, 0.99f, 0.88f);
+        [SerializeField, Range(0f, 3f)] private float slashIntensity = 1.2f;
+        [SerializeField, Range(0f, 4f)] private float slashNoiseSpeed = 1.35f;
+        [SerializeField, Range(0f, 1f)] private float slashErosion = 0.55f;
         private static readonly string[] CaptureSlashSprites =
             { "comic-slash-crescent", "comic-slash-cut", "comic-slash-sweep" };
         private int _lastCaptureSlash = -1;
@@ -29,6 +37,8 @@ namespace KnightsGauntlet.View
             public float row, age, life, size, spriteUnits;
             public float angle, rise;
             public bool slash;
+            public bool echo, spark;
+            public Vector2 offset, velocity;
             public Color color;
             public MaterialPropertyBlock shaderProperties;
         }
@@ -121,6 +131,9 @@ namespace KnightsGauntlet.View
             SpawnComicEffect("comic-impact", col, y, sim.ScrollCells,
                 reduced ? 0.10f : 0.20f, impactSize, false, accent);
 
+            // The pixel knight owns its trail instead of stacking the old slash.
+            if (_player.UsesPixelKnight) return;
+
             // Keep the cut on the landing piece, 33% larger than the previous
             // footprint, with only a small combo-size lift. Combo mostly adds ink
             // brightness and duration so the mark stays local around the capture.
@@ -130,10 +143,39 @@ namespace KnightsGauntlet.View
             int slashIndex = Random.Range(0, CaptureSlashSprites.Length - (_lastCaptureSlash >= 0 ? 1 : 0));
             if (_lastCaptureSlash >= 0 && slashIndex >= _lastCaptureSlash) slashIndex++;
             _lastCaptureSlash = slashIndex;
-            SpawnComicEffect(CaptureSlashSprites[slashIndex], col, y, sim.ScrollCells,
+            float slashAngle = Random.Range(0f, 360f);
+            var cut = SpawnComicEffect(CaptureSlashSprites[slashIndex], col, y, sim.ScrollCells,
                 reduced ? 0.14f : 0.24f + comboStrength * 0.06f,
-                slashSize, true, slashAccent, Random.Range(0f, 360f),
+                slashSize, true, slashAccent, slashAngle,
                 strength: comboStrength, variant: slashIndex);
+            if (!reduced)
+            {
+                var echo = SpawnComicEffect(CaptureSlashSprites[slashIndex], col, y, sim.ScrollCells,
+                    0.20f + comboStrength * 0.04f, slashSize * 0.94f, true,
+                    new Color(1f, 0.72f, 0.3f, 0.22f), slashAngle - 6f,
+                    strength: comboStrength, variant: slashIndex);
+                echo.echo = true;
+                echo.age = -0.028f;
+                echo.offset = -_playerAttackDirection * 0.045f;
+                echo.renderer.enabled = false;
+                echo.renderer.flipY = cut.renderer.flipY;
+                echo.renderer.sortingOrder = 199;
+                echo.shaderProperties.SetFloat(SlashSeedId, cut.shaderProperties.GetFloat(SlashSeedId));
+                echo.renderer.SetPropertyBlock(echo.shaderProperties);
+
+                int sparks = 3 + Mathf.RoundToInt(comboStrength * 3f);
+                for (int i = 0; i < sparks; i++)
+                {
+                    float angle = Mathf.Atan2(_playerAttackDirection.y, _playerAttackDirection.x)
+                        + Random.Range(-1.2f, 1.2f) + (i % 2 == 0 ? 0f : Mathf.PI);
+                    Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                    var spark = SpawnComicEffect(null, col, y, sim.ScrollCells,
+                        Random.Range(0.12f, 0.19f), Random.Range(0.08f, 0.14f), false,
+                        Color.Lerp(slashWakeColor, slashEdgeColor, Random.value), angle * Mathf.Rad2Deg);
+                    spark.velocity = direction * Random.Range(1.5f, 2.7f);
+                    spark.offset = direction * 0.05f;
+                }
+            }
         }
 
 
@@ -175,7 +217,7 @@ namespace KnightsGauntlet.View
             return line;
         }
 
-        private void SpawnComicEffect(string name, int col, float y, float scroll, float life, float size,
+        private ComicEffect SpawnComicEffect(string name, int col, float y, float scroll, float life, float size,
             bool slash, Color color, float angle = 0f, float rise = 0f, float strength = 0f, int variant = 0)
         {
             ComicEffect effect = null;
@@ -213,12 +255,24 @@ namespace KnightsGauntlet.View
                 effect.shaderProperties.SetFloat(SlashSeedId, Random.Range(0f, 1000f));
                 effect.shaderProperties.SetFloat(SlashVariantId, variant);
                 effect.shaderProperties.SetFloat(SlashComboId, strength);
+                effect.shaderProperties.SetFloat(SlashReducedId, SaveData.IsReducedEffects() ? 1f : 0f);
+                effect.shaderProperties.SetColor("_WakeColor", slashWakeColor);
+                effect.shaderProperties.SetColor("_EdgeColor", slashEdgeColor);
+                effect.shaderProperties.SetFloat("_Intensity", slashIntensity);
+                effect.shaderProperties.SetFloat("_NoiseSpeed", slashNoiseSpeed);
+                effect.shaderProperties.SetFloat("_Erosion", slashErosion);
+                if (_slashFlowNoise == null) _slashFlowNoise = Resources.Load<Texture2D>("SlashFlowNoise");
+                if (_slashFlowNoise != null) effect.shaderProperties.SetTexture("_FlowTex", _slashFlowNoise);
                 effect.renderer.SetPropertyBlock(effect.shaderProperties);
             }
             else effect.renderer.SetPropertyBlock(null);
             // Combat cuts must sit above board pieces, voxels, and score popups.
-            effect.renderer.sortingOrder = slash ? 200 : 24;
-            effect.renderer.sprite = ComicArt.Load(name);
+            effect.spark = name == null;
+            effect.echo = false;
+            effect.offset = effect.velocity = Vector2.zero;
+            effect.renderer.enabled = true;
+            effect.renderer.sortingOrder = effect.spark ? 201 : slash ? 200 : 24;
+            effect.renderer.sprite = effect.spark ? BoardView.UnitSquare() : ComicArt.Load(name);
             effect.spriteUnits = slash && effect.renderer.sprite != null
                 ? Mathf.Max(0.001f, Mathf.Max(effect.renderer.sprite.bounds.size.x, effect.renderer.sprite.bounds.size.y))
                 : 1f;
@@ -233,6 +287,9 @@ namespace KnightsGauntlet.View
                 (_board.cellSize * size * (slash ? 1.02f : 0.55f) / effect.spriteUnits);
             effect.renderer.color = color;
             effect.renderer.gameObject.SetActive(true);
+            if (effect.spark)
+                effect.renderer.transform.localScale = new Vector3(size, size * 0.16f, 1f) * _board.cellSize;
+            return effect;
         }
 
         private void AnimateComicEffects(GameSimulation sim, float dt)
@@ -241,26 +298,46 @@ namespace KnightsGauntlet.View
             {
                 if (!effect.renderer.gameObject.activeSelf) continue;
                 effect.age += dt;
+                bool reduced = SaveData.IsReducedEffects();
+                if (reduced && (effect.echo || effect.spark))
+                {
+                    effect.renderer.gameObject.SetActive(false);
+                    continue;
+                }
+                if (effect.age < 0f) continue;
+                effect.renderer.enabled = true;
                 float t = effect.age / effect.life;
                 if (t >= 1f) { effect.renderer.gameObject.SetActive(false); continue; }
                 Vector3 position = _board.CellToWorld(effect.col, effect.row + sim.ScrollCells);
+                Vector2 offset = effect.offset + effect.velocity * (effect.life * (t - 0.35f * t * t));
+                position += new Vector3(offset.x, offset.y, 0f) * _board.cellSize;
                 position.y += effect.rise * (1f - Mathf.Pow(1f - t, 3f)) * _board.cellSize;
                 effect.renderer.transform.position = position;
+                if (effect.spark)
+                {
+                    float length = effect.size * Mathf.Lerp(1f, 0.3f, t) * _board.cellSize;
+                    effect.renderer.transform.localScale = new Vector3(length, length * 0.16f, 1f);
+                    var sparkColor = effect.color;
+                    sparkColor.a *= 1f - Mathf.SmoothStep(0.25f, 1f, t);
+                    effect.renderer.color = sparkColor;
+                    continue;
+                }
                 float scale;
                 scale = effect.size * (effect.slash
-                    ? Mathf.Lerp(1.02f, 1.16f, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, t / 0.38f)))
+                    ? Mathf.Lerp(1.02f, 1.16f, 1f - Mathf.Pow(1f - Mathf.Min(1f, t / 0.28f), 3f))
                     : Mathf.Lerp(0.55f, 1.02f, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, t * 2.4f))));
                 if (SaveData.IsReducedEffects()) scale *= 0.78f;
                 effect.renderer.transform.localScale = Vector3.one * (_board.cellSize * scale / effect.spriteUnits);
                 if (effect.slash)
                 {
                     effect.shaderProperties.SetFloat(SlashProgressId, t);
+                    effect.shaderProperties.SetFloat(SlashReducedId, reduced ? 1f : 0f);
                     effect.renderer.SetPropertyBlock(effect.shaderProperties);
                     float turn = SaveData.IsReducedEffects() ? 0f : Mathf.Lerp(-9f, 4f, Mathf.SmoothStep(0f, 1f, t));
                     effect.renderer.transform.localRotation = Quaternion.Euler(0f, 0f, effect.angle + turn);
                 }
                 var color = effect.color;
-                color.a = SaveData.IsReducedEffects() ? 0.72f : effect.slash ? 1f : 1f - Mathf.SmoothStep(0.62f, 1f, t);
+                color.a *= reduced ? 0.72f : effect.slash ? 1f : 1f - Mathf.SmoothStep(0.62f, 1f, t);
                 effect.renderer.color = color;
             }
             foreach (var trail in _jumpTrails)

@@ -1,0 +1,653 @@
+[
+  {
+    "piece": "rook",
+    "facing": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      11,
+      11,
+      37,
+      40
+    ],
+    "palette": [
+      "542028",
+      "A63B38",
+      "EA6D59",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "rook",
+    "facing": "back",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      11,
+      11,
+      37,
+      39
+    ],
+    "palette": [
+      "542028",
+      "A63B38",
+      "EA6D59",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "bishop",
+    "facing": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      16,
+      10,
+      34,
+      40
+    ],
+    "palette": [
+      "211541",
+      "483184",
+      "8A72C4",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "bishop",
+    "facing": "back",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      15,
+      10,
+      32,
+      39
+    ],
+    "palette": [
+      "211541",
+      "483184",
+      "8A72C4",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "queen",
+    "facing": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      16,
+      12,
+      35,
+      40
+    ],
+    "palette": [
+      "450F36",
+      "941C61",
+      "DF5694",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "queen",
+    "facing": "back",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      14,
+      12,
+      32,
+      39
+    ],
+    "palette": [
+      "450F36",
+      "941C61",
+      "DF5694",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "pawn",
+    "facing": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      16,
+      20,
+      32,
+      40
+    ],
+    "palette": [
+      "092C3D",
+      "126077",
+      "36A0AE",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "rook",
+    "facing": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      15,
+      15,
+      48,
+      53
+    ],
+    "palette": [
+      "542028",
+      "A63B38",
+      "EA6D59",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "rook",
+    "facing": "back",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      16,
+      15,
+      49,
+      51
+    ],
+    "palette": [
+      "542028",
+      "A63B38",
+      "EA6D59",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "bishop",
+    "facing": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      21,
+      13,
+      44,
+      53
+    ],
+    "palette": [
+      "211541",
+      "483184",
+      "8A72C4",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "bishop",
+    "facing": "back",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      20,
+      13,
+      43,
+      52
+    ],
+    "palette": [
+      "211541",
+      "483184",
+      "8A72C4",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "queen",
+    "facing": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      21,
+      16,
+      46,
+      53
+    ],
+    "palette": [
+      "450F36",
+      "941C61",
+      "DF5694",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "queen",
+    "facing": "back",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      18,
+      15,
+      43,
+      51
+    ],
+    "palette": [
+      "450F36",
+      "941C61",
+      "DF5694",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "pawn",
+    "facing": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      22,
+      26,
+      42,
+      53
+    ],
+    "palette": [
+      "092C3D",
+      "126077",
+      "36A0AE",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "rook",
+    "facing": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      23,
+      22,
+      72,
+      79
+    ],
+    "palette": [
+      "542028",
+      "A63B38",
+      "EA6D59",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "rook",
+    "facing": "back",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      24,
+      22,
+      73,
+      76
+    ],
+    "palette": [
+      "542028",
+      "A63B38",
+      "EA6D59",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "bishop",
+    "facing": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      32,
+      20,
+      66,
+      79
+    ],
+    "palette": [
+      "211541",
+      "483184",
+      "8A72C4",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "bishop",
+    "facing": "back",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      30,
+      20,
+      64,
+      77
+    ],
+    "palette": [
+      "211541",
+      "483184",
+      "8A72C4",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "queen",
+    "facing": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      32,
+      24,
+      69,
+      79
+    ],
+    "palette": [
+      "450F36",
+      "941C61",
+      "DF5694",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "queen",
+    "facing": "back",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      27,
+      22,
+      64,
+      76
+    ],
+    "palette": [
+      "450F36",
+      "941C61",
+      "DF5694",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  },
+  {
+    "piece": "pawn",
+    "facing": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.22
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      33,
+      40,
+      63,
+      79
+    ],
+    "palette": [
+      "092C3D",
+      "126077",
+      "36A0AE",
+      "131A30",
+      "263650",
+      "43566A",
+      "92502F",
+      "CC8C3E",
+      "F4C866",
+      "8E9AAE",
+      "CDD5D5",
+      "FFF0CE",
+      "101320"
+    ]
+  }
+]

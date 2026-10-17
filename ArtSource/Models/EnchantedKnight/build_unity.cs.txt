@@ -1,0 +1,77 @@
+// Execute as a method body using Unity MCP execute_code, after importing the FBX.
+// Creates a static one-material preview prefab. Editable parts remain in the FBX.
+const string folder = "Assets/Art/EnchantedKnight/";
+var source = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(folder + "EnchantedKnight.fbx");
+var instance = UnityEngine.Object.Instantiate(source);
+var parts = new System.Collections.Generic.List<UnityEngine.Mesh>();
+var output = new UnityEngine.GameObject("EnchantedKnight");
+try
+{
+    var colors = new System.Collections.Generic.Dictionary<string, string> {
+        {"EK_Cobalt","294FA5"},{"EK_Crest highlights","4272C2"},{"EK_Deep blue","172C60"},
+        {"EK_Joint navy","121C30"},{"EK_Ivory armor","E5DFC9"},{"EK_Ivory bevel","B8B49F"},
+        {"EK_Antique gold","D9A842"},{"EK_Gold edge","F0CA67"},{"EK_Gold shade","9D6A29"},{"EK_Blade","F1EEDB"}
+    };
+    var names = new System.Collections.Generic.List<string>(colors.Keys);
+    var palette = new UnityEngine.Texture2D(16, 1, UnityEngine.TextureFormat.RGBA32, false);
+    for(int i=0;i<16;i++) {
+        UnityEngine.Color c=UnityEngine.Color.white;
+        if(i<names.Count) UnityEngine.ColorUtility.TryParseHtmlString("#"+colors[names[i]],out c);
+        palette.SetPixel(i,0,c);
+    }
+    palette.Apply();
+    System.IO.File.WriteAllBytes(folder+"KnightPalette.png",palette.EncodeToPNG());
+    UnityEngine.Object.DestroyImmediate(palette);
+    UnityEditor.AssetDatabase.ImportAsset(folder+"KnightPalette.png");
+    var ti=(UnityEditor.TextureImporter)UnityEditor.AssetImporter.GetAtPath(folder+"KnightPalette.png");
+    ti.textureType=UnityEditor.TextureImporterType.Default;
+    ti.filterMode=UnityEngine.FilterMode.Point; ti.wrapMode=UnityEngine.TextureWrapMode.Clamp;
+    ti.mipmapEnabled=false; ti.sRGBTexture=true;
+    ti.textureCompression=UnityEditor.TextureImporterCompression.Uncompressed; ti.SaveAndReimport();
+    var combines=new System.Collections.Generic.List<UnityEngine.CombineInstance>();
+    var upright=UnityEngine.Matrix4x4.Rotate(UnityEngine.Quaternion.Euler(-90,0,0));
+    foreach(var filter in instance.GetComponentsInChildren<UnityEngine.MeshFilter>()) {
+        var renderer=filter.GetComponent<UnityEngine.MeshRenderer>();
+        for(int sub=0;sub<filter.sharedMesh.subMeshCount;sub++) {
+            var original=filter.sharedMesh;
+            var part=new UnityEngine.Mesh();
+            part.vertices=original.vertices; part.normals=original.normals;
+            part.triangles=original.GetTriangles(sub);
+            int paletteIndex=names.IndexOf(renderer.sharedMaterials[sub].name);
+            if(paletteIndex<0) throw new System.Exception("Unknown material: "+renderer.sharedMaterials[sub].name);
+            var uv=new UnityEngine.Vector2[original.vertexCount];
+            for(int j=0;j<uv.Length;j++) uv[j]=new UnityEngine.Vector2((paletteIndex+.5f)/16f,.5f);
+            part.uv=uv; parts.Add(part);
+            combines.Add(new UnityEngine.CombineInstance {mesh=part,transform=upright*filter.transform.localToWorldMatrix});
+        }
+    }
+    var merged=new UnityEngine.Mesh(); merged.name="EnchantedKnight_PaletteMesh";
+    merged.CombineMeshes(combines.ToArray(),true,true);
+    merged.RecalculateBounds();
+    var bounds=merged.bounds; float scale=1f/bounds.size.y;
+    var vertices=merged.vertices;
+    for(int i=0;i<vertices.Length;i++) vertices[i]=(vertices[i]-new UnityEngine.Vector3(0,bounds.min.y,0))*scale;
+    merged.vertices=vertices; merged.RecalculateBounds();
+    string meshPath=folder+"EnchantedKnightMesh.asset";
+    var existingMesh=UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Mesh>(meshPath);
+    if(existingMesh!=null) { UnityEditor.EditorUtility.CopySerialized(merged,existingMesh); UnityEngine.Object.DestroyImmediate(merged); merged=existingMesh; }
+    else UnityEditor.AssetDatabase.CreateAsset(merged,meshPath);
+    var shader=UnityEngine.Resources.Load<UnityEngine.Shader>("Pieces/ChessPiece");
+    if(shader==null) throw new System.Exception("Project ChessPiece shader missing.");
+    string materialPath=folder+"EnchantedKnight.mat";
+    var material=UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Material>(materialPath);
+    if(material==null) {material=new UnityEngine.Material(shader); UnityEditor.AssetDatabase.CreateAsset(material,materialPath);}
+    material.shader=shader; material.SetTexture("_BaseMap",UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>(folder+"KnightPalette.png"));
+    material.SetColor("_BaseColor",UnityEngine.Color.white); material.SetFloat("_Smoothness",0);
+    UnityEditor.EditorUtility.SetDirty(material);
+    output.AddComponent<UnityEngine.MeshFilter>().sharedMesh=merged;
+    output.AddComponent<UnityEngine.MeshRenderer>().sharedMaterial=material;
+    UnityEditor.PrefabUtility.SaveAsPrefabAsset(output,folder+"EnchantedKnight.prefab");
+    UnityEditor.AssetDatabase.SaveAssets();
+    return "Saved EnchantedKnight.prefab: "+merged.triangles.Length/3+" triangles, "+merged.vertexCount+" vertices, one renderer and one material, Y-up, height "+merged.bounds.size.y+"m, feet at "+merged.bounds.min.y;
+}
+finally {
+    UnityEngine.Object.DestroyImmediate(instance);
+    UnityEngine.Object.DestroyImmediate(output);
+    foreach(var part in parts) UnityEngine.Object.DestroyImmediate(part);
+}

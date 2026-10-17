@@ -171,6 +171,10 @@ namespace KnightsGauntlet.View
             _view.Init(theme, _board);
             _view.SetPiecePresentation(pieceScale, enemyPieceRotation, playerPieceRotation);
 
+            var pixelFilter=cam.GetComponent<EnvironmentPixelFilter>();
+            if (pixelFilter == null) pixelFilter=cam.gameObject.AddComponent<EnvironmentPixelFilter>();
+            pixelFilter.Initialize(cam,_view,this);
+
             var sfxGo = new GameObject("Sfx"); sfxGo.transform.SetParent(transform, false);
             sfxGo.AddComponent<SfxManager>();
 

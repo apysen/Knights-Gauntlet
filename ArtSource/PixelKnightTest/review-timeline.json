@@ -1,0 +1,110 @@
+{
+    "effect": "Unity GPU pixel shader",
+    "samples": [
+        {
+            "bodyFrame": 0,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 1,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 2,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 3,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 4,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 5,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 6,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 7,
+            "captureTime": -1.0,
+            "durationMs": 125
+        },
+        {
+            "bodyFrame": 8,
+            "captureTime": 0.0,
+            "durationMs": 70
+        },
+        {
+            "bodyFrame": 9,
+            "captureTime": 0.07000000029802323,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 9,
+            "captureTime": 0.09000000357627869,
+            "durationMs": 15
+        },
+        {
+            "bodyFrame": 10,
+            "captureTime": 0.10499999672174454,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 10,
+            "captureTime": 0.125,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 10,
+            "captureTime": 0.14499999582767487,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 10,
+            "captureTime": 0.16500000655651093,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 10,
+            "captureTime": 0.1850000023841858,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 10,
+            "captureTime": 0.20499999821186067,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 10,
+            "captureTime": 0.22499999403953553,
+            "durationMs": 25
+        },
+        {
+            "bodyFrame": 0,
+            "captureTime": 0.25,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 0,
+            "captureTime": 0.27000001072883608,
+            "durationMs": 20
+        },
+        {
+            "bodyFrame": 0,
+            "captureTime": 0.28999999165534975,
+            "durationMs": 60
+        }
+    ]
+}

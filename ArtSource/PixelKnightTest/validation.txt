@@ -1,0 +1,4 @@
+48px: 11 frames, no clipped pixels, 13 colors including outline.
+64px: 11 frames, no clipped pixels, 13 colors including outline.
+96px: 11 frames, no clipped pixels, 13 colors including outline.
+Rear view; 8 idle frames; 3 capture poses at 70/35/145 ms; independent 220 ms Unity GPU slash; fixed camera and pivot.

@@ -1,0 +1,359 @@
+[
+  {
+    "piece": "rook",
+    "view": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      10,
+      6,
+      38,
+      38
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "rook",
+    "view": "back",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      9,
+      6,
+      38,
+      38
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "rook",
+    "view": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      13,
+      8,
+      51,
+      51
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "rook",
+    "view": "back",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      12,
+      8,
+      51,
+      51
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "rook",
+    "view": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      20,
+      13,
+      76,
+      77
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "rook",
+    "view": "back",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      19,
+      13,
+      77,
+      77
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "bishop",
+    "view": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      14,
+      2,
+      34,
+      38
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "bishop",
+    "view": "back",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      14,
+      2,
+      34,
+      38
+    ],
+    "colors": 21
+  },
+  {
+    "piece": "bishop",
+    "view": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      18,
+      3,
+      45,
+      51
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "bishop",
+    "view": "back",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      18,
+      3,
+      45,
+      51
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "bishop",
+    "view": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      28,
+      5,
+      68,
+      77
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "bishop",
+    "view": "back",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      28,
+      5,
+      68,
+      77
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "queen",
+    "view": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      7,
+      2,
+      40,
+      38
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "queen",
+    "view": "back",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      8,
+      2,
+      40,
+      38
+    ],
+    "colors": 21
+  },
+  {
+    "piece": "queen",
+    "view": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      11,
+      3,
+      54,
+      51
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "queen",
+    "view": "back",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      11,
+      3,
+      53,
+      51
+    ],
+    "colors": 22
+  },
+  {
+    "piece": "queen",
+    "view": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      15,
+      5,
+      81,
+      77
+    ],
+    "colors": 24
+  },
+  {
+    "piece": "queen",
+    "view": "back",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      16,
+      5,
+      79,
+      77
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "pawn",
+    "view": "front",
+    "size": 48,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 48,
+    "bounds": [
+      14,
+      8,
+      33,
+      38
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "pawn",
+    "view": "front",
+    "size": 64,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 64,
+    "bounds": [
+      19,
+      11,
+      44,
+      51
+    ],
+    "colors": 23
+  },
+  {
+    "piece": "pawn",
+    "view": "front",
+    "size": 96,
+    "pivot": [
+      0.5,
+      0.2
+    ],
+    "pixelsPerUnit": 96,
+    "bounds": [
+      29,
+      17,
+      66,
+      77
+    ],
+    "colors": 23
+  }
+]

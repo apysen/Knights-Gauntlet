@@ -37,6 +37,9 @@ namespace KnightsGauntlet.View
         private ComicPose _pose;
         private Material _defaultMaterial;
         private float _poseUntil;
+        private GameObject _pixelKnight;
+        private PixelKnightSlash _pixelSlash;
+        public bool UsesPixelKnight => _pixelKnight != null && _pixelKnight.activeSelf;
         private Transform _modelRoot;
         private Renderer[] _modelRenderers;
         private string _modelKey;
@@ -123,6 +126,7 @@ namespace KnightsGauntlet.View
 
         public void ClearPose()
         {
+            if (UsesPixelKnight) _pixelSlash.StopCapture();
             _poseUntil = 0f;
             _pose = ComicPose.Idle;
             if (spriteRenderer != null) spriteRenderer.sprite = _idleSprite;
@@ -131,6 +135,7 @@ namespace KnightsGauntlet.View
 
         public void PlayAttackMotion(PieceType form, Vector2 direction, float duration = 0.32f)
         {
+            if (UsesPixelKnight) { _pixelSlash.PlayCapture(); return; }
             if (_modelRoot == null || !_modelRoot.gameObject.activeInHierarchy)
             {
                 ShowPose(ComicPose.Attack, duration);
@@ -190,6 +195,8 @@ namespace KnightsGauntlet.View
 
         private void LateUpdate()
         {
+            if (UsesPixelKnight && Camera.main != null)
+                _pixelKnight.transform.rotation = Camera.main.transform.rotation;
             if (_modelRoot == null) return;
             Vector3 hop = Vector3.zero;
             bool wasHopping = _hopActive;
@@ -318,6 +325,30 @@ namespace KnightsGauntlet.View
             _frontHit = _hitSprite;
             _poseUntil = 0f;
             _pose = ComicPose.Idle;
+
+            if (_pixelKnight != null) _pixelKnight.SetActive(false);
+            if (isPlayer && theme.comicStyle && PlayerPrefs.GetInt("kg_pixel_knight_preview", 0) != 0 &&
+                (type == PieceType.Knight || type == PieceType.Nightrider))
+            {
+                if (_pixelKnight == null)
+                {
+                    var prefab = Resources.Load<GameObject>("PixelKnightGameplay");
+                    if (prefab != null)
+                    {
+                        _pixelKnight = Instantiate(prefab,transform,false);
+                        _pixelSlash = _pixelKnight.GetComponent<PixelKnightSlash>();
+                    }
+                }
+                if (_pixelKnight != null)
+                {
+                    _pixelKnight.SetActive(true);
+                    if (_modelRoot != null) _modelRoot.gameObject.SetActive(false);
+                    spriteRenderer.enabled = false;
+                    if (glyphLabel != null) glyphLabel.enabled = false;
+                    if (backing != null) backing.enabled = false;
+                    return;
+                }
+            }
 
             // Prefer modeled pieces and compact modeled hazard plaques.
             if (theme.comicStyle && !forceSprite && ConfigureModel(type, boss, theme.ceramicPiecePrototype, theme.inkPorcelainPieces))

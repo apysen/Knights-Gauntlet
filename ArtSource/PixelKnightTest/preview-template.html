@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Knight pixel animation proof</title>
+<style>
+body{margin:0;background:#111927;color:#e9edf4;font:16px system-ui;line-height:1.5}main{max-width:1080px;margin:auto;padding:28px}h1{font-size:26px;margin:0 0 8px}p{color:#afbdd0;margin:0 0 20px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:24px}section{background:#192436;padding:20px;border-radius:12px}label{display:inline-flex;align-items:center;gap:8px;margin:0 12px 12px 0}select,button{background:#293b55;color:#fff;border:1px solid #52627a;padding:8px 12px;border-radius:6px;font:inherit;cursor:pointer}canvas{display:block;width:100%;height:auto;image-rendering:pixelated;background:repeating-conic-gradient(#202c40 0% 25%,#243249 0% 50%) 0/32px 32px}img{display:block;width:100%;height:auto;max-width:444px;margin:auto;border-radius:4px}#status{font:13px ui-monospace;color:#c5cfde;margin-top:14px}small{display:block;color:#a8b7ca;margin-top:12px}@media(max-width:700px){.layout{grid-template-columns:1fr}main{padding:16px}}
+</style>
+<main><h1>Knight animation proof</h1><p>Rear view. Eight idle poses and a three-pose downward diagonal capture: raised, cut, low finish. 250 ms body animation with an independent 220 ms pixel-grid GPU slash.</p>
+<div class="layout"><section>
+<label>Frame size <select id="size"><option>48</option><option selected>64</option><option>96</option></select></label>
+<label>Animation <select id="mode"><option value="both">Idle + capture</option><option value="idle">Idle</option><option value="capture">Capture</option></select></label>
+<button id="play">Pause</button><button id="step">Next frame</button>
+<canvas id="sprite" width="384" height="384"></canvas><div id="status"></div>
+<small>Nearest-neighbor display, a fixed foot pivot, and 13 opaque palette colors. Pixel counts describe the full square frame.</small>
+</section><section><p>Same displayed character height on the current board. Left to right: 48, 64, 96px.</p><img src="board-animation.gif" alt="Three pixel knight sizes animated on the existing board"><small>The board and scenery use the current project assets. This is a separate art review.</small></section></div>
+</main>
+<script>
+const sheets=__SHEETS__, durations=__DURATIONS__, bodyFrames=__BODY_FRAMES__;
+const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d');
+const size=document.querySelector('#size'),mode=document.querySelector('#mode');
+const bank={}; for(const s of [48,64,96]){bank[s]=new Image();bank[s].src=sheets[s]}
+let playing=true,frame=0,elapsed=0,last=performance.now();
+function range(){return mode.value==='idle'?[0,7]:mode.value==='capture'?[8,durations.length-1]:[0,durations.length-1]}
+function advance(){const[a,b]=range();frame=frame>=b?a:frame+1;elapsed=0}
+size.onchange=()=>draw();mode.onchange=()=>{frame=range()[0];elapsed=0;draw()};
+const button=document.querySelector('#play');button.onclick=()=>{playing=!playing;button.textContent=playing?'Pause':'Play'};
+document.querySelector('#step').onclick=()=>{playing=false;button.textContent='Play';advance();draw()};
+function draw(){const s=+size.value;ctx.clearRect(0,0,384,384);ctx.imageSmoothingEnabled=false;ctx.drawImage(bank[s],frame*s,0,s,s,0,0,384,384);document.querySelector('#status').textContent=`${s}x${s} frame | ${bodyFrames[frame]<8?'Idle':'Capture'} pose ${bodyFrames[frame]<8?bodyFrames[frame]+1:bodyFrames[frame]-7} | ${durations[frame]} ms`}
+function tick(now){let dt=Math.min(200,now-last);last=now;if(playing){elapsed+=dt;while(elapsed>=durations[frame]){const carry=elapsed-durations[frame];advance();elapsed=carry}}if(bank[+size.value].complete)draw();requestAnimationFrame(tick)}requestAnimationFrame(tick);
+</script></html>
