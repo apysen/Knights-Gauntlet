@@ -11,11 +11,4 @@
     <androidPackage spec="com.unity3d.ads-mediation:admob-adapter:5.11.0">
     </androidPackage>
   </androidPackages>
-  <iosPods>
-    <iosPod name="IronSourceAdMobAdapter" version="5.11.0.0">
-      <sources>
-        <source>https://github.com/CocoaPods/Specs</source>
-      </sources>
-    </iosPod>
-  </iosPods>
 </dependencies>
