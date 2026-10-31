@@ -15,8 +15,19 @@ namespace KnightsGauntlet.Editor
     //
     // Runs at order 100 (after most other processors). Existing entries are preserved and
     // duplicates are skipped, so it composes safely with any IDs LevelPlay/adapters add.
+    //
+    // It also writes GADApplicationIdentifier. If the Google Mobile Ads SDK is linked at all
+    // (directly or through any LevelPlay adapter), it checks for this key on its own at launch,
+    // whether or not we ever initialize ads. When the key is missing,
+    // GADApplicationVerifyPublisherInitializedCorrectly throws an uncaught NSException on a
+    // background queue and the app dies before the splash. The key is harmless when AdMob is
+    // not linked, so it is always written.
     public static class SKAdNetworkPostProcess
     {
+        // iOS app id from the AdMob console (App settings). Not the Android one, and not an
+        // ad unit id (app ids use '~', ad units use '/').
+        private const string AdMobApplicationIdentifier = "ca-app-pub-8625750656535254~2166038450";
+
         [PostProcessBuild(100)]
         public static void OnPostProcessBuild(BuildTarget target, string pathToBuiltProject)
         {
@@ -28,6 +39,8 @@ namespace KnightsGauntlet.Editor
             var plist = new PlistDocument();
             plist.ReadFromFile(plistPath);
             var root = plist.root;
+
+            root.SetString("GADApplicationIdentifier", AdMobApplicationIdentifier);
 
             PlistElementArray items = (root["SKAdNetworkItems"] as PlistElementArray) ?? root.CreateArray("SKAdNetworkItems");
 
