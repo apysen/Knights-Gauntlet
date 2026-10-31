@@ -90,7 +90,6 @@ namespace KnightsGauntlet.View
             { Sfx.PieceCapture,    "SFX/Capture Slash" },
             { Sfx.TabSelect,       "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square)" },
             { Sfx.PageTurn,        "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square)" },
-            { Sfx.Transform,       "SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 4 (Square)" },
             { Sfx.Untransform,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 5 (Square)" },
             { Sfx.Transformation,     "SFX/Transformation" },
             { Sfx.AdventureNextLevel, "SFX/Adventure Mode Next Level" },

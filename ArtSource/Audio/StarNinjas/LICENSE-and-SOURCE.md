@@ -16,4 +16,4 @@ Runtime mappings:
 
 Processing: decoded to mono 44.1 kHz PCM WAV, peak normalized to 0.92, silence trimmed with a short margin, and a 2 ms edge fade to prevent clicks. The recorded timbre was retained; no synthesized layers were added.
 
-The original archive and recordings are preserved here. These recordings are used only by the modern capture sound path. Legacy mode retains its original JDSherbert pixel sound.
+Only the three source recordings used by the runtime capture variations are retained here; the unused recordings and duplicate archive were removed. These recordings are used only by the modern capture sound path. Legacy mode retains its original JDSherbert pixel sound.

@@ -1,0 +1,780 @@
+Assets/Art.meta
+Assets/Art/KnightPixelTest.meta
+Assets/Art/KnightPixelTest/Knight48-Capture.anim
+Assets/Art/KnightPixelTest/Knight48-Capture.anim.meta
+Assets/Art/KnightPixelTest/Knight48-Idle.anim
+Assets/Art/KnightPixelTest/Knight48-Idle.anim.meta
+Assets/Art/KnightPixelTest/Knight48.controller
+Assets/Art/KnightPixelTest/Knight48.controller.meta
+Assets/Art/KnightPixelTest/Knight64-Capture.anim
+Assets/Art/KnightPixelTest/Knight64-Capture.anim.meta
+Assets/Art/KnightPixelTest/Knight64-Idle.anim
+Assets/Art/KnightPixelTest/Knight64-Idle.anim.meta
+Assets/Art/KnightPixelTest/Knight64.controller
+Assets/Art/KnightPixelTest/Knight64.controller.meta
+Assets/Art/KnightPixelTest/Knight96-Capture.anim
+Assets/Art/KnightPixelTest/Knight96-Capture.anim.meta
+Assets/Art/KnightPixelTest/Knight96-Idle.anim
+Assets/Art/KnightPixelTest/Knight96-Idle.anim.meta
+Assets/Art/KnightPixelTest/Knight96.controller
+Assets/Art/KnightPixelTest/Knight96.controller.meta
+Assets/Art/KnightPixelTest/KnightGameplay.controller
+Assets/Art/KnightPixelTest/KnightGameplay.controller.meta
+Assets/Art/KnightPixelTest/PixelKnight-48.prefab
+Assets/Art/KnightPixelTest/PixelKnight-48.prefab.meta
+Assets/Art/KnightPixelTest/PixelKnight-64.prefab
+Assets/Art/KnightPixelTest/PixelKnight-64.prefab.meta
+Assets/Art/KnightPixelTest/PixelKnight-96.prefab
+Assets/Art/KnightPixelTest/PixelKnight-96.prefab.meta
+Assets/Art/KnightPixelTest/PixelKnight.mat
+Assets/Art/KnightPixelTest/PixelKnight.mat.meta
+Assets/Art/KnightPixelTest/PixelKnightSlash.cs
+Assets/Art/KnightPixelTest/PixelKnightSlash.cs.meta
+Assets/Art/KnightPixelTest/PixelKnightSlash.shader
+Assets/Art/KnightPixelTest/PixelKnightSlash.shader.meta
+Assets/Art/KnightPixelTest/PixelSlashRender.mat
+Assets/Art/KnightPixelTest/PixelSlashRender.mat.meta
+Assets/Art/KnightPixelTest/knight-48.json
+Assets/Art/KnightPixelTest/knight-48.json.meta
+Assets/Art/KnightPixelTest/knight-48.png
+Assets/Art/KnightPixelTest/knight-48.png.meta
+Assets/Art/KnightPixelTest/knight-64.json
+Assets/Art/KnightPixelTest/knight-64.json.meta
+Assets/Art/KnightPixelTest/knight-64.png
+Assets/Art/KnightPixelTest/knight-64.png.meta
+Assets/Art/KnightPixelTest/knight-96.json
+Assets/Art/KnightPixelTest/knight-96.json.meta
+Assets/Art/KnightPixelTest/knight-96.png
+Assets/Art/KnightPixelTest/knight-96.png.meta
+Assets/DefaultVolumeProfile.asset
+Assets/DefaultVolumeProfile.asset.meta
+Assets/Editor.meta
+Assets/Editor/BattleMovementChecks.cs
+Assets/Editor/BattleMovementChecks.cs.meta
+Assets/Editor/CeramicPiecePreview.cs
+Assets/Editor/CeramicPiecePreview.cs.meta
+Assets/Editor/ComicArtPreview.cs
+Assets/Editor/ComicArtPreview.cs.meta
+Assets/Editor/GameRegressionChecks.cs
+Assets/Editor/GameRegressionChecks.cs.meta
+Assets/Editor/InkPorcelainPreview.cs
+Assets/Editor/InkPorcelainPreview.cs.meta
+Assets/Editor/KnightPixelProofBuilder.cs
+Assets/Editor/KnightPixelProofBuilder.cs.meta
+Assets/Editor/PieceModelMetricsBuilder.cs
+Assets/Editor/PieceModelMetricsBuilder.cs.meta
+Assets/Editor/SKAdNetworkPostProcess.cs
+Assets/Editor/SKAdNetworkPostProcess.cs.meta
+Assets/ExternalDependencyManager.meta
+Assets/ExternalDependencyManager/Editor.meta
+Assets/ExternalDependencyManager/Editor/1.2.185.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.IOSResolver.dll
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.IOSResolver.dll.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.IOSResolver.pdb.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.JarResolver.dll
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.JarResolver.dll.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.JarResolver.pdb.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.PackageManagerResolver.dll
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.PackageManagerResolver.dll.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.PackageManagerResolver.pdb.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.VersionHandlerImpl.dll
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.VersionHandlerImpl.dll.meta
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.VersionHandlerImpl.pdb.meta
+Assets/ExternalDependencyManager/Editor/CHANGELOG.md
+Assets/ExternalDependencyManager/Editor/CHANGELOG.md.meta
+Assets/ExternalDependencyManager/Editor/Google.VersionHandler.dll
+Assets/ExternalDependencyManager/Editor/Google.VersionHandler.dll.meta
+Assets/ExternalDependencyManager/Editor/Google.VersionHandler.pdb.meta
+Assets/ExternalDependencyManager/Editor/LICENSE
+Assets/ExternalDependencyManager/Editor/LICENSE.meta
+Assets/ExternalDependencyManager/Editor/README.md
+Assets/ExternalDependencyManager/Editor/README.md.meta
+Assets/ExternalDependencyManager/Editor/external-dependency-manager_version-1.2.185_manifest.txt
+Assets/ExternalDependencyManager/Editor/external-dependency-manager_version-1.2.185_manifest.txt.meta
+Assets/GameTheme.asset
+Assets/GameTheme.asset.meta
+Assets/GooglePlayPlugins.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/CHANGELOG.md
+Assets/GooglePlayPlugins/com.google.play.appupdate/CHANGELOG.md.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Editor.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Editor/Dependencies.xml
+Assets/GooglePlayPlugins/com.google.play.appupdate/Editor/Dependencies.xml.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/LICENSE.md
+Assets/GooglePlayPlugins/com.google.play.appupdate/LICENSE.md.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Proguard.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Proguard/app_update.txt
+Assets/GooglePlayPlugins/com.google.play.appupdate/Proguard/app_update.txt.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/README.md
+Assets/GooglePlayPlugins/com.google.play.appupdate/README.md.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Google.Play.AppUpdate.asmdef
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Google.Play.AppUpdate.asmdef.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Plugins.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Plugins/com.google.play.appupdate.metadata.jar
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Plugins/com.google.play.appupdate.metadata.jar.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateErrorCode.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateErrorCode.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateInfo.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateInfo.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateManager.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateManager.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateOptions.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateOptions.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateRequest.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateRequest.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateStatus.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateStatus.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateType.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateType.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateAsyncOperation.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateAsyncOperation.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateHandler.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateHandler.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerInternal.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerInternal.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerPlayCore.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerPlayCore.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdatePlayCoreTranslator.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdatePlayCoreTranslator.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateRequestImpl.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateRequestImpl.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateState.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateState.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateStateListener.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateStateListener.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/UpdateAvailability.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/UpdateAvailability.cs.meta
+Assets/GooglePlayPlugins/com.google.play.appupdate/package.json
+Assets/GooglePlayPlugins/com.google.play.appupdate/package.json.meta
+Assets/GooglePlayPlugins/com.google.play.common.meta
+Assets/GooglePlayPlugins/com.google.play.common/CHANGELOG.md
+Assets/GooglePlayPlugins/com.google.play.common/CHANGELOG.md.meta
+Assets/GooglePlayPlugins/com.google.play.common/LICENSE.md
+Assets/GooglePlayPlugins/com.google.play.common/LICENSE.md.meta
+Assets/GooglePlayPlugins/com.google.play.common/README.md
+Assets/GooglePlayPlugins/com.google.play.common/README.md.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Google.Play.Common.asmdef
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Google.Play.Common.asmdef.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/AndroidConstants.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/AndroidConstants.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/PlayAsyncOperationImpl.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/PlayAsyncOperationImpl.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingBar.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingBar.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingScreen.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingScreen.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/ScrollingFillAnimator.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/ScrollingFillAnimator.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/PlayAsyncOperation.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/PlayAsyncOperation.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/UnityPlayerHelper.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/UnityPlayerHelper.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/VoidResult.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/VoidResult.cs.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantLoadingTile.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantLoadingTile.png.meta
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantRetryButton.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantRetryButton.png.meta
+Assets/GooglePlayPlugins/com.google.play.common/package.json
+Assets/GooglePlayPlugins/com.google.play.common/package.json.meta
+Assets/GooglePlayPlugins/com.google.play.core.meta
+Assets/GooglePlayPlugins/com.google.play.core/CHANGELOG.md
+Assets/GooglePlayPlugins/com.google.play.core/CHANGELOG.md.meta
+Assets/GooglePlayPlugins/com.google.play.core/Editor.meta
+Assets/GooglePlayPlugins/com.google.play.core/Editor/Dependencies.xml
+Assets/GooglePlayPlugins/com.google.play.core/Editor/Dependencies.xml.meta
+Assets/GooglePlayPlugins/com.google.play.core/LICENSE.md
+Assets/GooglePlayPlugins/com.google.play.core/LICENSE.md.meta
+Assets/GooglePlayPlugins/com.google.play.core/Proguard.meta
+Assets/GooglePlayPlugins/com.google.play.core/Proguard/common.txt
+Assets/GooglePlayPlugins/com.google.play.core/Proguard/common.txt.meta
+Assets/GooglePlayPlugins/com.google.play.core/README.md
+Assets/GooglePlayPlugins/com.google.play.core/README.md.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Google.Play.Core.asmdef
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Google.Play.Core.asmdef.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/ActivityResult.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/ActivityResult.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreConstants.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreConstants.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreEventHandler.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreEventHandler.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreHelper.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreHelper.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnFailureListener.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnFailureListener.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnSuccessListener.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnSuccessListener.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayServicesTask.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayServicesTask.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnFailureListener.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnFailureListener.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnSuccessListener.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnSuccessListener.cs.meta
+Assets/GooglePlayPlugins/com.google.play.core/package.json
+Assets/GooglePlayPlugins/com.google.play.core/package.json.meta
+Assets/InputSystem_Actions.inputactions
+Assets/InputSystem_Actions.inputactions.meta
+Assets/LevelPlay.meta
+Assets/LevelPlay/Editor.meta
+Assets/LevelPlay/Editor/ISAdMobAdapterDependencies.xml
+Assets/LevelPlay/Editor/ISAdMobAdapterDependencies.xml.meta
+Assets/LevelPlay/Editor/ISAppLovinAdapterDependencies.xml
+Assets/LevelPlay/Editor/ISAppLovinAdapterDependencies.xml.meta
+Assets/LevelPlay/Editor/ISUnityAdsAdapterDependencies.xml
+Assets/LevelPlay/Editor/ISUnityAdsAdapterDependencies.xml.meta
+Assets/LevelPlay/Editor/IronSourceSDKDependencies.xml
+Assets/LevelPlay/Editor/IronSourceSDKDependencies.xml.meta
+Assets/LevelPlay/Editor/LevelPlayVersions.json
+Assets/LevelPlay/Editor/LevelPlayVersions.json.meta
+Assets/LevelPlay/Resources.meta
+Assets/LevelPlay/Resources/LevelPlayMediationSettings.asset
+Assets/LevelPlay/Resources/LevelPlayMediationSettings.asset.meta
+Assets/Plugins.meta
+Assets/Plugins/Android.meta
+Assets/Plugins/Android/AdIdPermission.androidlib.meta
+Assets/Plugins/Android/AdIdPermission.androidlib/AndroidManifest.xml
+Assets/Plugins/Android/AdIdPermission.androidlib/build.gradle
+Assets/Plugins/Android/gradleTemplate.properties
+Assets/Plugins/Android/gradleTemplate.properties.meta
+Assets/Plugins/Android/mainTemplate.gradle
+Assets/Plugins/Android/mainTemplate.gradle.meta
+Assets/Plugins/Android/proguard-user.txt
+Assets/Plugins/Android/proguard-user.txt.meta
+Assets/Plugins/Android/settingsTemplate.gradle
+Assets/Plugins/Android/settingsTemplate.gradle.meta
+Assets/Resources.meta
+Assets/Resources/BillingMode.json
+Assets/Resources/BillingMode.json.meta
+Assets/Resources/BoardClipSprite.shader
+Assets/Resources/BoardClipSprite.shader.meta
+Assets/Resources/BoardModels.meta
+Assets/Resources/BoardModels/BridgeSurround.fbx
+Assets/Resources/BoardModels/BridgeSurround.fbx.meta
+Assets/Resources/BoardModels/CastleSurround.fbx
+Assets/Resources/BoardModels/CastleSurround.fbx.meta
+Assets/Resources/BoardModels/CrackedTile.fbx
+Assets/Resources/BoardModels/CrackedTile.fbx.meta
+Assets/Resources/BoardModels/GardenSurround.fbx
+Assets/Resources/BoardModels/GardenSurround.fbx.meta
+Assets/Resources/BoardModels/HazardPlaque.fbx
+Assets/Resources/BoardModels/HazardPlaque.fbx.meta
+Assets/Resources/BoardRoll.hlsl
+Assets/Resources/BoardRoll.hlsl.meta
+Assets/Resources/CaptureSlash.shader
+Assets/Resources/CaptureSlash.shader.meta
+Assets/Resources/CaptureVoxel.shader
+Assets/Resources/CaptureVoxel.shader.meta
+Assets/Resources/Coin.meta
+Assets/Resources/Coin/Coin_Silver-Sheet.png
+Assets/Resources/Coin/Coin_Silver-Sheet.png.meta
+Assets/Resources/Comic.meta
+Assets/Resources/Comic/ComicPalette.mat
+Assets/Resources/Comic/ComicPalette.mat.meta
+Assets/Resources/Comic/ComicPalette.shader
+Assets/Resources/Comic/ComicPalette.shader.meta
+Assets/Resources/Comic/PaintedChess.mat
+Assets/Resources/Comic/PaintedChess.mat.meta
+Assets/Resources/Comic/PaintedChess.shader
+Assets/Resources/Comic/PaintedChess.shader.meta
+Assets/Resources/Comic/comic-coin.png
+Assets/Resources/Comic/comic-coin.png.meta
+Assets/Resources/Comic/comic-impact.png
+Assets/Resources/Comic/comic-impact.png.meta
+Assets/Resources/Comic/comic-slash-crescent.png
+Assets/Resources/Comic/comic-slash-crescent.png.meta
+Assets/Resources/Comic/comic-slash-cut.png
+Assets/Resources/Comic/comic-slash-cut.png.meta
+Assets/Resources/Comic/comic-slash-sweep.png
+Assets/Resources/Comic/comic-slash-sweep.png.meta
+Assets/Resources/Comic/comic-trap-idle.png
+Assets/Resources/Comic/comic-trap-idle.png.meta
+Assets/Resources/Comic/supplied-bishop-back.png
+Assets/Resources/Comic/supplied-bishop-back.png.meta
+Assets/Resources/Comic/supplied-bishop-front.png
+Assets/Resources/Comic/supplied-bishop-front.png.meta
+Assets/Resources/Comic/supplied-king-back.png
+Assets/Resources/Comic/supplied-king-back.png.meta
+Assets/Resources/Comic/supplied-king-front.png
+Assets/Resources/Comic/supplied-king-front.png.meta
+Assets/Resources/Comic/supplied-knight-back.png
+Assets/Resources/Comic/supplied-knight-back.png.meta
+Assets/Resources/Comic/supplied-knight-front.png
+Assets/Resources/Comic/supplied-knight-front.png.meta
+Assets/Resources/Comic/supplied-pawn-back.png
+Assets/Resources/Comic/supplied-pawn-back.png.meta
+Assets/Resources/Comic/supplied-pawn-front.png
+Assets/Resources/Comic/supplied-pawn-front.png.meta
+Assets/Resources/Comic/supplied-queen-back.png
+Assets/Resources/Comic/supplied-queen-back.png.meta
+Assets/Resources/Comic/supplied-queen-front.png
+Assets/Resources/Comic/supplied-queen-front.png.meta
+Assets/Resources/Comic/supplied-rook-back.png
+Assets/Resources/Comic/supplied-rook-back.png.meta
+Assets/Resources/Comic/supplied-rook-front.png
+Assets/Resources/Comic/supplied-rook-front.png.meta
+Assets/Resources/ComicEffectOverlay.shader
+Assets/Resources/ComicEffectOverlay.shader.meta
+Assets/Resources/EnvironmentPixelComposite.shader
+Assets/Resources/EnvironmentPixelComposite.shader.meta
+Assets/Resources/Flag.meta
+Assets/Resources/Flag/flag animation.png
+Assets/Resources/Flag/flag animation.png.meta
+Assets/Resources/Fonts.meta
+Assets/Resources/Fonts/DejaVuSans-Bold.ttf
+Assets/Resources/Fonts/DejaVuSans-Bold.ttf.meta
+Assets/Resources/Fonts/PixelChess.ttf
+Assets/Resources/Fonts/PixelChess.ttf.meta
+Assets/Resources/Fonts/ThaleahFat_TTF.ttf
+Assets/Resources/Fonts/ThaleahFat_TTF.ttf.meta
+Assets/Resources/Horizon.meta
+Assets/Resources/Horizon/CastleApproachGate.fbx
+Assets/Resources/Horizon/CastleApproachGate.fbx.meta
+Assets/Resources/Horizon/CastleHallBay.fbx
+Assets/Resources/Horizon/CastleHallBay.fbx.meta
+Assets/Resources/Horizon/CastleHallLantern.fbx
+Assets/Resources/Horizon/CastleHallLantern.fbx.meta
+Assets/Resources/Horizon/HorizonDrum.fbx
+Assets/Resources/Horizon/HorizonDrum.fbx.meta
+Assets/Resources/Horizon/OpenRollingFrame.fbx
+Assets/Resources/Horizon/OpenRollingFrame.fbx.meta
+Assets/Resources/Horizon/RollingBridgeRail.fbx
+Assets/Resources/Horizon/RollingBridgeRail.fbx.meta
+Assets/Resources/Horizon/RollingGrassTile.fbx
+Assets/Resources/Horizon/RollingGrassTile.fbx.meta
+Assets/Resources/Horizon/RollingStoneTile.fbx
+Assets/Resources/Horizon/RollingStoneTile.fbx.meta
+Assets/Resources/Horizon/RollingWoodTile.fbx
+Assets/Resources/Horizon/RollingWoodTile.fbx.meta
+Assets/Resources/HorizonScenery.shader
+Assets/Resources/HorizonScenery.shader.meta
+Assets/Resources/HorizonSky.shader
+Assets/Resources/HorizonSky.shader.meta
+Assets/Resources/LegacyUI.meta
+Assets/Resources/LegacyUI/Chronokinesis.png
+Assets/Resources/LegacyUI/Chronokinesis.png.meta
+Assets/Resources/LegacyUI/Cracked Tile.png
+Assets/Resources/LegacyUI/Cracked Tile.png.meta
+Assets/Resources/LegacyUI/Holy Cross.png
+Assets/Resources/LegacyUI/Holy Cross.png.meta
+Assets/Resources/LegacyUI/Pathfinder.png
+Assets/Resources/LegacyUI/Pathfinder.png.meta
+Assets/Resources/LegacyUI/Retry.png
+Assets/Resources/LegacyUI/Retry.png.meta
+Assets/Resources/MenuCircleReveal.shader
+Assets/Resources/MenuCircleReveal.shader.meta
+Assets/Resources/Pieces.meta
+Assets/Resources/Pieces/CeramicPrototype.meta
+Assets/Resources/Pieces/CeramicPrototype/MatteCeramic.shader
+Assets/Resources/Pieces/CeramicPrototype/MatteCeramic.shader.meta
+Assets/Resources/Pieces/CeramicPrototype/bishop.fbx
+Assets/Resources/Pieces/CeramicPrototype/bishop.fbx.meta
+Assets/Resources/Pieces/CeramicPrototype/knight.fbx
+Assets/Resources/Pieces/CeramicPrototype/knight.fbx.meta
+Assets/Resources/Pieces/CeramicPrototype/rook.fbx
+Assets/Resources/Pieces/CeramicPrototype/rook.fbx.meta
+Assets/Resources/Pieces/ChessPiece.shader
+Assets/Resources/Pieces/ChessPiece.shader.meta
+Assets/Resources/Pieces/InkPorcelain.meta
+Assets/Resources/Pieces/InkPorcelain/InkPorcelain.shader
+Assets/Resources/Pieces/InkPorcelain/InkPorcelain.shader.meta
+Assets/Resources/Pieces/InkPorcelain/bishop.fbx
+Assets/Resources/Pieces/InkPorcelain/bishop.fbx.meta
+Assets/Resources/Pieces/InkPorcelain/knight.fbx
+Assets/Resources/Pieces/InkPorcelain/knight.fbx.meta
+Assets/Resources/Pieces/InkPorcelain/pawn.fbx
+Assets/Resources/Pieces/InkPorcelain/pawn.fbx.meta
+Assets/Resources/Pieces/InkPorcelain/queen.fbx
+Assets/Resources/Pieces/InkPorcelain/queen.fbx.meta
+Assets/Resources/Pieces/InkPorcelain/rook.fbx
+Assets/Resources/Pieces/InkPorcelain/rook.fbx.meta
+Assets/Resources/Pieces/Optimized.meta
+Assets/Resources/Pieces/Optimized/bishop.fbx
+Assets/Resources/Pieces/Optimized/bishop.fbx.meta
+Assets/Resources/Pieces/Optimized/knight.fbx
+Assets/Resources/Pieces/Optimized/knight.fbx.meta
+Assets/Resources/Pieces/Optimized/pawn.fbx
+Assets/Resources/Pieces/Optimized/pawn.fbx.meta
+Assets/Resources/Pieces/Optimized/queen.fbx
+Assets/Resources/Pieces/Optimized/queen.fbx.meta
+Assets/Resources/Pieces/Optimized/rook.fbx
+Assets/Resources/Pieces/Optimized/rook.fbx.meta
+Assets/Resources/Pieces/Textures.meta
+Assets/Resources/Pieces/Textures/bishop-basecolor.png
+Assets/Resources/Pieces/Textures/bishop-basecolor.png.meta
+Assets/Resources/Pieces/Textures/knight-basecolor.png
+Assets/Resources/Pieces/Textures/knight-basecolor.png.meta
+Assets/Resources/Pieces/Textures/pawn-basecolor.png
+Assets/Resources/Pieces/Textures/pawn-basecolor.png.meta
+Assets/Resources/Pieces/Textures/queen-basecolor.png
+Assets/Resources/Pieces/Textures/queen-basecolor.png.meta
+Assets/Resources/Pieces/Textures/rook-basecolor.png
+Assets/Resources/Pieces/Textures/rook-basecolor.png.meta
+Assets/Resources/Pieces/model-metrics.json
+Assets/Resources/Pieces/model-metrics.json.meta
+Assets/Resources/PixelKnightGameplay.prefab
+Assets/Resources/PixelKnightGameplay.prefab.meta
+Assets/Resources/Powerups.meta
+Assets/Resources/Powerups/Chronokinesis.png
+Assets/Resources/Powerups/Chronokinesis.png.meta
+Assets/Resources/Powerups/Holy Cross.png
+Assets/Resources/Powerups/Holy Cross.png.meta
+Assets/Resources/Powerups/Pathfinder.png
+Assets/Resources/Powerups/Pathfinder.png.meta
+Assets/Resources/SFX.meta
+Assets/Resources/SFX/Adventure Mode Next Level.wav
+Assets/Resources/SFX/Adventure Mode Next Level.wav.meta
+Assets/Resources/SFX/Capture Slash 2.wav
+Assets/Resources/SFX/Capture Slash 2.wav.meta
+Assets/Resources/SFX/Capture Slash 3.wav
+Assets/Resources/SFX/Capture Slash 3.wav.meta
+Assets/Resources/SFX/Capture Slash.wav
+Assets/Resources/SFX/Capture Slash.wav.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 3 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 3 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 5 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 5 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 1 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 1 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 4 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 4 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 5 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 5 (Square).ogg.meta
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square).ogg
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square).ogg.meta
+Assets/Resources/SFX/MenuTheme.wav
+Assets/Resources/SFX/MenuTheme.wav.meta
+Assets/Resources/SFX/Transformation.wav
+Assets/Resources/SFX/Transformation.wav.meta
+Assets/Resources/SlashFlowNoise.png
+Assets/Resources/SlashFlowNoise.png.meta
+Assets/Resources/UI.meta
+Assets/Resources/UI/Cracked Tile.png
+Assets/Resources/UI/Cracked Tile.png.meta
+Assets/Resources/UI/Star.png
+Assets/Resources/UI/Star.png.meta
+Assets/Resources/UI/UI SIMPLE PIXEL UNSPLIT.png
+Assets/Resources/UI/UI SIMPLE PIXEL UNSPLIT.png.meta
+Assets/Resources/VFX.meta
+Assets/Resources/VFX/bubble_sheet.png
+Assets/Resources/VFX/bubble_sheet.png.meta
+Assets/Resources/VFX/explosion.png
+Assets/Resources/VFX/explosion.png.meta
+Assets/Resources/VFX/fireworks.png
+Assets/Resources/VFX/fireworks.png.meta
+Assets/Resources/VFX/lightning.meta
+Assets/Resources/VFX/lightning/lightning_skill5_frame1.png
+Assets/Resources/VFX/lightning/lightning_skill5_frame1.png.meta
+Assets/Resources/VFX/lightning/lightning_skill5_frame2.png
+Assets/Resources/VFX/lightning/lightning_skill5_frame2.png.meta
+Assets/Resources/VFX/lightning/lightning_skill5_frame3.png
+Assets/Resources/VFX/lightning/lightning_skill5_frame3.png.meta
+Assets/Resources/VFX/lightning/lightning_skill5_frame4.png
+Assets/Resources/VFX/lightning/lightning_skill5_frame4.png.meta
+Assets/Resources/VFX/smoke.meta
+Assets/Resources/VFX/smoke/Smoke VFX B1.png
+Assets/Resources/VFX/smoke/Smoke VFX B1.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B10.png
+Assets/Resources/VFX/smoke/Smoke VFX B10.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B11.png
+Assets/Resources/VFX/smoke/Smoke VFX B11.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B12.png
+Assets/Resources/VFX/smoke/Smoke VFX B12.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B2.png
+Assets/Resources/VFX/smoke/Smoke VFX B2.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B3.png
+Assets/Resources/VFX/smoke/Smoke VFX B3.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B4.png
+Assets/Resources/VFX/smoke/Smoke VFX B4.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B5.png
+Assets/Resources/VFX/smoke/Smoke VFX B5.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B6.png
+Assets/Resources/VFX/smoke/Smoke VFX B6.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B7.png
+Assets/Resources/VFX/smoke/Smoke VFX B7.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B8.png
+Assets/Resources/VFX/smoke/Smoke VFX B8.png.meta
+Assets/Resources/VFX/smoke/Smoke VFX B9.png
+Assets/Resources/VFX/smoke/Smoke VFX B9.png.meta
+Assets/Resources/VFX/void.png
+Assets/Resources/VFX/void.png.meta
+Assets/Resources/VFX/water.png
+Assets/Resources/VFX/water.png.meta
+Assets/Resources/VFX/wind.png
+Assets/Resources/VFX/wind.png.meta
+Assets/Resources/XboxCloudSettings.asset
+Assets/Resources/XboxCloudSettings.asset.meta
+Assets/Scenes.meta
+Assets/Scenes/SampleScene.unity
+Assets/Scenes/SampleScene.unity.meta
+Assets/Scripts.meta
+Assets/Scripts/Core.meta
+Assets/Scripts/Core/409-4098924_chess-piece-knight-pin-chessboard-transparent-knight-chess.png
+Assets/Scripts/Core/409-4098924_chess-piece-knight-pin-chessboard-transparent-knight-chess.png.meta
+Assets/Scripts/Core/AdventureSolver.cs
+Assets/Scripts/Core/AdventureSolver.cs.meta
+Assets/Scripts/Core/BattleGenerator.cs
+Assets/Scripts/Core/BattleGenerator.cs.meta
+Assets/Scripts/Core/CoreTypes.cs
+Assets/Scripts/Core/CoreTypes.cs.meta
+Assets/Scripts/Core/EnemyAI.cs
+Assets/Scripts/Core/EnemyAI.cs.meta
+Assets/Scripts/Core/Enums.cs
+Assets/Scripts/Core/Enums.cs.meta
+Assets/Scripts/Core/EscapeSolver.cs
+Assets/Scripts/Core/EscapeSolver.cs.meta
+Assets/Scripts/Core/GameConfig.cs
+Assets/Scripts/Core/GameConfig.cs.meta
+Assets/Scripts/Core/GamePiece.cs
+Assets/Scripts/Core/GamePiece.cs.meta
+Assets/Scripts/Core/GameSimulation.cs
+Assets/Scripts/Core/GameSimulation.cs.meta
+Assets/Scripts/Core/MoveRules.cs
+Assets/Scripts/Core/MoveRules.cs.meta
+Assets/Scripts/Core/NameFilter.cs
+Assets/Scripts/Core/NameFilter.cs.meta
+Assets/Scripts/Core/TrapGenerator.cs
+Assets/Scripts/Core/TrapGenerator.cs.meta
+Assets/Scripts/Core/UpdateChecker.cs
+Assets/Scripts/Core/UpdateChecker.cs.meta
+Assets/Scripts/View.meta
+Assets/Scripts/View/AchievementTracker.cs
+Assets/Scripts/View/AchievementTracker.cs.meta
+Assets/Scripts/View/Achievements.cs
+Assets/Scripts/View/Achievements.cs.meta
+Assets/Scripts/View/AdService.cs
+Assets/Scripts/View/AdService.cs.meta
+Assets/Scripts/View/AdventureLevels.cs
+Assets/Scripts/View/AdventureLevels.cs.meta
+Assets/Scripts/View/BoardBiomeFlow.cs
+Assets/Scripts/View/BoardBiomeFlow.cs.meta
+Assets/Scripts/View/BoardView.Horizon.cs
+Assets/Scripts/View/BoardView.Horizon.cs.meta
+Assets/Scripts/View/BoardView.cs
+Assets/Scripts/View/BoardView.cs.meta
+Assets/Scripts/View/CameraShake.cs
+Assets/Scripts/View/CameraShake.cs.meta
+Assets/Scripts/View/ComicArt.cs
+Assets/Scripts/View/ComicArt.cs.meta
+Assets/Scripts/View/DailyPrizes.cs
+Assets/Scripts/View/DailyPrizes.cs.meta
+Assets/Scripts/View/EnvironmentPixelDepthFeature.cs
+Assets/Scripts/View/EnvironmentPixelDepthFeature.cs.meta
+Assets/Scripts/View/EnvironmentPixelFilter.cs
+Assets/Scripts/View/EnvironmentPixelFilter.cs.meta
+Assets/Scripts/View/GameContent.cs
+Assets/Scripts/View/GameContent.cs.meta
+Assets/Scripts/View/GameManager.Presentation.cs
+Assets/Scripts/View/GameManager.Presentation.cs.meta
+Assets/Scripts/View/GameManager.cs
+Assets/Scripts/View/GameManager.cs.meta
+Assets/Scripts/View/GameTheme.cs
+Assets/Scripts/View/GameTheme.cs.meta
+Assets/Scripts/View/GameView.BoardClipping.cs
+Assets/Scripts/View/GameView.BoardClipping.cs.meta
+Assets/Scripts/View/GameView.Comic.cs
+Assets/Scripts/View/GameView.Comic.cs.meta
+Assets/Scripts/View/GameView.EnemyMotion.cs
+Assets/Scripts/View/GameView.EnemyMotion.cs.meta
+Assets/Scripts/View/GameView.Legacy.cs
+Assets/Scripts/View/GameView.Legacy.cs.meta
+Assets/Scripts/View/GameView.cs
+Assets/Scripts/View/GameView.cs.meta
+Assets/Scripts/View/GoalFlag3D.cs
+Assets/Scripts/View/GoalFlag3D.cs.meta
+Assets/Scripts/View/HowToArt.cs
+Assets/Scripts/View/HowToArt.cs.meta
+Assets/Scripts/View/IapService.cs
+Assets/Scripts/View/IapService.cs.meta
+Assets/Scripts/View/LeaderboardClient.cs
+Assets/Scripts/View/LeaderboardClient.cs.meta
+Assets/Scripts/View/LeaderboardScreen.cs
+Assets/Scripts/View/LeaderboardScreen.cs.meta
+Assets/Scripts/View/LevelData.cs
+Assets/Scripts/View/LevelData.cs.meta
+Assets/Scripts/View/LevelPlayAdService.cs
+Assets/Scripts/View/LevelPlayAdService.cs.meta
+Assets/Scripts/View/MenuKnightPreview.cs
+Assets/Scripts/View/MenuKnightPreview.cs.meta
+Assets/Scripts/View/PieceView.cs
+Assets/Scripts/View/PieceView.cs.meta
+Assets/Scripts/View/Powerups.cs
+Assets/Scripts/View/Powerups.cs.meta
+Assets/Scripts/View/RoyalBoardCrest.cs
+Assets/Scripts/View/RoyalBoardCrest.cs.meta
+Assets/Scripts/View/RoyalIcons.cs
+Assets/Scripts/View/RoyalIcons.cs.meta
+Assets/Scripts/View/SaveData.cs
+Assets/Scripts/View/SaveData.cs.meta
+Assets/Scripts/View/SfxManager.cs
+Assets/Scripts/View/SfxManager.cs.meta
+Assets/Scripts/View/Skins.cs
+Assets/Scripts/View/Skins.cs.meta
+Assets/Scripts/View/SupabaseConfig.cs
+Assets/Scripts/View/SupabaseConfig.cs.meta
+Assets/Scripts/View/UIFactory.Legacy.cs
+Assets/Scripts/View/UIFactory.Legacy.cs.meta
+Assets/Scripts/View/UIFactory.cs
+Assets/Scripts/View/UIFactory.cs.meta
+Assets/Scripts/View/UIManager.Hud.cs
+Assets/Scripts/View/UIManager.Hud.cs.meta
+Assets/Scripts/View/UIManager.Layout.cs
+Assets/Scripts/View/UIManager.Layout.cs.meta
+Assets/Scripts/View/UIManager.Legacy.cs
+Assets/Scripts/View/UIManager.Legacy.cs.meta
+Assets/Scripts/View/UIManager.MenuReveal.cs
+Assets/Scripts/View/UIManager.MenuReveal.cs.meta
+Assets/Scripts/View/UIManager.cs
+Assets/Scripts/View/UIManager.cs.meta
+Assets/Scripts/View/UIScreenFit.cs
+Assets/Scripts/View/UIScreenFit.cs.meta
+Assets/Scripts/View/UISprites.cs
+Assets/Scripts/View/UISprites.cs.meta
+Assets/Scripts/View/UnityIapService.cs
+Assets/Scripts/View/UnityIapService.cs.meta
+Assets/Scripts/View/Vfx.cs
+Assets/Scripts/View/Vfx.cs.meta
+Assets/Scripts/View/VfxPlayer.cs
+Assets/Scripts/View/VfxPlayer.cs.meta
+Assets/Settings.meta
+Assets/Settings/Build Profiles.meta
+Assets/Settings/Build Profiles/iOS.asset
+Assets/Settings/Build Profiles/iOS.asset.meta
+Assets/Settings/EnvironmentPixelRenderer.asset
+Assets/Settings/EnvironmentPixelRenderer.asset.meta
+Assets/Settings/Renderer2D.asset
+Assets/Settings/Renderer2D.asset.meta
+Assets/Settings/UniversalRP.asset
+Assets/Settings/UniversalRP.asset.meta
+Assets/TextMesh Pro.meta
+Assets/TextMesh Pro/Examples & Extras.meta
+Assets/TextMesh Pro/Examples & Extras/Fonts.meta
+Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf
+Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf.meta
+Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold - License.txt
+Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold - License.txt.meta
+Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf
+Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf.meta
+Assets/TextMesh Pro/Examples & Extras/Resources.meta
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials.meta
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Bangers SDF.asset
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Bangers SDF.asset.meta
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SDF.asset
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SDF.asset.meta
+Assets/TextMesh Pro/Fonts.meta
+Assets/TextMesh Pro/Fonts/DejaVuSans-Bold SDF.asset
+Assets/TextMesh Pro/Fonts/DejaVuSans-Bold SDF.asset.meta
+Assets/TextMesh Pro/Fonts/LiberationSans.ttf
+Assets/TextMesh Pro/Fonts/LiberationSans.ttf.meta
+Assets/TextMesh Pro/Resources.meta
+Assets/TextMesh Pro/Resources/Fonts & Materials.meta
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Drop Shadow.mat
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Drop Shadow.mat.meta
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset.meta
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat.meta
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset.meta
+Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt
+Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt.meta
+Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt
+Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt.meta
+Assets/TextMesh Pro/Resources/Style Sheets.meta
+Assets/TextMesh Pro/Resources/Style Sheets/Default Style Sheet.asset
+Assets/TextMesh Pro/Resources/Style Sheets/Default Style Sheet.asset.meta
+Assets/TextMesh Pro/Resources/TMP Settings.asset
+Assets/TextMesh Pro/Resources/TMP Settings.asset.meta
+Assets/TextMesh Pro/Shaders.meta
+Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl
+Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl.meta
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_Bitmap.shader
+Assets/TextMesh Pro/Shaders/TMP_Bitmap.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF.shader.meta
+Assets/TextMesh Pro/Shaders/TMP_Sprite.shader
+Assets/TextMesh Pro/Shaders/TMP_Sprite.shader.meta
+Assets/TextMesh Pro/Shaders/TMPro.cginc
+Assets/TextMesh Pro/Shaders/TMPro.cginc.meta
+Assets/TextMesh Pro/Shaders/TMPro_Mobile.cginc
+Assets/TextMesh Pro/Shaders/TMPro_Mobile.cginc.meta
+Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc
+Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc.meta
+Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc
+Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc.meta
+Assets/UniversalRenderPipelineGlobalSettings.asset
+Assets/UniversalRenderPipelineGlobalSettings.asset.meta
+Packages/manifest.json
+Packages/packages-lock.json
+ProjectSettings/AndroidResolverDependencies.xml
+ProjectSettings/AudioManager.asset
+ProjectSettings/ClusterInputManager.asset
+ProjectSettings/DynamicsManager.asset
+ProjectSettings/EditorBuildSettings.asset
+ProjectSettings/EditorSettings.asset
+ProjectSettings/GraphicsSettings.asset
+ProjectSettings/GvhProjectSettings.xml
+ProjectSettings/InputManager.asset
+ProjectSettings/MemorySettings.asset
+ProjectSettings/MultiplayerManager.asset
+ProjectSettings/NavMeshAreas.asset
+ProjectSettings/NetworkManager.asset
+ProjectSettings/PackageManagerSettings.asset
+ProjectSettings/Packages/com.unity.ai.assistant/Settings.json
+ProjectSettings/Packages/com.unity.services.core/Settings.json
+ProjectSettings/Packages/com.unity.services.levelplay/Settings.json
+ProjectSettings/Physics2DSettings.asset
+ProjectSettings/PhysicsCoreProjectSettings2D.asset
+ProjectSettings/PresetManager.asset
+ProjectSettings/ProjectAuditorSettings.asset
+ProjectSettings/ProjectSettings.asset
+ProjectSettings/ProjectVersion.txt
+ProjectSettings/QualitySettings.asset
+ProjectSettings/SceneTemplateSettings.json
+ProjectSettings/ShaderGraphSettings.asset
+ProjectSettings/TagManager.asset
+ProjectSettings/TimeManager.asset
+ProjectSettings/URPProjectSettings.asset
+ProjectSettings/UnityConnectSettings.asset
+ProjectSettings/VFXManager.asset
+ProjectSettings/VersionControlSettings.asset
+ProjectSettings/XRSettings.asset
+ignore.conf

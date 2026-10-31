@@ -1,0 +1,608 @@
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise256/LDR_LLL1_1.png
+Assets/Art/KnightPixelTest/PixelKnightSlash.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Nature/SpeedTree7.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/StencilDitherMaskSeed.shader
+Assets/GooglePlayPlugins/com.google.play.common/package.json
+Assets/Scripts/View/GameView.Comic.cs
+Assets/Resources/VFX/fireworks.png
+Assets/Scripts/Core/Enums.cs
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/ShadowsMidtonesHighlights.cs
+Packages/com.unity.render-pipelines.universal/Shaders/XR/XROcclusionMesh.shader
+Assets/Scripts/Core/AdventureSolver.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingBar.cs
+Assets/Scripts/View/VfxPlayer.cs
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 5 (Square).ogg
+Assets/LevelPlay/Editor/ISAdMobAdapterDependencies.xml
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.IOSResolver.pdb
+Assets/Resources/Horizon/RollingGrassTile.fbx
+Assets/Resources/VFX/smoke/Smoke VFX B12.png
+Packages/com.unity.render-pipelines.core/Runtime/Volume/VolumeProfile.cs
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/LensFlareScreenSpace.shader
+Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt
+Packages/com.unity.render-pipelines.core/Runtime/Debug/ProbeSamplingDebugMesh.fbx
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise256/LDR_LLL1_2.png
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Large02.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_30.png
+Assets/Resources/VFX/smoke/Smoke VFX B11.png
+Assets/Resources/Horizon/CastleHallBay.fbx
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Google.Play.AppUpdate.asmdef
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_16.png
+Assets/Scripts/View/Vfx.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/UpdateAvailability.cs
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/FilmGrain.cs
+Assets/Resources/ComicEffectOverlay.shader
+Packages/com.unity.render-pipelines.universal/Runtime/UniversalRenderPipelineGlobalSettings.cs
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/MotionBlur.cs
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree8Billboard.shadersubgraph
+Assets/Editor/SKAdNetworkPostProcess.cs
+Assets/GooglePlayPlugins/com.google.play.core/CHANGELOG.md
+Assets/Resources/SFX/Capture Slash 2.wav
+Assets/Resources/Horizon/RollingStoneTile.fbx
+Assets/Resources/Comic/supplied-queen-front.png
+Assets/Scripts/View/UIFactory.cs
+Assets/ExternalDependencyManager/Editor/external-dependency-manager_version-1.2.185_manifest.txt
+Assets/Resources/Comic/PaintedChess.shader
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_8.png
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Common/GeometryPool/GeometryPoolKernels.compute
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Lit-Default.mat
+Assets/Scripts/View/AdService.cs
+Assets/Plugins/Android/AdIdPermission.androidlib
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/ScreenSpaceAmbientOcclusion.shader
+Assets/Resources/Pieces/model-metrics.json
+Assets/GooglePlayPlugins/com.google.play.appupdate/Proguard/app_update.txt
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_28.png
+Assets/Resources/BoardModels/StoneTile.fbx
+Assets/Resources/Comic/graphic-rook-back-idle.png
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_13.png
+Assets/Resources/BillingMode.json
+Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/OnTileUberPost.shader
+Assets/Resources/VFX/smoke/Smoke VFX B10.png
+Packages/com.unity.render-pipelines.core/Runtime/Debugging/Runtime UI Resources/RuntimeDebugWindow_PanelSettings.asset
+Packages/com.unity.shadergraph/Editor/Importers/ShaderSubGraphImporter.cs
+Packages/com.unity.render-pipelines.core/Runtime/PathTracing/Shaders/SetAlphaChannel.compute
+Assets/GooglePlayPlugins/com.google.play.core/package.json
+Assets/Resources/Horizon/HorizonDrum.fbx
+Assets/TextMesh Pro/Resources/Style Sheets/Default Style Sheet.asset
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/PaniniProjection.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Terrain/WavingGrass.shader
+Assets/ExternalDependencyManager/Editor/Google.VersionHandler.pdb
+Assets/Resources/Powerups/Pathfinder.png
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/Bloom.shader
+Assets/Resources/Comic/graphic-bishop-back-idle.png
+Assets/Resources/VFX/smoke/Smoke VFX B4.png
+Packages/com.unity.ugui/Runtime/TMP/TMP_Settings.cs
+Assets/Scripts/View/UIFactory.Legacy.cs
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/RenderingLayerMask/TraceRenderingLayerMask.urtshader
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree8LODTransition.shadersubgraph
+Assets/GooglePlayPlugins/com.google.play.appupdate/LICENSE.md
+Packages/com.unity.render-pipelines.universal/Shaders/Decal.shadergraph
+Packages/com.unity.render-pipelines.core/Runtime/Debug/ProbeVolumeFragmentationDebug.shader
+Packages/com.unity.shadergraph/ShaderGraphLibrary/LODDitheringTransition.hlsl
+Assets/Scripts/View/GameContent.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_23.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise256/LDR_LLL1_6.png
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Shadow2D-Shadow-Geometry.shader
+Assets/Resources/Comic/graphic-knight-front-attack.png
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/BokehDepthOfField.shader
+Packages/com.unity.render-pipelines.core/Runtime/Debug/ProbeVolumeOffsetDebug.shader
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/LutBuilderLdr.shader
+Assets/Scripts/View/GameView.cs
+Assets/Settings/Build Profiles/Android™.asset
+Assets/Resources/HorizonSky.shader
+Assets/Scripts/View/UIManager.Legacy.cs
+Assets/Resources/Comic/graphic-queen-front-attack.png
+Assets/TextMesh Pro/Shaders/TMP_Sprite.shader
+Assets/Resources/SlashFlowNoise.png
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Light2D.shader
+Assets/Resources/BoardModels/BridgeRail.fbx
+Assets/Resources/Comic/supplied-rook-front.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Editor/Dependencies.xml
+Assets/GooglePlayPlugins/com.google.play.common/README.md
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/ProbeVolumeSubdivide.compute
+Assets/Scripts/Core/EscapeSolver.cs
+Assets/Scripts/View/HowToArt.cs
+Packages/com.unity.render-pipelines.core/Runtime/Debugging/Runtime UI Resources/DebugWindowCommon.uss
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/Bloom.cs
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 4 (Square).ogg
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/Tonemapping.cs
+Packages/com.unity.inputsystem/InputSystem/Actions/InputActionReference.cs
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat
+Assets/Resources/Comic/graphic-rook-front-idle.png
+Packages/com.unity.shadergraph/Editor/Importers/ShaderGraphMetadata.cs
+Packages/com.unity.render-pipelines.universal/Shaders/Terrain/TerrainLit.shader
+Assets/Resources/Comic/supplied-king-front.png
+Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Compute/RadeonRays/kernels/CopyPositions.compute
+Assets/Resources/Powerups/Holy Cross.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateStatus.cs
+Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader
+Assets/Scripts/View/RoyalBoardCrest.cs
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/InstanceWindDataUpdateKernels.compute
+Packages/com.unity.render-pipelines.core/Runtime/Debug/ProbeVolumeDebug.shader
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/LensFlareDataDriven.shader
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/PaniniProjection.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_7.png
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/ChromaticAberration.cs
+Assets/Editor/PieceModelMetricsBuilder.cs
+Packages/com.unity.render-pipelines.universal/Runtime/2D/Lights/Light2D.cs
+Assets/Resources/BoardTiles/castle-stone-sheet.png
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Shadow2D-Shadow-Sprite.shader
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/TerrainLit.mat
+Assets/Resources/Pieces/InkPorcelain/bishop.fbx
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat
+Assets/Scripts/View/LevelPlayAdService.cs
+Assets/Resources/VFX/smoke/Smoke VFX B1.png
+Assets/Resources/Comic/graphic-bishop-front-attack.png
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/CameraMotionBlur.shader
+Assets/Scripts/View/LeaderboardScreen.cs
+Assets/Art/KnightPixelTest/KnightGameplay.controller
+Assets/Scripts/View/UIManager.MenuReveal.cs
+Assets/Scripts/Core/EnemyAI.cs
+Assets/Settings/Build Profiles/iOS.asset
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Compute/RadeonRays/kernels/block_scan.compute
+Assets/Resources/Comic/graphic-rook-back-attack.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_11.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_10.png
+Assets/Resources/Comic/comic-slash-crescent.png
+Assets/Scripts/View/ComicArt.cs
+Assets/Resources/Comic/graphic-pawn-front-hit.png
+Assets/Resources/BoardTiles/grass-sheet.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_20.png
+Assets/Resources/VFX/lightning/lightning_skill5_frame4.png
+Assets/Plugins/Android/mainTemplate.gradle
+Assets/Scripts/View/SupabaseConfig.cs
+Packages/com.unity.shadergraph/Editor/Importers/ShaderSubGraphMetadata.cs
+Packages/com.unity.purchasing/Runtime/Stores/XboxStore/CloudServices/XboxCloudSettings.cs
+Assets/Resources/Comic/comic-coin.png
+Assets/Scripts/View/GameView.BoardClipping.cs
+Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolumeBlendStates.compute
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Common/Utilities/CopyBuffer.compute
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingScreen.cs
+Assets/Resources/Pieces/InkPorcelain/rook.fbx
+Assets/Resources/XboxCloudSettings.asset
+Packages/com.unity.render-pipelines.universal/Shaders/Terrain/TerrainLitBase.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/CopyDepth.shader
+Assets/Resources/CombatVfx/comic-fist.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise256/LDR_LLL1_3.png
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/SpriteMask-Default.mat
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateStateListener.cs
+Assets/Resources/Comic/comic-trap-idle.png
+Packages/com.unity.render-pipelines.core/Runtime/Vrs/Shaders/VrsVisualization.shader
+Assets/Resources/Pieces/Textures/pawn-basecolor.png
+Assets/Resources/BoardClipSprite.shader
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree8InterpolatedNormals.shadersubgraph
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Thin02.png
+Packages/com.unity.render-pipelines.universal/Editor/AssetVersion.cs
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree9Wind.hlsl
+Assets/GooglePlayPlugins/com.google.play.appupdate/CHANGELOG.md
+Assets/Resources/BoardModels/CrackedTile.fbx
+Assets/Resources/VFX/lightning/lightning_skill5_frame1.png
+Assets/Resources/Comic/supplied-bishop-front.png
+Assets/GooglePlayPlugins/com.google.play.core/Proguard/common.txt
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 3 (Square).ogg
+Assets/Scripts/Core/UpdateChecker.cs
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/LensDistortion.cs
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/UberPost.shader
+Assets/Resources/Comic/graphic-pawn-back-idle.png
+Assets/Resources/Comic/graphic-bishop-front-idle.png
+Assets/Resources/VFX/smoke/Smoke VFX B5.png
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Shadow2D-Unshadow-Sprite.shader
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Compute/RadeonRays/kernels/bit_histogram.compute
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateRequest.cs
+Packages/com.unity.render-pipelines.universal/Runtime/2D/Renderer2DData.cs
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/ScreenSpaceLensFlare.cs
+Assets/Resources/VFX/smoke/Smoke VFX B8.png
+Packages/com.unity.render-pipelines.core/Editor/UnifiedRayTracing/UnifiedRTShaderImporter.cs
+Assets/UniversalRenderPipelineGlobalSettings.asset
+Assets/Resources/Comic/graphic-rook-front-attack.png
+Assets/Scripts/View/AchievementTracker.cs
+Assets/Resources/Comic/graphic-rook-back-hit.png
+Assets/LevelPlay/Resources/LevelPlayMediationSettings.asset
+Assets/Scripts/Core/MoveRules.cs
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/DebugOcclusionTest.shader
+Assets/GameTheme.asset
+Assets/LevelPlay/Editor/ISUnityAdsAdapterDependencies.xml
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_6.png
+Packages/com.unity.ugui/Editor Resources/Gizmos/TMP - Font Asset Icon.psd
+Assets/Resources/HorizonScenery.shader
+Assets/Resources/PixelKnightGameplay.prefab
+Assets/DefaultVolumeProfile.asset
+Assets/Scripts/View/SfxManager.cs
+Assets/Resources/Comic/comic-slash-cut.png
+Packages/com.unity.render-pipelines.universal/Runtime/Decal/DBuffer/DBufferClear.shader
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/DepthOfField.cs
+Packages/com.unity.render-pipelines.universal/Shaders/Particles/ParticlesUnlit.shader
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.IOSResolver.dll
+Packages/com.unity.shadergraph/Editor/Data/SubGraph/SubGraphAsset.cs
+Assets/Resources/Pieces/Textures/bishop-basecolor.png
+Packages/com.unity.render-pipelines.universal/Shaders/Nature/SpeedTree7Billboard.shader
+Packages/com.unity.ugui/Runtime/TMP/TMP_FontAsset.cs
+Assets/Resources/Comic/supplied-rook-back.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_18.png
+Assets/Resources/Horizon/CastleVault.fbx
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayServicesTask.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_29.png
+Assets/Resources/BoardModels/BoardFrame.fbx
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square).ogg
+Assets/ExternalDependencyManager/Editor/LICENSE
+Assets/Scripts/View/EnvironmentPixelFilter.cs
+Packages/com.unity.render-pipelines.universal/Shaders/Lit.shader
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateInfo.cs
+Assets/Resources/Comic/graphic-knight-front-idle.png
+Assets/Resources/Pieces/Textures/queen-basecolor.png
+Assets/Resources/UI/Cracked Tile.png
+Assets/Resources/Horizon/DrawbridgeGate.fbx
+Assets/Resources/LegacyUI/Holy Cross.png
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/GaussianDepthOfField.shader
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_3.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/ScrollingFillAnimator.cs
+Assets/Resources/Comic/supplied-knight-back.png
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Compute/RadeonRays/kernels/block_reduce_part.compute
+Assets/Resources/Comic/graphic-queen-front-idle.png
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/ChannelMixer.cs
+Assets/Resources/Horizon/CastleApproachGate.fbx
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateOptions.cs
+Assets/Settings/EnvironmentPixelRenderer.asset
+Assets/GooglePlayPlugins/com.google.play.core/README.md
+Assets/Resources/Pieces/CeramicPrototype/bishop.fbx
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Nature/SpeedTree9_URP.shadergraph
+Packages/com.unity.render-pipelines.universal/Runtime/Data/UniversalRenderPipelineAsset.cs
+Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolumeUploadDataL2.compute
+Assets/Resources/Comic/ComicPalette.shader
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Thin01.png
+Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/DecalSimpleTemplateThumbnail.png
+Assets/Settings/Renderer2D.asset
+Assets/TextMesh Pro/Shaders/TMPro_Mobile.cginc
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnSuccessListener.cs
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/TemporalAA.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/StencilDeferred.shader
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree9Wind.shadersubgraph
+Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreHelper.cs
+Assets/Resources/Horizon/RoyalGardenHorizon.fbx
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/Decal.mat
+Assets/Scripts/View/UIManager.cs
+Packages/com.unity.render-pipelines.core/Runtime/PathTracing/Environment/EnvironmentImportanceSamplingBuild.compute
+Assets/TextMesh Pro/Fonts/DejaVuSans-Bold SDF.asset
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_5.png
+Packages/com.unity.render-pipelines.universal/Textures/BayerMatrix.png
+Packages/com.unity.render-pipelines.core/Runtime/PathTracing/Shaders/BlitCookie.compute
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/SimpleLit.mat
+Assets/Resources/VFX/smoke/Smoke VFX B2.png
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/OccluderDepthPyramidKernels.compute
+Assets/Resources/VFX/void.png
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTreeCommon.hlsl
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/LiftGammaGain.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/README.md
+Assets/Art/KnightPixelTest/Knight64-Idle.anim
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise64/L/LDR_LLL1_0.png
+Packages/com.unity.render-pipelines.core/Runtime/STP/StpSetup.compute
+Assets/Resources/MenuCircleReveal.shader
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/WhiteBalance.cs
+Packages/com.unity.inputsystem/InputSystem/Editor/AssetImporter/InputActionImporter.cs
+Assets/Resources/Comic/graphic-bishop-front-hit.png
+Assets/Resources/LegacyUI/Cracked Tile.png
+Assets/TextMesh Pro/Resources/TMP Settings.asset
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree9CameraFacingLeafEffect.shadersubgraph
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Medium05.png
+Assets/Resources/LegacyUI/Chronokinesis.png
+Packages/com.unity.shadergraph/Editor/Importers/ShaderGraphIndexedData.cs
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Medium06.png
+Packages/com.unity.render-pipelines.universal/Runtime/UniversalRendererData.cs
+Assets/Resources/Comic/graphic-knight-back-idle.png
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Shadow2D-Unshadow-Geometry.shader
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/DebugOccluder.shader
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree8Wind.hlsl
+Assets/GooglePlayPlugins/com.google.play.appupdate/package.json
+Assets/Resources/VFX/smoke/Smoke VFX B6.png
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/FinalPost.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/BlitHDROverlay.shader
+Assets/Resources/BoardModels/CastleSurround.fbx
+Assets/Scripts/View/AdventureLevels.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/ActivityResult.cs
+Assets/TextMesh Pro/Fonts/LiberationSans.ttf
+Assets/Scripts/View/Skins.cs
+Assets/Scripts/View/MenuKnightPreview.cs
+Assets/Resources/Pieces/base-footprints.json
+Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/PlayAsyncOperation.cs
+Assets/Art/KnightPixelTest/knight-64.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_0.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/AndroidConstants.cs
+Packages/com.unity.render-pipelines.universal/Shaders/Debug/HDRDebugView.shader
+Assets/Resources/Comic/graphic-pawn-front-idle.png
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Google.Play.Core.asmdef
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 1 (Square).ogg
+Assets/InputSystem_Actions.inputactions
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/Sampling.shader
+Assets/Resources/Pieces/CeramicPrototype/knight.fbx
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square).ogg
+Assets/Art/KnightPixelTest/PixelKnightSlash.cs
+Assets/Resources/SFX/Adventure Mode Next Level.wav
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree8CameraFacingLeafEffect.shadersubgraph
+Assets/Resources/BoardModels/GrassTile.fbx
+Assets/Resources/BoardModels/BridgeSurround.fbx
+Assets/Scripts/View/UISprites.cs
+Assets/Resources/Comic/graphic-pawn-back-attack.png
+Assets/Resources/Pieces/Textures/rook-basecolor.png
+Assets/Resources/SFX/Capture Slash 3.wav
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_17.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_24.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_27.png
+Assets/Resources/Comic/graphic-pawn-front-attack.png
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/CoreBlitColorAndDepth.shader
+Assets/GooglePlayPlugins/com.google.play.core/LICENSE.md
+Assets/LevelPlay/Editor/ISAppLovinAdapterDependencies.xml
+Assets/Resources/Comic/graphic-queen-back-hit.png
+Assets/Resources/Pieces/ChessPiece.shader
+Assets/Resources/Comic/graphic-queen-back-idle.png
+Assets/Resources/Powerups/Chronokinesis.png
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Medium01.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_15.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_4.png
+Assets/Scripts/View/BoardView.cs
+Assets/Resources/SFX/Transformation.wav
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/InstanceDataBufferUploadKernels.compute
+Assets/Scripts/View/GameView.EnemyMotion.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_21.png
+Assets/LevelPlay/Editor/IronSourceSDKDependencies.xml
+Assets/Resources/VFX/explosion.png
+Assets/Resources/Horizon/RollingWoodTile.fbx
+Assets/Scripts/Core/NameFilter.cs
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/ClusterDeferred.shader
+Assets/Scripts/View/UIScreenFit.cs
+Assets/Resources/VFX/lightning/lightning_skill5_frame2.png
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree8Wind.shadersubgraph
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square).ogg
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Sprite-Unlit-Default.shader
+Assets/Resources/VFX/smoke/Smoke VFX B3.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise256/LDR_LLL1_4.png
+Assets/Resources/Comic/graphic-knight-front-hit.png
+Assets/Scripts/View/UIManager.Layout.cs
+Assets/Resources/Coin/Coin_Silver-Sheet.png
+Packages/com.unity.render-pipelines.universal/Shaders/AutodeskInteractive/AutodeskInteractiveMasked.shadergraph
+Packages/com.unity.render-pipelines.universal/Shaders/CameraMotionVectors.shader
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/Lit.mat
+Assets/Resources/Horizon/RollingBridgeRail.fbx
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Google.Play.Common.asmdef
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Bangers SDF.asset
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/ColorAdjustments.cs
+Assets/Resources/Comic/graphic-knight-back-hit.png
+Assets/Resources/Fonts/DejaVuSans-Bold.ttf
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/Mesh2D-Lit-Default.mat
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreConstants.cs
+Packages/com.unity.inputsystem/InputSystem/Actions/InputActionAsset.cs
+Packages/com.unity.render-pipelines.core/Runtime/Debugging/Runtime UI Resources/RuntimeDebugWindow.uxml
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateErrorCode.cs
+Assets/LevelPlay/Editor/LevelPlayVersions.json
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/Vignette.cs
+Packages/com.unity.render-pipelines.universal/Shaders/XR/XRMotionVector.shader
+Packages/com.unity.render-pipelines.universal/Shaders/XR/XRMirrorView.shader
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_2.png
+Assets/Editor/InkPorcelainPreview.cs
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Medium02.png
+Assets/Plugins/Android/proguard-user.txt
+Assets/Resources/Comic/graphic-queen-front-hit.png
+Packages/com.unity.render-pipelines.core/Runtime/Debugging/Runtime UI Resources/RuntimeDebugWindow.tss
+Assets/Resources/Comic/graphic-pawn-back-hit.png
+Assets/Resources/Comic/graphic-knight-back-attack.png
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/StopNaN.shader
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Compute/RadeonRays/kernels/build_hlbvh.compute
+Assets/Editor/KnightPixelProofBuilder.cs
+Packages/com.unity.render-pipelines.universal/Shaders/Terrain/TerrainDetailLit.shader
+Assets/Scripts/View/GameManager.cs
+Assets/Editor/CeramicPiecePreview.cs
+Assets/Resources/UI/Star.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdatePlayCoreTranslator.cs
+Packages/com.unity.render-pipelines.universal/Shaders/SimpleLit.shader
+Assets/Resources/Comic/supplied-king-back.png
+Assets/Resources/Pieces/Optimized/bishop.fbx
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateManager.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreEventHandler.cs
+Packages/com.unity.render-pipelines.core/Runtime/Debug/ProbeVolumeSamplingDebug.shader
+Assets/Scripts/View/GoalFlag3D.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_9.png
+Assets/Resources/LegacyUI/Pathfinder.png
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.PackageManagerResolver.pdb
+Assets/Resources/SFX/Capture Slash.wav
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/CoreBlit.shader
+Assets/Resources/Pieces/CeramicPrototype/rook.fbx
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/ColorCurves.cs
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Mesh2D-Lit-Default.shader
+Packages/com.unity.render-pipelines.universal/Textures/SMAA/SearchTex.tga
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/UnityPlayerHelper.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_19.png
+Assets/Art/KnightPixelTest/PixelSlashRender.mat
+Assets/Scripts/View/IapService.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnSuccessListener.cs
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass.shader
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Medium04.png
+Packages/com.unity.render-pipelines.universal/Shaders/Terrain/WavingGrassBillboard.shader
+Packages/com.unity.render-pipelines.universal/Shaders/Debug/ProbeVolumeSamplingDebugPositionNormal.compute
+Packages/com.unity.ugui/Runtime/TMP/TMP_StyleSheet.cs
+Assets/Resources/SFX/MenuTheme.wav
+Packages/com.unity.render-pipelines.core/Runtime/PathTracing/Meshes/6FaceSkyboxMesh.mesh
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Large01.png
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Sprite-Mask.shader
+Assets/Resources/Pieces/CeramicPrototype/MatteCeramic.shader
+Assets/Resources/Comic/supplied-queen-back.png
+Assets/Resources/Comic/graphic-bishop-back-attack.png
+Assets/Scripts/View/GameView.Legacy.cs
+Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/DynamicGI/DynamicGISkyOcclusion.urtshader
+Assets/Resources/Flag/flag animation.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_12.png
+Assets/Resources/Comic/supplied-bishop-back.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateType.cs
+Assets/Scripts/Core/409-4098924_chess-piece-knight-pin-chessboard-transparent-knight-chess.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_25.png
+Assets/Scripts/View/DailyPrizes.cs
+Assets/Editor/ComicArtPreview.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantRetryButton.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerInternal.cs
+Assets/Resources/VFX/smoke/Smoke VFX B9.png
+Packages/com.unity.render-pipelines.core/Runtime/STP/StpPreTaa.compute
+Assets/Scripts/View/UIManager.Hud.cs
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader
+Assets/Scripts/View/Powerups.cs
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Compute/RadeonRays/kernels/scatter.compute
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.JarResolver.pdb
+Assets/Scripts/Core/GameConfig.cs
+Assets/Resources/VFX/bubble_sheet.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateRequestImpl.cs
+Packages/com.unity.render-pipelines.core/Runtime/UnifiedRayTracing/Compute/RadeonRays/kernels/restructure_bvh.compute
+Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolumeUploadData.compute
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/SubpixelMorphologicalAntialiasing.shader
+Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt
+Assets/Resources/Comic/comic-impact.png
+Assets/Resources/CaptureVoxel.shader
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Plugins/com.google.play.appupdate.metadata.jar
+Assets/Scripts/View/PieceView.cs
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Drop Shadow.mat
+Assets/Resources/BoardTiles/drawbridge-sheet.png
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/VoxelizeScene.shader
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateAsyncOperation.cs
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/LutBuilderHdr.shader
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/OcclusionCullingDebug.compute
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/InstanceTransformUpdateKernels.compute
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SDF.asset
+Assets/Resources/SupabaseConfig.asset
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/ScalingSetup.shader
+Assets/Scripts/View/EnvironmentPixelDepthFeature.cs
+Assets/Resources/BoardTiles/drawbridge-rail-overlays.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantLoadingTile.png
+Assets/Resources/Pieces/Textures/knight-basecolor.png
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+Packages/com.unity.render-pipelines.universal/Textures/FilmGrain/Medium03.png
+Assets/Resources/BoardRoll.hlsl
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.VersionHandlerImpl.pdb
+Packages/com.unity.render-pipelines.universal/Shaders/Nature/SpeedTree8_PBRLit.shadergraph
+Assets/Art/KnightPixelTest/Knight64-Capture.anim
+Assets/Resources/Pieces/Optimized/pawn.fbx
+Assets/Resources/Pieces/InkPorcelain/pawn.fbx
+Assets/Resources/Fonts/ThaleahFat_TTF.ttf
+Assets/Resources/VFX/water.png
+Packages/com.unity.render-pipelines.universal/Textures/SMAA/AreaTex.tga
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/VirtualOffset/TraceVirtualOffset.urtshader
+Assets/Resources/Horizon/CastleHallLantern.fbx
+Assets/TextMesh Pro/Shaders/TMP_Bitmap.shader
+Assets/Scripts/View/GameManager.Presentation.cs
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader
+Assets/Scripts/Core/GamePiece.cs
+Assets/Scripts/View/LeaderboardClient.cs
+Assets/Scripts/View/LevelData.cs
+Assets/Resources/UI/Retry.png
+Assets/Resources/VFX/smoke/Smoke VFX B7.png
+Packages/com.unity.render-pipelines.universal/Shaders/Utils/FallbackError.shader
+Assets/Plugins/Android/gradleTemplate.properties
+Assets/Resources/Comic/supplied-pawn-back.png
+Packages/com.unity.render-pipelines.universal/Editor/Volume/DefaultVolumeProfile.asset
+Assets/GooglePlayPlugins/com.google.play.core/Editor/Dependencies.xml
+Packages/com.unity.render-pipelines.core/Runtime/Debug/ProbeVolumeNumbersDisplayTex.png
+Packages/com.unity.services.levelplay/Runtime/Utilities/LevelPlayMediationSettings.cs
+Assets/Scripts/Core/CoreTypes.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnFailureListener.cs
+Assets/Scripts/View/SaveData.cs
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Shadow2D-Projected.shader
+Packages/com.unity.render-pipelines.universal/Shaders/AutodeskInteractive/AutodeskInteractive.shadergraph
+Assets/Resources/Pieces/Optimized/knight.fbx
+Assets/Settings/UniversalRP.asset
+Assets/Scripts/View/BoardView.Horizon.cs
+Assets/Resources/BoardModels/GardenSurround.fbx
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_22.png
+Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Unlit-Default.mat
+Assets/Resources/VFX/wind.png
+Assets/Scripts/View/CameraShake.cs
+Packages/com.unity.render-pipelines.universal/Textures/DebugFont.tga
+Packages/com.unity.render-pipelines.universal/Shaders/Debug/DebugReplacement.shader
+Assets/ExternalDependencyManager/Editor/README.md
+Assets/Resources/Comic/ComicPalette.mat
+Packages/com.unity.render-pipelines.core/Runtime/Vrs/Shaders/VrsTexture.compute
+Assets/Scripts/View/RoyalIcons.cs
+Assets/Resources/UI/UI SIMPLE PIXEL UNSPLIT.png
+Assets/GooglePlayPlugins/com.google.play.common/LICENSE.md
+Assets/Resources/BoardModels/HazardPlaque.fbx
+Assets/Resources/CaptureSlash.shader
+Assets/Resources/Pieces/InkPorcelain/InkPorcelain.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader
+Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/InstanceDataBufferCopyKernels.compute
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnFailureListener.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_14.png
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_31.png
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.PackageManagerResolver.dll
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateState.cs
+Assets/Resources/LegacyUI/Retry.png
+Assets/TextMesh Pro/Shaders/TMPro.cginc
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerPlayCore.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateHandler.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_1.png
+Assets/Resources/BoardModels/WoodTile.fbx
+Assets/Scripts/View/BoardBiomeFlow.cs
+Assets/Scripts/Core/GameSimulation.cs
+Assets/Scripts/View/Achievements.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/VoidResult.cs
+Assets/Resources/Comic/comic-slash-sweep.png
+Assets/Resources/Comic/comic-slash.png
+Assets/Scripts/View/GameTheme.cs
+Assets/ExternalDependencyManager/Editor/Google.VersionHandler.dll
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.VersionHandlerImpl.dll
+Packages/com.unity.render-pipelines.core/Runtime/PathTracing/Shaders/BlitCubemap.compute
+Assets/Resources/Comic/graphic-queen-back-attack.png
+Packages/com.unity.render-pipelines.core/Runtime/PathTracing/Shaders/BuildLightGrid.compute
+Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise16/L/LDR_LLL1_26.png
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/ProbeVolumeCellDilation.compute
+Assets/Art/KnightPixelTest/PixelKnight.mat
+Packages/com.unity.shadergraph/Editor/Importers/ShaderGraphImporter.cs
+Packages/com.unity.render-pipelines.core/Shaders/CoreCopy.shader
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader
+Assets/Editor/BattleMovementChecks.cs
+Packages/com.unity.shadergraph/ShaderGraphLibrary/Nature/SpeedTree8ColorAlpha.shadersubgraph
+Assets/Resources/Comic/supplied-pawn-front.png
+Assets/Resources/EnvironmentPixelComposite.shader
+Assets/Resources/Fonts/PixelChess.ttf
+Packages/com.unity.render-pipelines.core/Runtime/PathTracing/Meshes/SkyboxMesh.mesh
+Assets/ExternalDependencyManager/Editor/CHANGELOG.md
+Assets/Resources/Comic/graphic-bishop-back-hit.png
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/SplitToning.cs
+Assets/Resources/VFX/lightning/lightning_skill5_frame3.png
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 5 (Square).ogg
+Assets/Scenes/SampleScene.unity
+Packages/com.unity.render-pipelines.universal/Runtime/UniversalAdditionalCameraData.cs
+Packages/com.unity.render-pipelines.universal/Shaders/AutodeskInteractive/AutodeskInteractiveTransparent.shadergraph
+Assets/Resources/Comic/PaintedChess.mat
+Assets/Scripts/Core/BattleGenerator.cs
+Assets/Scripts/View/UnityIapService.cs
+Packages/com.unity.render-pipelines.core/Runtime/Debugging/Runtime UI Resources/RuntimeDebugWindow.uss
+Assets/Editor/GameRegressionChecks.cs
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise256/LDR_LLL1_0.png
+Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolumesOptions.cs
+Assets/GooglePlayPlugins/com.google.play.common/CHANGELOG.md
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.JarResolver.dll
+Assets/Resources/Comic/graphic-rook-front-hit.png
+Assets/Resources/Pieces/InkPorcelain/queen.fbx
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/PlayAsyncOperationImpl.cs
+Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/EdgeAdaptiveSpatialUpsampling.shader
+Packages/com.unity.render-pipelines.universal/Shaders/2D/Sprite-Lit-Default.shader
+Packages/com.unity.render-pipelines.universal/Textures/BlueNoise256/LDR_LLL1_5.png
+Packages/com.unity.render-pipelines.universal/Runtime/Overrides/ColorLookup.cs
+Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/GPUDriven/InstanceOcclusionCullingKernels.compute
+Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square).ogg
+Assets/Resources/Pieces/InkPorcelain/knight.fbx
+Assets/Resources/Pieces/Optimized/queen.fbx
+Assets/Scripts/Core/TrapGenerator.cs
+Packages/com.unity.render-pipelines.core/Runtime/STP/StpTaa.compute
+Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/UniversalMetadata.cs
+Assets/Resources/Pieces/Optimized/rook.fbx
+Assets/Resources/Comic/supplied-knight-front.png
+Assets/Plugins/Android/settingsTemplate.gradle
+Assets/Resources/Horizon/OpenRollingFrame.fbx

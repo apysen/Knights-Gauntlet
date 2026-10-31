@@ -1,0 +1,186 @@
+[
+  {
+    "path": "Assets/Resources/BoardTiles/drawbridge-sheet.png",
+    "bytes": 2038664
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-bishop-back-idle.png",
+    "bytes": 19049
+  },
+  {
+    "path": "Assets/Resources/CombatVfx/comic-fist.png",
+    "bytes": 1028753
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-rook-front-hit.png",
+    "bytes": 21497
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-bishop-front-hit.png",
+    "bytes": 19896
+  },
+  {
+    "path": "Assets/Resources/BoardTiles/castle-stone-sheet.png",
+    "bytes": 2157641
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-pawn-back-hit.png",
+    "bytes": 19258
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-pawn-front-hit.png",
+    "bytes": 19258
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-bishop-front-attack.png",
+    "bytes": 19321
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-knight-back-attack.png",
+    "bytes": 20945
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-rook-back-idle.png",
+    "bytes": 19240
+  },
+  {
+    "path": "Assets/Resources/UI/Retry.png",
+    "bytes": 178137
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-pawn-back-attack.png",
+    "bytes": 18747
+  },
+  {
+    "path": "Assets/Resources/Comic/comic-slash.png",
+    "bytes": 7019
+  },
+  {
+    "path": "Assets/Resources/BoardModels/BridgeRail.fbx",
+    "bytes": 20268
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-queen-back-hit.png",
+    "bytes": 20982
+  },
+  {
+    "path": "Assets/Resources/Horizon/CastleVault.fbx",
+    "bytes": 88172
+  },
+  {
+    "path": "Assets/Resources/Horizon/DrawbridgeGate.fbx",
+    "bytes": 74300
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-knight-front-attack.png",
+    "bytes": 20680
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-rook-front-attack.png",
+    "bytes": 20737
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-bishop-back-attack.png",
+    "bytes": 19191
+  },
+  {
+    "path": "Assets/Resources/BoardModels/WoodTile.fbx",
+    "bytes": 22940
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-knight-front-idle.png",
+    "bytes": 19511
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-queen-front-hit.png",
+    "bytes": 20982
+  },
+  {
+    "path": "Assets/Resources/BoardTiles/drawbridge-rail-overlays.png",
+    "bytes": 553810
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-rook-back-hit.png",
+    "bytes": 21378
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-pawn-front-idle.png",
+    "bytes": 18757
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-queen-front-idle.png",
+    "bytes": 19290
+  },
+  {
+    "path": "Assets/Resources/BoardModels/BoardFrame.fbx",
+    "bytes": 54124
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-queen-front-attack.png",
+    "bytes": 20300
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-bishop-back-hit.png",
+    "bytes": 19736
+  },
+  {
+    "path": "Assets/Resources/Horizon/RoyalGardenHorizon.fbx",
+    "bytes": 112012
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-pawn-front-attack.png",
+    "bytes": 18747
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-queen-back-attack.png",
+    "bytes": 20300
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-knight-back-idle.png",
+    "bytes": 20257
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-rook-back-attack.png",
+    "bytes": 20622
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-pawn-back-idle.png",
+    "bytes": 18757
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-queen-back-idle.png",
+    "bytes": 19290
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-bishop-front-idle.png",
+    "bytes": 19314
+  },
+  {
+    "path": "Assets/Resources/BoardModels/StoneTile.fbx",
+    "bytes": 19820
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-knight-back-hit.png",
+    "bytes": 21496
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-knight-front-hit.png",
+    "bytes": 21312
+  },
+  {
+    "path": "Assets/Resources/Pieces/base-footprints.json",
+    "bytes": 785
+  },
+  {
+    "path": "Assets/Resources/BoardModels/GrassTile.fbx",
+    "bytes": 20060
+  },
+  {
+    "path": "Assets/Resources/BoardTiles/grass-sheet.png",
+    "bytes": 2349751
+  },
+  {
+    "path": "Assets/Resources/Comic/graphic-rook-front-idle.png",
+    "bytes": 19405
+  }
+]

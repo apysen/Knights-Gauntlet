@@ -1,0 +1,360 @@
+Assets/Resources/Powerups/Pathfinder.png
+Assets/Resources/Horizon/CastleHallBay.fbx
+Assets/Resources/Horizon/CastleApproachGate.fbx
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateRequestImpl.cs
+Assets/Resources/LegacyUI/Cracked Tile.png
+Assets/Editor/SKAdNetworkPostProcess.cs
+Assets/Scripts/View/AchievementTracker.cs
+Assets/Scripts/View/AdService.cs
+Assets/TextMesh Pro/Shaders/TMPro.cginc
+Assets/Scripts/View/EnvironmentPixelFilter.cs
+Assets/LevelPlay/Editor/ISAppLovinAdapterDependencies.xml
+Assets/Resources/Comic/supplied-queen-front.png
+Assets/Resources/SFX/MenuTheme.wav
+Assets/Scripts/View/UISprites.cs
+Assets/Resources/BoardTiles/drawbridge-sheet.png
+Assets/ExternalDependencyManager/Editor/LICENSE
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader
+Assets/Resources/VFX/lightning/lightning_skill5_frame2.png
+Assets/Resources/LegacyUI/Retry.png
+Assets/Resources/Comic/graphic-bishop-back-idle.png
+Assets/Resources/CombatVfx/comic-fist.png
+Assets/GooglePlayPlugins/com.google.play.common/package.json
+Assets/Resources/Comic/comic-trap-idle.png
+Assets/Resources/Comic/graphic-rook-front-hit.png
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile-2-Pass.shader
+Assets/Resources/Pieces/CeramicPrototype/MatteCeramic.shader
+Assets/LevelPlay/Resources/LevelPlayMediationSettings.asset
+Assets/Scripts/View/GameManager.Presentation.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateAsyncOperation.cs
+Assets/Scripts/Core/MoveRules.cs
+Assets/Resources/Comic/graphic-bishop-front-hit.png
+Assets/Scripts/View/UIFactory.cs
+Assets/Scripts/View/GameManager.cs
+Assets/Resources/BoardTiles/castle-stone-sheet.png
+Assets/ExternalDependencyManager/Editor/Google.VersionHandler.dll
+Assets/Resources/Comic/graphic-pawn-back-hit.png
+Assets/Resources/XboxCloudSettings.asset
+Assets/Resources/VFX/wind.png
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.IOSResolver.dll
+Assets/Editor/ComicArtPreview.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateState.cs
+Assets/Resources/Comic/PaintedChess.mat
+Assets/Resources/ComicEffectOverlay.shader
+Assets/Resources/Comic/graphic-pawn-front-hit.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantLoadingTile.png
+Assets/Resources/Pieces/Textures/rook-basecolor.png
+Assets/Scripts/View/BoardView.cs
+Assets/Resources/VFX/smoke/Smoke VFX B4.png
+Assets/TextMesh Pro/Shaders/TMP_Bitmap.shader
+Assets/Scripts/View/LeaderboardScreen.cs
+Assets/Resources/Comic/graphic-bishop-front-attack.png
+Assets/Resources/HorizonScenery.shader
+Assets/Resources/HorizonSky.shader
+Assets/Resources/Comic/graphic-knight-back-attack.png
+Assets/Resources/Horizon/CastleHallLantern.fbx
+Assets/Resources/Pieces/CeramicPrototype/bishop.fbx
+Assets/Resources/Comic/supplied-knight-front.png
+Assets/Resources/Comic/graphic-rook-back-idle.png
+Assets/Scripts/Core/GamePiece.cs
+Assets/Resources/Comic/supplied-bishop-back.png
+Assets/Resources/Horizon/HorizonDrum.fbx
+Assets/Plugins/Android/mainTemplate.gradle
+Assets/Resources/UI/Retry.png
+Assets/Resources/VFX/smoke/Smoke VFX B11.png
+Assets/Scripts/View/SfxManager.cs
+Assets/Resources/SFX/Capture Slash.wav
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/UnityPlayerHelper.cs
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.VersionHandlerImpl.dll
+Assets/Resources/VFX/smoke/Smoke VFX B10.png
+Assets/Resources/PixelKnightGameplay.prefab
+Assets/Resources/VFX/smoke/Smoke VFX B8.png
+Assets/Scripts/View/LevelData.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateInfo.cs
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square).ogg
+Assets/Scripts/Core/BattleGenerator.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnFailureListener.cs
+Assets/Scripts/View/AdventureLevels.cs
+Assets/Resources/Powerups/Holy Cross.png
+Assets/Resources/VFX/fireworks.png
+Assets/UniversalRenderPipelineGlobalSettings.asset
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Google.Play.AppUpdate.asmdef
+Assets/Resources/SFX/Capture Slash 3.wav
+Assets/Resources/UI/UI SIMPLE PIXEL UNSPLIT.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateRequest.cs
+Assets/Resources/CaptureVoxel.shader
+Assets/TextMesh Pro/Shaders/TMPro_Mobile.cginc
+Assets/Resources/EnvironmentPixelComposite.shader
+Assets/Resources/Comic/graphic-pawn-back-attack.png
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 5 (Square).ogg
+Assets/Resources/Pieces/InkPorcelain/pawn.fbx
+Assets/Resources/Comic/comic-slash.png
+Assets/TextMesh Pro/Shaders/TMP_SDF SSD.shader
+Assets/GooglePlayPlugins/com.google.play.appupdate/README.md
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerInternal.cs
+Assets/Scripts/Core/EnemyAI.cs
+Assets/Resources/VFX/lightning/lightning_skill5_frame3.png
+Assets/Settings/Build Profiles/Android™.asset
+Assets/Resources/BoardModels/BridgeRail.fbx
+Assets/GooglePlayPlugins/com.google.play.common/CHANGELOG.md
+Assets/Resources/Flag/flag animation.png
+Assets/Resources/Comic/supplied-rook-front.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Proguard/app_update.txt
+Assets/Resources/Pieces/Textures/queen-basecolor.png
+Assets/Scripts/Core/409-4098924_chess-piece-knight-pin-chessboard-transparent-knight-chess.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Google.Play.Common.asmdef
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/AndroidConstants.cs
+Assets/Resources/SFX/Capture Slash 2.wav
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 5 (Square).ogg
+Assets/Scripts/View/UIManager.Layout.cs
+Assets/Scripts/View/UnityIapService.cs
+Assets/Resources/UI/Cracked Tile.png
+Assets/Scripts/View/VfxPlayer.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreEventHandler.cs
+Assets/ExternalDependencyManager/Editor/CHANGELOG.md
+Assets/GooglePlayPlugins/com.google.play.core/Editor/Dependencies.xml
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.JarResolver.dll
+Assets/Plugins/Android/proguard-user.txt
+Assets/Resources/Pieces/InkPorcelain/queen.fbx
+Assets/Scripts/View/PieceView.cs
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface-Mobile.shader
+Assets/Art/KnightPixelTest/PixelKnightSlash.shader
+Assets/Scripts/View/UIManager.cs
+Assets/Editor/CeramicPiecePreview.cs
+Assets/GooglePlayPlugins/com.google.play.common/README.md
+Assets/Resources/Comic/graphic-queen-back-hit.png
+Assets/Scripts/View/UIManager.MenuReveal.cs
+Assets/Resources/MenuCircleReveal.shader
+Assets/Resources/Powerups/Chronokinesis.png
+Assets/GameTheme.asset
+Assets/Resources/Horizon/CastleVault.fbx
+Assets/Resources/BoardModels/CrackedTile.fbx
+Assets/Resources/BoardRoll.hlsl
+Assets/LevelPlay/Editor/IronSourceSDKDependencies.xml
+Assets/Scripts/View/BoardView.Horizon.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/CHANGELOG.md
+Assets/GooglePlayPlugins/com.google.play.appupdate/package.json
+Assets/Resources/Horizon/DrawbridgeGate.fbx
+Assets/Resources/Comic/graphic-knight-front-attack.png
+Assets/Resources/Pieces/CeramicPrototype/knight.fbx
+Assets/TextMesh Pro/Shaders/SDFFunctions.hlsl
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateType.cs
+Assets/Resources/Comic/supplied-queen-back.png
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Google.Play.Core.asmdef
+Assets/Resources/Comic/graphic-rook-front-attack.png
+Assets/Resources/Pieces/InkPorcelain/rook.fbx
+Assets/Resources/Horizon/OpenRollingFrame.fbx
+Assets/Scripts/View/MenuKnightPreview.cs
+Assets/Editor/InkPorcelainPreview.cs
+Assets/Resources/Comic/supplied-bishop-front.png
+Assets/Resources/VFX/smoke/Smoke VFX B2.png
+Assets/Resources/VFX/explosion.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateManager.cs
+Assets/Resources/Comic/graphic-bishop-back-attack.png
+Assets/Resources/BoardModels/BridgeSurround.fbx
+Assets/Resources/Horizon/RollingBridgeRail.fbx
+Assets/Resources/Comic/supplied-rook-back.png
+Assets/Scripts/View/UIFactory.Legacy.cs
+Assets/Scripts/View/BoardBiomeFlow.cs
+Assets/Resources/BoardModels/WoodTile.fbx
+Assets/Resources/Comic/graphic-knight-front-idle.png
+Assets/Resources/Comic/comic-coin.png
+Assets/Resources/Comic/graphic-queen-front-hit.png
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square).ogg
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.JarResolver.pdb
+Assets/Scripts/View/GameView.Legacy.cs
+Assets/Resources/BoardTiles/drawbridge-rail-overlays.png
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.IOSResolver.pdb
+Assets/Resources/Comic/comic-slash-cut.png
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Drop Shadow.mat
+Assets/Resources/BoardClipSprite.shader
+Assets/Scripts/View/GoalFlag3D.cs
+Assets/TextMesh Pro/Shaders/TMP_SDF-Surface.shader
+Assets/Scripts/View/LevelPlayAdService.cs
+Assets/Scripts/Core/TrapGenerator.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnFailureListener.cs
+Assets/Scripts/Core/CoreTypes.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingScreen.cs
+Assets/Resources/SFX/Adventure Mode Next Level.wav
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Custom-Atlas.shader
+Assets/Resources/VFX/smoke/Smoke VFX B5.png
+Assets/Resources/Fonts/ThaleahFat_TTF.ttf
+Assets/Scripts/View/GameView.Comic.cs
+Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+Assets/Resources/Pieces/Textures/knight-basecolor.png
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/ScrollingFillAnimator.cs
+Assets/Resources/VFX/smoke/Smoke VFX B1.png
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/ActivityResult.cs
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateHandler.cs
+Assets/Settings/Build Profiles/iOS.asset
+Assets/Plugins/Android/gradleTemplate.properties
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile SSD.shader
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateErrorCode.cs
+Assets/Resources/Comic/graphic-rook-back-hit.png
+Assets/TextMesh Pro/Resources/LineBreaking Leading Characters.txt
+Assets/GooglePlayPlugins/com.google.play.core/README.md
+Assets/Resources/BoardModels/HazardPlaque.fbx
+Assets/Resources/Pieces/Textures/pawn-basecolor.png
+Assets/Resources/Comic/supplied-pawn-back.png
+Assets/Scripts/View/Powerups.cs
+Assets/Resources/Pieces/Optimized/knight.fbx
+Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 3 (Square).ogg
+Assets/Scripts/Core/EscapeSolver.cs
+Assets/Resources/Comic/graphic-pawn-front-idle.png
+Assets/Resources/Comic/supplied-pawn-front.png
+Assets/Scripts/Core/GameSimulation.cs
+Assets/Scripts/View/SaveData.cs
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat
+Assets/GooglePlayPlugins/com.google.play.appupdate/Editor/Dependencies.xml
+Assets/Resources/Comic/graphic-queen-front-idle.png
+Assets/Resources/Pieces/InkPorcelain/knight.fbx
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayServicesTask.cs
+Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc
+Assets/Resources/VFX/smoke/Smoke VFX B7.png
+Assets/Scripts/View/Vfx.cs
+Assets/Resources/Horizon/RollingGrassTile.fbx
+Assets/TextMesh Pro/Resources/Style Sheets/Default Style Sheet.asset
+Assets/Resources/Pieces/InkPorcelain/bishop.fbx
+Assets/Resources/LegacyUI/Holy Cross.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/LICENSE.md
+Assets/Resources/Comic/comic-slash-crescent.png
+Assets/Scripts/View/GameView.cs
+Assets/Editor/GameRegressionChecks.cs
+Assets/LevelPlay/Editor/ISUnityAdsAdapterDependencies.xml
+Assets/Resources/BillingMode.json
+Assets/LevelPlay/Editor/ISAdMobAdapterDependencies.xml
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square).ogg
+Assets/Resources/Pieces/Optimized/rook.fbx
+Assets/Resources/BoardModels/BoardFrame.fbx
+Assets/Resources/Pieces/Textures/bishop-basecolor.png
+Assets/Resources/VFX/lightning/lightning_skill5_frame1.png
+Assets/Scripts/View/Achievements.cs
+Assets/Resources/SFX/Transformation.wav
+Assets/Resources/Fonts/DejaVuSans-Bold.ttf
+Assets/Resources/Fonts/PixelChess.ttf
+Assets/Resources/Pieces/model-metrics.json
+Assets/Scripts/View/GameTheme.cs
+Assets/Editor/PieceModelMetricsBuilder.cs
+Assets/Resources/Comic/graphic-queen-front-attack.png
+Assets/TextMesh Pro/Resources/LineBreaking Following Characters.txt
+Assets/Scripts/View/CameraShake.cs
+Assets/Resources/Comic/PaintedChess.shader
+Assets/Scripts/View/GameContent.cs
+Assets/LevelPlay/Editor/LevelPlayVersions.json
+Assets/Resources/Horizon/RollingWoodTile.fbx
+Assets/Resources/Comic/ComicPalette.mat
+Assets/InputSystem_Actions.inputactions
+Assets/Scripts/View/ComicArt.cs
+Assets/Resources/VFX/smoke/Smoke VFX B6.png
+Assets/Resources/LegacyUI/Pathfinder.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateManagerPlayCore.cs
+Assets/Scripts/Core/UpdateChecker.cs
+Assets/Resources/Comic/graphic-bishop-back-hit.png
+Assets/Scripts/Core/GameConfig.cs
+Assets/Resources/Horizon/RoyalGardenHorizon.fbx
+Assets/GooglePlayPlugins/com.google.play.core/LICENSE.md
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/VoidResult.cs
+Assets/GooglePlayPlugins/com.google.play.core/package.json
+Assets/Editor/BattleMovementChecks.cs
+Assets/Scripts/View/IapService.cs
+Assets/Resources/Horizon/RollingStoneTile.fbx
+Assets/Scripts/View/RoyalIcons.cs
+Assets/Resources/Comic/graphic-pawn-front-attack.png
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square).ogg
+Assets/Resources/Comic/graphic-queen-back-attack.png
+Assets/ExternalDependencyManager/Editor/Google.VersionHandler.pdb
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Plugins/com.google.play.appupdate.metadata.jar
+Assets/Resources/Pieces/Optimized/pawn.fbx
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 1 (Square).ogg
+Assets/Resources/Pieces/ChessPiece.shader
+Assets/Resources/Comic/ComicPalette.shader
+Assets/Resources/VFX/lightning/lightning_skill5_frame4.png
+Assets/Resources/Coin/Coin_Silver-Sheet.png
+Assets/Scripts/View/UIScreenFit.cs
+Assets/GooglePlayPlugins/com.google.play.core/Proguard/common.txt
+Assets/Resources/Pieces/Optimized/queen.fbx
+Assets/Resources/VFX/void.png
+Assets/Resources/Pieces/InkPorcelain/InkPorcelain.shader
+Assets/Resources/Comic/graphic-knight-back-idle.png
+Assets/GooglePlayPlugins/com.google.play.core/CHANGELOG.md
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Masking.shader
+Assets/Resources/Comic/graphic-rook-back-attack.png
+Assets/Resources/Comic/graphic-pawn-back-idle.png
+Assets/Resources/Comic/graphic-queen-back-idle.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateOptions.cs
+Assets/Scripts/View/LeaderboardClient.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/LoadingScreen/LoadingBar.cs
+Assets/Scripts/View/RoyalBoardCrest.cs
+Assets/GooglePlayPlugins/com.google.play.common/LICENSE.md
+Assets/Resources/Comic/graphic-bishop-front-idle.png
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Roboto-Bold SDF.asset
+Assets/Scripts/Core/NameFilter.cs
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/PlayAsyncOperation.cs
+Assets/Resources/BoardModels/StoneTile.fbx
+Assets/Scripts/View/HowToArt.cs
+Assets/Resources/LegacyUI/Chronokinesis.png
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/UpdateAvailability.cs
+Assets/Resources/Comic/graphic-knight-back-hit.png
+Assets/Scripts/View/SupabaseConfig.cs
+Assets/Resources/VFX/bubble_sheet.png
+Assets/Resources/Comic/supplied-king-back.png
+Assets/Resources/Comic/comic-slash-sweep.png
+Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Bangers SDF.asset
+Assets/Resources/Comic/graphic-knight-front-hit.png
+Assets/Resources/BoardModels/CastleSurround.fbx
+Assets/Scripts/View/DailyPrizes.cs
+Assets/Resources/Pieces/base-footprints.json
+Assets/Resources/Comic/supplied-knight-back.png
+Assets/TextMesh Pro/Shaders/TMP_SDF Overlay.shader
+Assets/ExternalDependencyManager/Editor/README.md
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/TaskOnSuccessListener.cs
+Assets/Scripts/Core/Enums.cs
+Assets/Resources/CaptureSlash.shader
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdateStateListener.cs
+Assets/Resources/BoardModels/GrassTile.fbx
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.VersionHandlerImpl.pdb
+Assets/TextMesh Pro/Shaders/TMP_Bitmap-Mobile.shader
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Textures/GooglePlayInstantRetryButton.png
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreConstants.cs
+Assets/Scripts/View/UIManager.Hud.cs
+Assets/Resources/BoardModels/GardenSurround.fbx
+Assets/Resources/Pieces/Optimized/bishop.fbx
+Assets/Plugins/Android/AdIdPermission.androidlib
+Assets/Resources/UI/Star.png
+Assets/Resources/SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 4 (Square).ogg
+Assets/Resources/SlashFlowNoise.png
+Assets/Resources/VFX/water.png
+Assets/Scripts/View/GameView.EnemyMotion.cs
+Assets/Plugins/Android/settingsTemplate.gradle
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/AppUpdateStatus.cs
+Assets/ExternalDependencyManager/Editor/external-dependency-manager_version-1.2.185_manifest.txt
+Assets/Scripts/View/GameView.BoardClipping.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreHelper.cs
+Assets/GooglePlayPlugins/com.google.play.core/Runtime/Scripts/Internal/PlayCoreOnSuccessListener.cs
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.PackageManagerResolver.pdb
+Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+Assets/GooglePlayPlugins/com.google.play.appupdate/Runtime/Scripts/Internal/AppUpdatePlayCoreTranslator.cs
+Assets/Scripts/View/Skins.cs
+Assets/Resources/Pieces/CeramicPrototype/rook.fbx
+Assets/Scripts/View/EnvironmentPixelDepthFeature.cs
+Assets/DefaultVolumeProfile.asset
+Assets/TextMesh Pro/Resources/TMP Settings.asset
+Assets/Resources/Comic/supplied-king-front.png
+Assets/Resources/SupabaseConfig.asset
+Assets/Resources/BoardTiles/grass-sheet.png
+Assets/Resources/VFX/smoke/Smoke VFX B12.png
+Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset
+Assets/Editor/KnightPixelProofBuilder.cs
+Assets/Scripts/View/UIManager.Legacy.cs
+Assets/Resources/VFX/smoke/Smoke VFX B3.png
+Assets/Resources/Comic/comic-impact.png
+Assets/ExternalDependencyManager/Editor/1.2.185/Google.PackageManagerResolver.dll
+Assets/Scripts/Core/AdventureSolver.cs
+Assets/TextMesh Pro/Shaders/TMP_Sprite.shader
+Assets/GooglePlayPlugins/com.google.play.common/Runtime/Scripts/Internal/PlayAsyncOperationImpl.cs
+Assets/Resources/Comic/graphic-rook-front-idle.png
+Assets/Resources/VFX/smoke/Smoke VFX B9.png
+Assets/Scenes/SampleScene.unity
+Assets/Settings/UniversalRP.asset

@@ -1,0 +1,23 @@
+{
+  "baseline": {
+    "passed": 289,
+    "failed": 9
+  },
+  "afterCleanup": {
+    "passed": 289,
+    "failed": 9
+  },
+  "identicalFailures": true,
+  "missingAssetWarnings": 0,
+  "failures": [
+    "- FAIL Only incoming row changes at grass/bridge threshold",
+    "- FAIL Scenery transition follows the same moving row boundary",
+    "- FAIL Three biome regions coexist by row",
+    "- FAIL Rewind preserves terrain history",
+    "- FAIL Grass and bridge coexist during scroll transition",
+    "- FAIL Bridge replaces grass after full board length",
+    "- FAIL Bridge and castle coexist during scroll transition",
+    "- FAIL Castle replaces bridge after full board length",
+    "- FAIL All 50 projected cell targets round-trip"
+  ]
+}
