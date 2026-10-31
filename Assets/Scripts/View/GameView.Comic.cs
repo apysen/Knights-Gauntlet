@@ -381,6 +381,7 @@ namespace KnightsGauntlet.View
         private void OnDestroy()
         {
             DisposeBoardSpriteMaterial();
+            DisposeBubble3D();
             if (_trailMaterial == null) return;
             if (Application.isPlaying) Destroy(_trailMaterial);
             else DestroyImmediate(_trailMaterial);

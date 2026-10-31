@@ -494,11 +494,11 @@ namespace KnightsGauntlet.View
         // last minion is captured, play the pop animation (frames 15-19) once, then hide.
         private void UpdateQueenShield(GameSimulation sim, float dt)
         {
-            if (_queenShield == null || _bubbleFrames == null || _bubbleFrames.Length == 0) return;
+            if (_queenShield == null) return;
             AdvEnemy queen = null;
             var adv = sim.AdvEnemies;
             for (int i = 0; i < adv.Count; i++) if (adv[i].Alive && adv[i].Hunter) { queen = adv[i]; break; }
-            if (queen == null) { _queenShield.gameObject.SetActive(false); _shieldWasUp = false; _popping = false; return; }
+            if (queen == null) { HideQueenShield(); _shieldWasUp = false; _popping = false; return; }
 
             if (sim.QueenShielded)
             {
@@ -516,13 +516,29 @@ namespace KnightsGauntlet.View
                 int span = BubblePopEnd - BubblePopStart; // 5 (frames 14..19)
                 int frame = BubblePopStart + Mathf.Min(span, Mathf.FloorToInt(t * (span + 1)));
                 DrawShield(queen, sim, frame);
-                if (_popTimer >= BubblePopDuration) { _popping = false; _queenShield.gameObject.SetActive(false); }
+                if (_popTimer >= BubblePopDuration) { _popping = false; HideQueenShield(); }
             }
-            else _queenShield.gameObject.SetActive(false);
+            else HideQueenShield();
+        }
+
+        private void HideQueenShield()
+        {
+            _queenShield.gameObject.SetActive(false);
+            HideBubble3D();
         }
 
         private void DrawShield(AdvEnemy queen, GameSimulation sim, int frame)
         {
+            // 3D art: a real bubble that rolls under the conveyor with her. The pixel
+            // sprite strip is kept only for the legacy 2D art style.
+            if (!_legacy2D)
+            {
+                _queenShield.gameObject.SetActive(false);
+                DrawBubble3D(queen, sim, _popping ? Mathf.Clamp01(_popTimer / BubblePopDuration) : 0f);
+                return;
+            }
+            HideBubble3D();
+            if (_bubbleFrames == null || _bubbleFrames.Length == 0) return;
             _queenShield.gameObject.SetActive(true);
             _queenShield.sprite = _bubbleFrames[Mathf.Clamp(frame, 0, _bubbleFrames.Length - 1)];
             // Nudge down by BubbleDownPixels art pixels (a cell = one row; the bubble is
