@@ -1,0 +1,52 @@
+workflows:
+  knights-gauntlet-ios:
+    name: Knight's Gauntlet iOS (exported Xcode project)
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.apy.knightsgauntlet
+      vars:
+        IOS_PROJECT_PATH: ios-export
+        XCODE_SCHEME: Unity-iPhone
+        APP_STORE_APPLE_ID: REPLACE_WITH_NUMERIC_APP_STORE_CONNECT_APP_ID
+    scripts:
+      - name: Install CocoaPods dependencies when present
+        script: |
+          set -e
+          if [ -f "$IOS_PROJECT_PATH/Podfile" ]; then
+            cd "$IOS_PROJECT_PATH"
+            pod install
+          fi
+      - name: Apply App Store signing profiles
+        script: |
+          cd "$IOS_PROJECT_PATH"
+          xcode-project use-profiles
+      - name: Increment build number from App Store Connect
+        script: |
+          set -e
+          case "$APP_STORE_APPLE_ID" in
+            ''|REPLACE_*) echo "Set APP_STORE_APPLE_ID to the numeric Apple ID from App Store Connect."; exit 1 ;;
+          esac
+          BUILD_NUMBER="$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID")"
+          BUILD_NUMBER=$((BUILD_NUMBER + 1))
+          cd "$IOS_PROJECT_PATH"
+          agvtool new-version -all "$BUILD_NUMBER"
+      - name: Build signed IPA
+        script: |
+          set -e
+          if [ -d "$IOS_PROJECT_PATH/Unity-iPhone.xcworkspace" ]; then
+            xcode-project build-ipa --workspace "$IOS_PROJECT_PATH/Unity-iPhone.xcworkspace" --scheme "$XCODE_SCHEME"
+          else
+            xcode-project build-ipa --project "$IOS_PROJECT_PATH/Unity-iPhone.xcodeproj" --scheme "$XCODE_SCHEME"
+          fi
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
