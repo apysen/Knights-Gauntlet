@@ -358,13 +358,11 @@ namespace KnightsGauntlet.View
             wallet.name = "Wallet";
             _menuShillingsRt = wallet;
             wallet.anchorMin = wallet.anchorMax = wallet.pivot = new Vector2(1, 1);
-            var coin = new GameObject("Coin", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            var coin = new GameObject("Coin", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement), typeof(SpinningCoinIcon));
             coin.transform.SetParent(wallet, false);
-            coin.GetComponent<Image>().sprite = UISprites.Circle();
-            coin.GetComponent<Image>().color = UIFactory.Gold;
-            coin.GetComponent<Image>().raycastTarget = false;
             var coinSize = coin.GetComponent<LayoutElement>();
-            coinSize.preferredWidth = coinSize.preferredHeight = 18;
+            coinSize.preferredWidth = coinSize.preferredHeight = 24;
+            coin.GetComponent<SpinningCoinIcon>().EnableSwing();
             _menuShillings = _ui.Label(wallet, "", 18, UIFactory.Text);
             _menuShillings.textWrappingMode = TextWrappingModes.NoWrap;
             _menuShillings.GetComponent<LayoutElement>().preferredWidth = -1;
@@ -674,7 +672,7 @@ namespace KnightsGauntlet.View
             radRt.anchorMin = Vector2.zero; radRt.anchorMax = Vector2.one; radRt.offsetMin = Vector2.zero; radRt.offsetMax = Vector2.zero;
             radialGo.SetActive(false);
 
-            if (pu.Icon != null) AddIconChild(btn.gameObject, pu.Icon, UIFactory.Gold, 36);
+            if (!AddPowerupModel(btn.transform, pu, 36) && pu.Icon != null) AddIconChild(btn.gameObject, pu.Icon, UIFactory.Gold, 36);
 
             // Owned-count badge, bottom-right corner of the button.
             count = _ui.Label(btn.transform, "", 15, UIFactory.Gold, FontStyles.Normal);
@@ -1202,6 +1200,21 @@ namespace KnightsGauntlet.View
         // ── Adventure mode UI ────────────────────────────────────────────────
         // Star / icon helpers. The universal chess-glyph font (DejaVu) has no star
         // or restart-arrow in its atlas, so we draw them as sprites instead.
+        // The powerup's 3D model as a centred "Icon" child (modern style only). False when
+        // it cannot be shown, so the caller falls back to the flat line icon.
+        private bool AddPowerupModel(Transform parent, PowerupInfo pu, float size)
+        {
+            if (LegacyStyle) return false;
+            var go = new GameObject("Icon", typeof(RectTransform), typeof(RawImage), typeof(PowerupModelIcon));
+            go.transform.SetParent(parent, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(size, size); rt.anchoredPosition = Vector2.zero;
+            if (go.GetComponent<PowerupModelIcon>().Initialize(pu.Key)) return true;
+            Destroy(go);
+            return false;
+        }
+
         private void AddIconChild(GameObject btn, Sprite sprite, Color color, float size)
         {
             var go = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -1658,13 +1671,16 @@ namespace KnightsGauntlet.View
         private void BuildPowerupRow(Transform parent, PowerupInfo pu, int idx)
         {
             var row = _ui.Row(parent, 10f);
-            var iconGo = new GameObject("PuIcon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            var iconGo = new GameObject("PuIcon", typeof(RectTransform), typeof(LayoutElement));
             iconGo.transform.SetParent(row, false);
             var le = iconGo.GetComponent<LayoutElement>();
             le.preferredWidth = le.minWidth = 56f; le.preferredHeight = le.minHeight = 56f;
-            var img = iconGo.GetComponent<Image>(); img.raycastTarget = false;
-            if (pu.Icon != null) { img.sprite = pu.Icon; img.preserveAspect = true; img.color = UIFactory.Gold; }
-            else { img.sprite = _ui.Fill(); img.color = UIFactory.Panel; }
+            if (!AddPowerupModel(iconGo.transform, pu, 64))
+            {
+                var img = iconGo.AddComponent<Image>(); img.raycastTarget = false;
+                if (pu.Icon != null) { img.sprite = pu.Icon; img.preserveAspect = true; img.color = UIFactory.Gold; }
+                else { img.sprite = _ui.Fill(); img.color = UIFactory.Panel; }
+            }
 
             var info = _ui.Column(row, 2f);
             _ui.Label(info, pu.Name, 18, UIFactory.Gold, FontStyles.Normal, 210);

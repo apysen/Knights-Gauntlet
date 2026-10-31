@@ -126,6 +126,7 @@ namespace KnightsGauntlet.View
         private class TutStep { public string caption; public bool infoOnly; public System.Action setup; public int targetCol, targetRow; }
 
         public int Score => _sim != null ? _sim.Score : 0;
+        public int RunShillings => _sim != null ? _sim.RunShillings : 0;
         public GameMode CurrentMode => _sim != null ? _sim.Mode : GameMode.Trap;
         public Difficulty CurrentDifficulty => _sim != null ? _sim.Difficulty : Difficulty.Medium;
 
@@ -189,7 +190,17 @@ namespace KnightsGauntlet.View
                 SfxManager.Play(Sfx.ShieldBreak);
             };
             _sim.OnTransformExpired += () => SfxManager.Play(Sfx.Untransform);
-            _sim.OnPickupCollected += () => SfxManager.Play(Sfx.ShillingCollect);
+            _sim.OnPickupCollected += pk =>
+            {
+                // Sound, burst and "+N" all land on the collect frame (see GameView.Coins).
+                SfxManager.PlayShilling();
+                _view.SpawnPopup(pk.Col, pk.Y - 0.45f, "+" + pk.Value, UIFactory.Gold);
+                // One coin throughout: it pops on the board, then flies on into the counter.
+                if (!_ui.ReserveShilling(pk.Value)) { _view.PlayCoinCollect(pk.Col, pk.Y); return; }
+                int value = pk.Value;
+                if (!_view.PlayCoinCollect(pk.Col, pk.Y, (world, size, faceOn) => _ui.FlyShilling(world, size, faceOn, value)))
+                    _ui.LandShilling(value);
+            };
             _sim.OnTrapLevelUp += HandleTrapLevelUp;
 
             _ach = new AchievementTracker(_sim, OnAchievementUnlocked);

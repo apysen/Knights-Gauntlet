@@ -40,6 +40,16 @@ namespace KnightsGauntlet.View
         private AudioClip _legacyCaptureClip;
         private const string LegacyCapturePath = "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square)";
         private float _lastCaptureHapticTime = -1f;
+
+        // Shilling chain, the classic platformer coin run: each pickup soon after the
+        // last climbs one step up a major scale, capped at an octave so it never
+        // turns shrill, and resets after a pause. Own voices so a rising note never
+        // retunes one that is still ringing.
+        private const float ShillingChainWindow = 2f;
+        private static readonly int[] ShillingScale = { 0, 2, 4, 5, 7, 9, 11, 12 };
+        private AudioSource[] _shillingSources;
+        private int _shillingSourceIndex, _shillingChain;
+        private float _lastShillingTime = -10f;
         private AudioClip _menuTheme;
         private readonly Dictionary<Sfx, AudioClip> _clips = new Dictionary<Sfx, AudioClip>();
 
@@ -131,6 +141,14 @@ namespace KnightsGauntlet.View
                 _captureSources[i].spatialBlend = 0f;
             }
 
+            _shillingSources = new AudioSource[3];
+            for (int i = 0; i < _shillingSources.Length; i++)
+            {
+                _shillingSources[i] = gameObject.AddComponent<AudioSource>();
+                _shillingSources[i].playOnAwake = false;
+                _shillingSources[i].spatialBlend = 0f;
+            }
+
             foreach (var kv in Files)
             {
                 var clip = Resources.Load<AudioClip>(kv.Value);
@@ -160,6 +178,19 @@ namespace KnightsGauntlet.View
             if (_instance._clips.TryGetValue(id, out var clip) && clip != null)
                 _instance._src.PlayOneShot(clip,
                     SfxVolume * (id == Sfx.PieceMove && !UIFactory.LegacyStyle ? 0.68f : 1f));
+        }
+
+        public static void PlayShilling()
+        {
+            if (_instance == null || Muted) return;
+            if (!_instance._clips.TryGetValue(Sfx.ShillingCollect, out var clip) || clip == null) return;
+            float now = Time.unscaledTime;
+            _instance._shillingChain = now - _instance._lastShillingTime <= ShillingChainWindow
+                ? Mathf.Min(_instance._shillingChain + 1, ShillingScale.Length - 1) : 0;
+            _instance._lastShillingTime = now;
+            var source = _instance._shillingSources[_instance._shillingSourceIndex++ % _instance._shillingSources.Length];
+            source.pitch = Mathf.Pow(2f, ShillingScale[_instance._shillingChain] / 12f);
+            source.PlayOneShot(clip, SfxVolume);
         }
 
         public static void PlayCapture(int comboMultiplier)

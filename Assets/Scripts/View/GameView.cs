@@ -118,6 +118,7 @@ namespace KnightsGauntlet.View
             _coachFill = MakeBar("CoachFill", 8, CoachGold);
             _coachRing = MakeBar("CoachRing", 9, CoachGold);
             _coachRing.sprite = UISprites.RoundedBorder();
+            BendWithBoard(_coachFill); BendWithBoard(_coachRing);
 
             // Best-move marker (Divine Intervention): a bright green cell drawn over the
             // normal hints. Hidden unless the powerup is active. Fill + border for clarity.
@@ -125,6 +126,7 @@ namespace KnightsGauntlet.View
             _bestMoveFill.sprite = BoardView.UnitSquare();
             _bestMoveBorder = MakeBar("BestMoveBorder", 9, new Color(0.235f, 0.863f, 0.471f, 0.95f));
             _bestMoveBorder.sprite = UISprites.SquareBorder();
+            BendWithBoard(_bestMoveFill); BendWithBoard(_bestMoveBorder);
             _bestMoveFill.gameObject.SetActive(false);
             _bestMoveBorder.gameObject.SetActive(false);
 
@@ -327,20 +329,16 @@ namespace KnightsGauntlet.View
             var coin = _theme.comicStyle ? System.Array.Empty<Sprite>() : CoinFrames();
             _coinAnimT += dt;
             int coinIdx = coin.Length > 0 ? (int)(_coinAnimT * CoinFps) % coin.Length : 0;
+            int pk3 = 0;
             for (int i = 0; i < pickups.Count; i++)
             {
                 var pu = pickups[i];
                 if (!pu.Alive || pu.Y < (_legacy2D ? VisibleLo : -4.5f) || pu.Y > VisibleHi) continue;
+                // 3D art: a real spinning shilling that rolls under the conveyor.
+                if (_theme.comicStyle) { PlaceCoin3D(pk3++, pu.Col, pu.Y); continue; }
                 var sr = GetPickup(pk++);
                 sr.gameObject.SetActive(true);
-                if (_theme.comicStyle)
-                {
-                    sr.sprite = _theme.pickupSprite != null ? _theme.pickupSprite : ComicArt.Load("comic-coin");
-                    ClipBoardSprite(sr);
-                    sr.color = UIFactory.Gold;
-                    sr.transform.localScale = Vector3.one * (_board.cellSize * 0.56f);
-                }
-                else if (coin.Length > 0)
+                if (coin.Length > 0)
                 {
                     // Full-colour coin frame (no tint), scaled so its constant-height
                     // frames read at ~0.54 of a cell. Centre pivots keep the spinning
@@ -357,6 +355,7 @@ namespace KnightsGauntlet.View
                 sr.transform.position = _board.CellToWorld(pu.Col, pu.Y);
             }
             for (int k = pk; k < _pickupPool.Count; k++) _pickupPool[k].gameObject.SetActive(false);
+            HideCoins3D(pk3);
 
             // Player.
             _player.gameObject.SetActive(true);
@@ -443,6 +442,7 @@ namespace KnightsGauntlet.View
             UpdateCoachMark();
             UpdateGoalFlag();
             AnimatePopups(dt);
+            AnimateCoinBursts(dt);
             AnimateParticles(dt);
             AnimateVoxelParticles();
             AnimateComicEffects(sim, dt);
@@ -485,6 +485,7 @@ namespace KnightsGauntlet.View
             {
                 var sr = MakeBar(name, order, color);
                 sr.sprite = sprite;
+                BendWithBoard(sr);
                 pool.Add(sr);
             }
             return pool[i];
@@ -908,13 +909,13 @@ namespace KnightsGauntlet.View
                 var fillSR = go.AddComponent<SpriteRenderer>();
                 fillSR.sprite = _theme != null && _theme.threatSprite != null ? _theme.threatSprite : BoardView.UnitSquare();
                 fillSR.sortingOrder = 3;
-                ClipBoardSprite(fillSR);
+                BendWithBoard(fillSR);
                 var bgo = new GameObject("Border");
                 bgo.transform.SetParent(go.transform, false);
                 var borderSR = bgo.AddComponent<SpriteRenderer>();
                 borderSR.sprite = UISprites.SquareBorder(); // straight-edged, not a rounded ring
                 borderSR.sortingOrder = 4;
-                ClipBoardSprite(borderSR);
+                BendWithBoard(borderSR);
                 _threatPool.Add(new ThreatCell { go = go, fillSR = fillSR, borderSR = borderSR });
             }
             return _threatPool[i];
@@ -1096,7 +1097,7 @@ namespace KnightsGauntlet.View
                 var sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = BoardView.UnitSquare();
                 sr.sortingOrder = 1;
-                ClipBoardSprite(sr);
+                BendWithBoard(sr);
                 // Centre dot (mirrors the web hint marker); slightly bigger than the web's.
                 var dot = new GameObject("Dot");
                 dot.transform.SetParent(go.transform, false);
@@ -1114,7 +1115,7 @@ namespace KnightsGauntlet.View
 
         private void ConfigureHintVisual(HintCell hint)
         {
-            hint.dot.sprite = _legacy2D ? UISprites.Circle() : UISprites.MoveRing();
+            hint.dot.sprite = Bendable(_legacy2D ? UISprites.Circle() : UISprites.MoveRing());
             hint.dot.transform.localScale = Vector3.one * (_legacy2D ? .22f : .55f);
         }
 

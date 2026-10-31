@@ -8,6 +8,7 @@ Shader "Knight's Gauntlet/Queen Bubble"
         _Tint ("Film tint", Color) = (0.55, 0.82, 1, 1)
         _Opacity ("Opacity", Range(0, 1)) = 1
         _Pop ("Pop progress", Range(0, 1)) = 0
+        _Board ("Sits on the rolling board", Float) = 1 // 0 for free-standing glass (UI icons)
     }
     SubShader
     {
@@ -27,6 +28,7 @@ Shader "Knight's Gauntlet/Queen Bubble"
                 half4 _Tint;
                 float _Opacity;
                 float _Pop;
+                float _Board;
             CBUFFER_END
             float4 _KGBoardClip;
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
@@ -44,11 +46,16 @@ Shader "Knight's Gauntlet/Queen Bubble"
                 float3 p = input.positionOS.xyz;
                 // A slow wobble keeps it reading as a liquid film, not glass.
                 float t = _Time.y;
-                p += input.normalOS * (sin(t * 2.3 + p.z * 9.0) * .012 + sin(t * 1.7 + p.x * 11.0 + p.y * 7.0) * .010);
+                p += input.normalOS * (sin(t * 2.3 + p.z * 9.0) * .012 + sin(t * 1.7 + p.x * 11.0 + p.y * 7.0) * .010) * _Board;
                 p *= 1 + _Pop * .22; // swell as it bursts
                 output.positionWS = TransformObjectToWorld(p);
-                output.normalWS = KGRollNormal(TransformObjectToWorldNormal(input.normalOS), output.positionWS.y);
-                output.rolledWS = KGRollPosition(output.positionWS);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.rolledWS = output.positionWS;
+                if (_Board > .5)
+                {
+                    output.normalWS = KGRollNormal(output.normalWS, output.positionWS.y);
+                    output.rolledWS = KGRollPosition(output.positionWS);
+                }
                 output.positionCS = TransformWorldToHClip(output.rolledWS);
                 output.normalOS = input.normalOS;
                 return output;
@@ -57,7 +64,7 @@ Shader "Knight's Gauntlet/Queen Bubble"
             {
                 // Same top/bottom board clip as the pieces (not the side clip, so a
                 // bubble on an edge column stays round).
-                if (_KGBoardClip.w > .5)
+                if (_Board > .5 && _KGBoardClip.w > .5)
                 {
                     float boardY = input.positionWS.y - input.positionWS.z * _KGBoardClip.z;
                     clip(_KGBoardClip.y + boardY);

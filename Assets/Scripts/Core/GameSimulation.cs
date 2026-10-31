@@ -66,7 +66,7 @@ namespace KnightsGauntlet.Core
         public event Action<PieceType> OnFormChanged; // transform / expiry / shield
         public event Action OnShielded;                // a transform absorbed a hit
         public event Action OnDeath;
-        public event Action OnPickupCollected;         // a shilling pickup was collected
+        public event Action<Pickup> OnPickupCollected; // a shilling pickup was collected
         public event Action OnTransformExpired;        // form ran out on the timer (not a shield break)
 
         // Last few landings in scroll-invariant world space, for the snapshot.
@@ -920,7 +920,7 @@ namespace KnightsGauntlet.Core
                 {
                     pk.Alive = false;
                     RunShillings += pk.Value;
-                    OnPickupCollected?.Invoke();
+                    OnPickupCollected?.Invoke(pk);
                 }
             }
         }

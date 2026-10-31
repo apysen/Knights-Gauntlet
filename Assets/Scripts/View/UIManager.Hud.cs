@@ -88,6 +88,7 @@ namespace KnightsGauntlet.View
             _enemyBarFill = HudSurface(timerTrack, "TimerFill", UIFactory.Gold);
             UIFactory.Stretch(_enemyBarFill); _enemyBarFill.anchorMax = new Vector2(0, 1);
             _enemyBarRoot.SetActive(false);
+            BuildShillingCounter();
             BuildModernTallScroll();
             LayoutModernHud();
         }
@@ -136,7 +137,7 @@ namespace KnightsGauntlet.View
             var outline = button.GetComponent<Outline>(); if (outline != null) outline.enabled = false;
             var fillet = button.transform.Find("GoldFillet"); if (fillet != null) fillet.gameObject.SetActive(false);
             var icon = (RectTransform)button.transform.Find("Icon");
-            if (icon != null) { icon.sizeDelta = new Vector2(26, 26); icon.anchoredPosition = new Vector2(-15, 0); }
+            if (icon != null) { icon.sizeDelta = new Vector2(32, 32); icon.anchoredPosition = new Vector2(-14, 0); }
             count.font = UIFactory.BodyFont(); count.fontSize = 15;
             count.alignment = TextAlignmentOptions.Center;
             count.rectTransform.anchorMin = count.rectTransform.anchorMax = count.rectTransform.pivot = new Vector2(.5f, .5f);
@@ -298,6 +299,7 @@ namespace KnightsGauntlet.View
             _hudStatusValue.gameObject.SetActive(!adventure);
             for (int i = 0; i < 3; i++) _hudStars[i].gameObject.SetActive(adventure);
             _hudFooter.gameObject.SetActive(!tutorial);
+            UpdateShillingCounter(trap);
             _biomeLabel.gameObject.SetActive(adventure && !tutorial);
             if (tutorial)
             {
