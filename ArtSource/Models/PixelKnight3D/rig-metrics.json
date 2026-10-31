@@ -1,0 +1,19 @@
+{
+  "triangles": 20000,
+  "vertices": 9991,
+  "footAnchorBeforeCorrection": [
+    0.017678849399089813,
+    -0.08697309345006943,
+    0.0
+  ],
+  "bottom": 0.0,
+  "boneVertexCounts": {
+    "Root": 4707,
+    "Chest": 1986,
+    "Head": 2156,
+    "Cape": 6987,
+    "SwordArm": 406,
+    "FreeArm": 162
+  },
+  "idle": "Unity bone transforms; feet stay in Root; no board translation."
+}
