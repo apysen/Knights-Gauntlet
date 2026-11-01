@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace KnightsGauntlet.View
 {
@@ -18,7 +19,16 @@ namespace KnightsGauntlet.View
         Transform,          // battle/adventure: took on a captured piece's form (legacy pop)
         Untransform,        // form ran out when the timer expired
         Transformation,     // battle/adventure: a NEW transform begins (fires once per nightrider)
-        AdventureNextLevel // adventure: reached the level goal
+        AdventureNextLevel, // adventure: reached the level goal
+        // 3D style only (no legacy pixel sound, so legacy stays as it was):
+        CoinLand,        // a flying shilling lands in the HUD counter
+        BossPhase,       // the queen drops a phase (layered on the capture)
+        QueenShieldUp,   // a boss phase starts with the queen's bubble shield up
+        QueenShieldPop,  // her last minion falls and the bubble pops
+        PowerupChrono,   // Chronokinesis activated
+        PowerupDivine,   // Divine Intervention activated
+        PowerupPath,     // Divine Path (adventure) activated
+        TransformHum     // the quiet loop while a transformation lasts
     }
 
     // One shared AudioSource that plays short UI/gameplay sounds. Clips live in
@@ -27,11 +37,21 @@ namespace KnightsGauntlet.View
     //
     // GameManager creates one of these at boot. If a clip file is missing the entry
     // is simply skipped (with a warning), so a missing sound never breaks the game.
-    public class SfxManager : MonoBehaviour
+    //
+    // Music lives in SfxManager.Music.cs.
+    public partial class SfxManager : MonoBehaviour
     {
         private static SfxManager _instance;
         private AudioSource _src;
-        private AudioSource _music;
+        private AudioSource _uiSrc; // menu taps, so they sit on the UI mixer group
+
+        // Variant banks for the 3D style: numbered round robins, picked without repeating
+        // the last one, with a little pitch and volume jitter so repeats never sound
+        // identical. Own voices so the jitter never retunes another sound.
+        private class Bank { public readonly List<AudioClip> Clips = new List<AudioClip>(); public int Last = -1; public float LastTime = -10f; }
+        private readonly Dictionary<Sfx, Bank> _banks = new Dictionary<Sfx, Bank>();
+        private AudioSource[] _bankSources;
+        private int _bankSourceIndex;
         private AudioSource _loopSrc; // a single looping gameplay sound (e.g. the transform buff)
         private AudioSource[] _captureSources;
         private int _captureSourceIndex;
@@ -50,36 +70,80 @@ namespace KnightsGauntlet.View
         private AudioSource[] _shillingSources;
         private int _shillingSourceIndex, _shillingChain;
         private float _lastShillingTime = -10f;
-        private AudioClip _menuTheme;
         private readonly Dictionary<Sfx, AudioClip> _clips = new Dictionary<Sfx, AudioClip>();
 
-        // Looping background music. Add MenuTheme.wav under Assets/Resources/SFX/.
-        private const string MenuThemePath = "SFX/MenuTheme";
+        // Mixer with Music, SFX and UI groups under Master. Loaded from Resources so
+        // no scene wiring is needed. All groups sit at 0 dB, so routing through it
+        // changes nothing you can hear; it is the place for the Chronokinesis low-pass
+        // and per-bus trims later. Exposed volumes: MusicVolume, SfxVolume, UiVolume
+        // (in dB). If the asset is missing, sources just play unrouted.
+        private const string MixerPath = "Audio/KGMixer";
+
+        // 3D-style sounds (CC0, see ArtSource/Audio/LICENSES.md). Each entry is a bank:
+        // "Name" loads "Name 1", "Name 2", ... if numbered files exist, else "Name" alone.
+        // The legacy pixel style keeps the JDSherbert clips in Files below.
+        private static readonly Dictionary<Sfx, string> ModernFiles = new Dictionary<Sfx, string>
+        {
+            { Sfx.PieceMove,       "SFX/Move Wood" },
+            { Sfx.ShillingCollect, "SFX/Coin Ting" },
+            { Sfx.TrapLevelUp,     "SFX/Level Up Fanfare" },
+            { Sfx.CoinLand,        "SFX/Coin Land" },
+            { Sfx.BossPhase,       "SFX/Boss Phase Hit" },
+            { Sfx.QueenShieldUp,   "SFX/Queen Shield Up" },
+            { Sfx.QueenShieldPop,  "SFX/Queen Shield Pop" },
+            { Sfx.PowerupChrono,   "SFX/Powerup Chronokinesis" },
+            { Sfx.PowerupDivine,   "SFX/Powerup Divine" },
+            { Sfx.PowerupPath,     "SFX/Powerup Divine Path" },
+            // The transformation set, from the score's palette (ArtSource/Audio/MusicBuild).
+            { Sfx.Transformation,  "SFX/Transform Whoosh" },
+            { Sfx.TransformHum,    "SFX/Transform Hum" },
+            { Sfx.Untransform,     "SFX/Transform Poof" },  // the form's timer ran out
+            { Sfx.ShieldBreak,     "SFX/Transform Break" }, // the form shattered taking a hit
+        };
+
+        // Per-sound trim (dB) on top of the file's own level, plus a minimum gap so a
+        // burst of coins landing together doesn't pile up into one loud clatter.
+        private static float BankTrimDb(Sfx id) => id == Sfx.CoinLand ? -2f : 0f;
+        private static float BankMinGap(Sfx id) => id == Sfx.CoinLand ? 0.06f : 0f;
+        // Melodic or musical sounds get no pitch jitter (the shilling chain sets its own).
+        private static bool BankJitterPitch(Sfx id) => id == Sfx.PieceMove || id == Sfx.CoinLand || id == Sfx.QueenShieldPop;
+
+        // Sounds that belong on the UI group rather than SFX.
+        private static bool IsUi(Sfx id) => id == Sfx.PlaySelect || id == Sfx.TabSelect || id == Sfx.PageTurn;
 
         // ── Default volumes ──────────────────────────────────────────────────
         // EDIT THESE to change the out-of-the-box volume levels (0 = silent, 1 = full).
         // They only apply until the player moves a slider, which saves their own value.
         // Music is capped: it never plays louder than MaxMusicVolume (the full-right end
         // of the music slider), so the theme stays quietly in the background.
+        // Leave both ceilings at 0.1 until the clips are loudness-normalized: they are
+        // what keeps today's hot, mismatched files at a sane level, and raising them
+        // alone would make the game much louder for everyone with a saved volume.
         public const float MaxMusicVolume     = 0.1f;   // hard ceiling: music tops out at 10%
         public const float DefaultMusicVolume = 0.1f;   // must be within [0, MaxMusicVolume]
         public const float MaxSfxVolume       = 0.1f;   // hard ceiling: sfx top out at 10%
         public const float DefaultSfxVolume   = 0.1f;   // must be within [0, MaxSfxVolume]
 
-        // Current volumes, persisted so the player's choice survives a restart. Setting
-        // MusicVolume also updates the live music source so a slider drag is heard at once.
+        // Current volumes, persisted so the player's choice survives a restart. The music
+        // sources pick up a new MusicVolume on the next frame, so a slider drag is heard at once.
         // Music is clamped to [0, MaxMusicVolume]; this is the real AudioSource volume,
         // not the 0..1 slider position (see the Settings slider for the mapping).
         public static float MusicVolume
         {
-            get => Mathf.Clamp(PlayerPrefs.GetFloat("kg_music_vol", DefaultMusicVolume), 0f, MaxMusicVolume);
+            get
+            {
+                // Cached: the music voices read this every frame.
+                if (_musicVolCache < 0f) _musicVolCache = Mathf.Clamp(PlayerPrefs.GetFloat("kg_music_vol", DefaultMusicVolume), 0f, MaxMusicVolume);
+                return _musicVolCache;
+            }
             set
             {
                 float v = Mathf.Clamp(value, 0f, MaxMusicVolume);
+                _musicVolCache = v;
                 PlayerPrefs.SetFloat("kg_music_vol", v); PlayerPrefs.Save();
-                if (_instance != null && _instance._music != null) _instance._music.volume = v;
             }
         }
+        private static float _musicVolCache = -1f;
         // SFX is clamped to [0, MaxSfxVolume] the same way music is, so both top out at 10%.
         public static float SfxVolume
         {
@@ -109,27 +173,49 @@ namespace KnightsGauntlet.View
         public static bool Muted
         {
             get => PlayerPrefs.GetInt("kg_muted", 0) == 1;
-            set { PlayerPrefs.SetInt("kg_muted", value ? 1 : 0); PlayerPrefs.Save(); }
+            set
+            {
+                PlayerPrefs.SetInt("kg_muted", value ? 1 : 0); PlayerPrefs.Save();
+                // Muting used to only block new sounds, so music and loops played on.
+                if (_instance == null) return;
+                _instance.OnMutedChanged(value);
+                if (value && _instance._loopSrc != null) _instance._loopSrc.Stop();
+            }
         }
+
+        // Converts a decibel offset to a linear volume multiplier.
+        private static float Db(float db) => Mathf.Pow(10f, db / 20f);
 
         private void Awake()
         {
             if (_instance != null && _instance != this) { Destroy(this); return; }
             _instance = this;
+            var mixer = Resources.Load<AudioMixer>(MixerPath);
+            if (mixer == null) Debug.LogWarning("[SFX] Missing mixer at Assets/Resources/" + MixerPath + ".mixer");
+            AudioMixerGroup musicGroup = Group(mixer, "Music"), sfxGroup = Group(mixer, "SFX"), uiGroup = Group(mixer, "UI");
+
+            // Priority (0 = most important) decides who loses a voice when the phone runs
+            // out: music and the transform sting first, then UI, captures, coins, the rest.
             _src = gameObject.AddComponent<AudioSource>();
             _src.playOnAwake = false;
             _src.spatialBlend = 0f; // 2D
+            _src.outputAudioMixerGroup = sfxGroup;
+            _src.priority = 128;
 
-            _music = gameObject.AddComponent<AudioSource>();
-            _music.playOnAwake = false;
-            _music.loop = true;
-            _music.spatialBlend = 0f;
-            _music.volume = MusicVolume;
+            _uiSrc = gameObject.AddComponent<AudioSource>();
+            _uiSrc.playOnAwake = false;
+            _uiSrc.spatialBlend = 0f;
+            _uiSrc.outputAudioMixerGroup = uiGroup;
+            _uiSrc.priority = 64;
+
+            InitMusic(musicGroup);
 
             _loopSrc = gameObject.AddComponent<AudioSource>();
             _loopSrc.playOnAwake = false;
             _loopSrc.loop = true;
             _loopSrc.spatialBlend = 0f;
+            _loopSrc.outputAudioMixerGroup = sfxGroup;
+            _loopSrc.priority = 32;
 
             // Separate voices let fast capture chains rise in pitch without
             // retuning a sound that is still ringing from the previous hit.
@@ -139,6 +225,8 @@ namespace KnightsGauntlet.View
                 _captureSources[i] = gameObject.AddComponent<AudioSource>();
                 _captureSources[i].playOnAwake = false;
                 _captureSources[i].spatialBlend = 0f;
+                _captureSources[i].outputAudioMixerGroup = sfxGroup;
+                _captureSources[i].priority = 96;
             }
 
             _shillingSources = new AudioSource[3];
@@ -147,6 +235,36 @@ namespace KnightsGauntlet.View
                 _shillingSources[i] = gameObject.AddComponent<AudioSource>();
                 _shillingSources[i].playOnAwake = false;
                 _shillingSources[i].spatialBlend = 0f;
+                _shillingSources[i].outputAudioMixerGroup = sfxGroup;
+                _shillingSources[i].priority = 112;
+            }
+
+            _bankSources = new AudioSource[3];
+            for (int i = 0; i < _bankSources.Length; i++)
+            {
+                _bankSources[i] = gameObject.AddComponent<AudioSource>();
+                _bankSources[i].playOnAwake = false;
+                _bankSources[i].spatialBlend = 0f;
+                _bankSources[i].outputAudioMixerGroup = sfxGroup;
+                _bankSources[i].priority = 112;
+            }
+
+            foreach (var kv in ModernFiles)
+            {
+                var bank = new Bank();
+                for (int i = 1; ; i++)
+                {
+                    var variant = Resources.Load<AudioClip>(kv.Value + " " + i);
+                    if (variant == null) break;
+                    bank.Clips.Add(variant);
+                }
+                if (bank.Clips.Count == 0)
+                {
+                    var single = Resources.Load<AudioClip>(kv.Value);
+                    if (single != null) bank.Clips.Add(single);
+                }
+                if (bank.Clips.Count > 0) _banks[kv.Key] = bank;
+                else Debug.LogWarning("[SFX] Missing clip, add it at Assets/Resources/" + kv.Value + ".<ext>");
             }
 
             foreach (var kv in Files)
@@ -163,34 +281,63 @@ namespace KnightsGauntlet.View
                 var variant = Resources.Load<AudioClip>("SFX/Capture Slash " + i);
                 if (variant != null) _captureClips.Add(variant);
             }
-
-            _menuTheme = Resources.Load<AudioClip>(MenuThemePath);
-            if (_menuTheme == null)
-                Debug.LogWarning("[SFX] Missing menu theme at Assets/Resources/" + MenuThemePath + ".<ext>");
         }
 
         private void OnDestroy() { if (_instance == this) _instance = null; }
+
+        // Finds a direct child group of Master by name (null if the mixer or group is missing).
+        private static AudioMixerGroup Group(AudioMixer mixer, string name)
+        {
+            if (mixer == null) return null;
+            foreach (var g in mixer.FindMatchingGroups("Master/" + name))
+                if (g.name == name) return g;
+            return null;
+        }
 
         public static void Play(Sfx id)
         {
             if (id == Sfx.PieceCapture) { PlayCapture(1); return; }
             if (_instance == null || Muted) return;
+            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(id, out var bank)) { _instance.PlayBank(id, bank); return; }
             if (_instance._clips.TryGetValue(id, out var clip) && clip != null)
-                _instance._src.PlayOneShot(clip,
+                (IsUi(id) ? _instance._uiSrc : _instance._src).PlayOneShot(clip,
                     SfxVolume * (id == Sfx.PieceMove && !UIFactory.LegacyStyle ? 0.68f : 1f));
+        }
+
+        private void PlayBank(Sfx id, Bank bank)
+        {
+            float now = Time.unscaledTime;
+            if (now - bank.LastTime < BankMinGap(id)) return;
+            bank.LastTime = now;
+            int count = bank.Clips.Count;
+            int pick = Random.Range(0, count - (count > 1 && bank.Last >= 0 ? 1 : 0));
+            if (count > 1 && bank.Last >= 0 && pick >= bank.Last) pick++;
+            bank.Last = pick;
+            var source = _bankSources[_bankSourceIndex++ % _bankSources.Length];
+            // +/-4% pitch and +/-1.5 dB on the round-robin sounds; musical stings stay as written.
+            bool jitter = BankJitterPitch(id);
+            source.pitch = jitter ? Random.Range(0.96f, 1.04f) : 1f;
+            float db = BankTrimDb(id) + (jitter ? Random.Range(-1.5f, 1.5f) : 0f);
+            source.PlayOneShot(bank.Clips[pick], SfxVolume * Db(db));
         }
 
         public static void PlayShilling()
         {
             if (_instance == null || Muted) return;
-            if (!_instance._clips.TryGetValue(Sfx.ShillingCollect, out var clip) || clip == null) return;
+            AudioClip clip = null;
+            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(Sfx.ShillingCollect, out var bank)) clip = bank.Clips[0];
+            else _instance._clips.TryGetValue(Sfx.ShillingCollect, out clip);
+            if (clip == null) return;
             float now = Time.unscaledTime;
             _instance._shillingChain = now - _instance._lastShillingTime <= ShillingChainWindow
                 ? Mathf.Min(_instance._shillingChain + 1, ShillingScale.Length - 1) : 0;
             _instance._lastShillingTime = now;
             var source = _instance._shillingSources[_instance._shillingSourceIndex++ % _instance._shillingSources.Length];
             source.pitch = Mathf.Pow(2f, ShillingScale[_instance._shillingChain] / 12f);
-            source.PlayOneShot(clip, SfxVolume);
+            // Taper about 2 dB across the climb so the high notes don't poke out, plus
+            // a little volume jitter. No pitch jitter: the pitch is the melody.
+            float taper = Db(-2f * _instance._shillingChain / (ShillingScale.Length - 1));
+            source.PlayOneShot(clip, SfxVolume * taper * Db(Random.Range(-1f, 1f)));
         }
 
         public static void PlayCapture(int comboMultiplier)
@@ -212,8 +359,10 @@ namespace KnightsGauntlet.View
                 var clip = _instance._captureClips[clipIndex];
                 int voice = _instance._captureSourceIndex++ % _instance._captureSources.Length;
                 var source = _instance._captureSources[voice];
-                source.pitch = Mathf.Lerp(0.98f, 1.10f, combo);
-                source.PlayOneShot(clip, SfxVolume * Mathf.Lerp(1.00f, 1.35f, combo));
+                // Combo ramp plus +/-3% random pitch so repeats don't sound identical.
+                // Volume tops out at 1.15x so it won't clip once the ceilings are raised.
+                source.pitch = Mathf.Lerp(0.98f, 1.10f, combo) * Random.Range(0.97f, 1.03f);
+                source.PlayOneShot(clip, SfxVolume * Mathf.Lerp(1.00f, 1.15f, combo));
             }
             _instance.PulseCaptureHaptic();
         }
@@ -249,45 +398,44 @@ namespace KnightsGauntlet.View
 #endif
         }
 
-        // Loops a gameplay sound until StopLoop is called (used for the transform buff,
-        // which lasts a few seconds). Calling again swaps to the new clip and restarts.
-        public static void PlayLoop(Sfx id)
+        // Plays a gameplay sound on the dedicated loop voice until StopLoop is called.
+        // Calling again swaps to the new clip and restarts. Pass loop: false for a sting
+        // that should play once but still be cut short by StopLoop (the transformation:
+        // looping its 7 s sting made it repeat for the whole held form).
+        public static void PlayLoop(Sfx id, bool loop = true)
         {
             if (_instance == null || Muted) return;
             var l = _instance._loopSrc;
             if (l == null) return;
-            if (_instance._clips.TryGetValue(id, out var clip) && clip != null)
+            AudioClip clip = null;
+            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(id, out var bank)) clip = bank.Clips[0];
+            else _instance._clips.TryGetValue(id, out clip);
+            if (clip != null)
             {
+                _instance._loopFadeOut = false;
                 l.clip = clip;
+                l.loop = loop;
                 l.volume = SfxVolume;
                 l.Play();
             }
         }
 
+        // Stops the loop voice with a short fade (fast enough to feel immediate, slow
+        // enough not to click).
         public static void StopLoop()
         {
             if (_instance == null || _instance._loopSrc == null) return;
-            _instance._loopSrc.Stop();
+            if (_instance._loopSrc.isPlaying) _instance._loopFadeOut = true;
         }
 
-        // Loops the menu theme. Safe to call repeatedly: if it's already playing it
-        // does nothing (so bouncing between menu sub-screens never restarts it).
-        public static void PlayMenuMusic()
+        private bool _loopFadeOut;
+        private const float LoopFadeSeconds = 0.12f;
+
+        private void UpdateLoopFade()
         {
-            if (_instance == null || Muted) return;
-            var m = _instance._music;
-            if (m == null || _instance._menuTheme == null) return;
-            if (m.isPlaying && m.clip == _instance._menuTheme) return;
-            m.volume = MusicVolume;
-            m.clip = _instance._menuTheme;
-            m.Play();
+            if (!_loopFadeOut || _loopSrc == null) return;
+            _loopSrc.volume = Mathf.MoveTowards(_loopSrc.volume, 0f, SfxVolume / LoopFadeSeconds * Time.unscaledDeltaTime);
+            if (_loopSrc.volume <= 0f) { _loopSrc.Stop(); _loopFadeOut = false; }
         }
-
-        public static void StopMenuMusic()
-        {
-            if (_instance == null || _instance._music == null) return;
-            _instance._music.Stop();
-        }
-
     }
 }

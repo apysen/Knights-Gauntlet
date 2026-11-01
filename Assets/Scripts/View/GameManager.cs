@@ -291,7 +291,7 @@ namespace KnightsGauntlet.View
             _daily = false; _reviveCount = 0; _adLifeUsed = false; _runEnded = false;
             ResetPowerups();
             _ads.HideBanner();
-            SfxManager.StopMenuMusic();
+            SfxManager.PlayMusic(mode == GameMode.Battle ? Music.Battle : Music.Trap, (int)BoardBiome.Grass);
             _sim.Start(mode, difficulty);
             _ach.Reset();
             _view.SetPlayerForm(_sim.PlayerForm, CurrentSkin());
@@ -321,7 +321,7 @@ namespace KnightsGauntlet.View
             _daily = true; _reviveCount = 0; _adLifeUsed = false; _runEnded = false;
             ResetPowerups();
             _ads.HideBanner();
-            SfxManager.StopMenuMusic();
+            SfxManager.PlayMusic(Music.Trap, (int)BoardBiome.Grass);
             _sim.Start(GameMode.Trap, Difficulty.Grandmaster, SaveData.DailySeed(), mediumSpeed: true, pickups: false);
             _ach.Reset();
             _view.SetPlayerForm(_sim.PlayerForm, CurrentSkin());
@@ -329,9 +329,10 @@ namespace KnightsGauntlet.View
             _ui.ShowHud(showBadge: false); // daily hides the "TRAP · …" mode badge
         }
 
-        public void PauseGame() { if (_state != State.Playing && _state != State.Adventure) return; _prePause = _state; _state = State.Paused; _ui.ShowPause(_prePause == State.Adventure); }
+        public void PauseGame() { if (_state != State.Playing && _state != State.Adventure) return; _prePause = _state; _state = State.Paused; SfxManager.SetMusicPaused(true); _ui.ShowPause(_prePause == State.Adventure); }
         public void ExitAdventureToLevelSelect()
         {
+            SfxManager.SetMusicPaused(false); // the adventure loop plays on under level select
             _sim.TutorialEnd();
             _view.ClearCoachMark();
             _ui.SetAdventureHud(false, 0, "", -1); _ui.SetBossHud(false, 0, 0, false);
@@ -342,6 +343,7 @@ namespace KnightsGauntlet.View
         {
             if (_state != State.Paused) return;
             _state = _prePause;
+            SfxManager.SetMusicPaused(false);
             _ui.ShowHud(showBadge: !_daily);
             if (_prePause == State.Adventure && _advLevel != null) _ui.SetAdventureHud(true, _advMoves, _advLevel.Name, AdvEnemiesLeft());
             // ShowHud() hides the tall-map scrollbar; restore it when resuming a tall level.
@@ -388,6 +390,7 @@ namespace KnightsGauntlet.View
         {
             _reviveCount++;
             _sim.Revive();
+            SfxManager.PlayMusic(_sim.Mode == GameMode.Battle ? Music.Battle : Music.Trap, (int)CurrentBiome);
             _state = State.Reviving;     // freeze the board for a 3-2-1 countdown
             _reviveCountdown = 3f;
             _ads.HideBanner();
@@ -554,11 +557,14 @@ namespace KnightsGauntlet.View
                 const float chronoTargetRow = 3f, rewindSeconds = 2f;
                 float rewind = _sim.PlayerY - chronoTargetRow;
                 if (rewind > 0f) { _chronoRewindRate = rewind / rewindSeconds; _chronoRewindRemaining = rewindSeconds; }
+                SfxManager.Play(Sfx.PowerupChrono);
                 return true;
             }
             if (_divineRemaining > 0f) return false;
             if (!SaveData.TrySpendPowerup(Powerups.DivineIntervention.Key)) return false;
             _divineRemaining = Powerups.DivineIntervention.Duration;
+            SfxManager.Play(Sfx.PowerupDivine);
+            SfxManager.DuckMusic(2f);
             return true;
         }
 
@@ -579,6 +585,7 @@ namespace KnightsGauntlet.View
             if (path == null) { _ui.ShowToast("No route available for this level."); return false; }
             if (!SaveData.TrySpendPowerup(Powerups.DivinePath.Key)) return false;
             _divinePathActive = true; _divinePath = path;
+            SfxManager.Play(Sfx.PowerupPath);
             return true;
         }
 
@@ -662,7 +669,7 @@ namespace KnightsGauntlet.View
             _ui.SetBossHud(false,0,0,false);
             _adventureBiomeOverride = null;
             _board.ResetBackground();
-            SfxManager.StopMenuMusic();
+            SfxManager.PlayMusic(mode == GameMode.Battle ? Music.Battle : Music.Trap, (int)BoardBiome.Grass);
             _tutMode = mode; _tutDiff = diff; _tutReplay = replay;
             _sim.TutorialSetup(mode);
             _view.SetPlayerForm(PieceType.Knight, CurrentSkin());
@@ -843,6 +850,7 @@ namespace KnightsGauntlet.View
             // The level-up sting replaces the normal move blip for this move (flag consumed
             // in HandleInput), so the two don't play over each other.
             SfxManager.Play(Sfx.TrapLevelUp);
+            SfxManager.DuckMusic(2.2f); // the fanfare runs about 2.5 s
             _trapLeveledUpThisMove = true;
         }
 
@@ -864,7 +872,7 @@ namespace KnightsGauntlet.View
             _view.ResetComicPresentation();
             _view.ClearCoachMark();
             _deathRevealRemaining = 0f;
-            SfxManager.StopMenuMusic();
+            SfxManager.PlayMusic(lvl.IsBoss() ? Music.Boss : Music.Adventure, (int)AdventureBiome(lvl));
             _advLevel = lvl;
             _adventureBiomeOverride = AdventureBiome(lvl);
             _advMoves = 0;
@@ -874,6 +882,7 @@ namespace KnightsGauntlet.View
                 _bossPhase = 0;
                 _queenHealth = lvl.Phases.Length; // one HP per phase
                 LoadAdventureLayout(lvl.Phases[0]);
+                QueenShieldUp();
             }
             else
             {
@@ -1013,6 +1022,10 @@ namespace KnightsGauntlet.View
                 // yet. You then have to reach the flag tile to finish.
                 if (_advLevel.IsBoss())
                 {
+                    // Her last minion just fell: the bubble shield pops.
+                    bool shieldedNow = _sim.QueenShielded;
+                    if (_queenWasShielded && !shieldedNow) SfxManager.Play(Sfx.QueenShieldPop);
+                    _queenWasShielded = shieldedNow;
                     _ui.SetBossHud(true, _queenHealth, _advLevel.Phases.Length, _sim.QueenShielded);
                     if (_bossQueenDead)
                     {
@@ -1042,7 +1055,11 @@ namespace KnightsGauntlet.View
         private void AdvanceBossPhase()
         {
             _queenHealth = Mathf.Max(0, _queenHealth - 1);
+            // The capture plus a heavier orchestral hit, so a phase change reads bigger
+            // than an ordinary capture.
             SfxManager.PlayCapture(1);
+            SfxManager.Play(Sfx.BossPhase);
+            SfxManager.DuckMusic(0.8f);
             ShakeOnCapture(_lastCaptureKickDirection);
             _view.PlayComicCapture(_sim, 1);
             _view.SpawnCaptureVoxelBurst(_sim.PlayerCol, _sim.PlayerY, BurstColor(PieceType.Queen), 1);
@@ -1050,6 +1067,15 @@ namespace KnightsGauntlet.View
             if (_queenHealth <= 0) { _bossQueenDead = true; return; } // now go reach the flag
             _bossPhase++;
             LoadAdventureLayout(_advLevel.Phases[_bossPhase]);
+            QueenShieldUp();
+        }
+
+        // A boss phase just loaded: if the queen starts behind her bubble, play it forming.
+        private bool _queenWasShielded;
+        private void QueenShieldUp()
+        {
+            _queenWasShielded = _sim.QueenShielded;
+            if (_queenWasShielded) SfxManager.Play(Sfx.QueenShieldUp);
         }
 
         private void AdventureWin()
@@ -1061,6 +1087,7 @@ namespace KnightsGauntlet.View
             int balanceBefore = SaveData.GetShillings();
             if (reward > 0) SaveData.AddShillings(reward);
             SfxManager.Play(Sfx.AdventureNextLevel); // reached this level's goal
+            SfxManager.DuckMusic(2f);
             _sim.TutorialEnd(); _sim.Adventure = false;
             _view.ClearCoachMark();
             _ui.SetAdventureHud(false, 0, "", -1); _ui.SetBossHud(false, 0, 0, false);
@@ -1070,6 +1097,9 @@ namespace KnightsGauntlet.View
 
         private void AdventureFail()
         {
+            // Retries are quick, so the adventure loop keeps going and just dips under the sting.
+            SfxManager.PlayGameOverSting();
+            SfxManager.DuckMusic(2.5f);
             _sim.TutorialEnd(); _sim.Adventure = false;
             _view.ClearCoachMark();
             _ui.SetAdventureHud(false, 0, "", -1); _ui.SetBossHud(false, 0, 0, false);
@@ -1201,18 +1231,29 @@ namespace KnightsGauntlet.View
             }
             _wasTransformed = xf;
 
-            // The transform sting loops for as long as the player is transformed and actively
-            // playing. In battle the form is timed (TransformActive); in adventure it's a
-            // permanent puzzle form held until the level ends (PlayerForm != Knight). Gating on
-            // the play state stops it on the timer running out, a shield break, death, pause,
-            // or leaving the level, so it never lingers on another screen. Re-morphs and
-            // adventure form swaps keep the flag true, so the loop is never restarted.
+            // The score follows the board: meadow, bridge, castle arrangements of the same loop.
+            if (_state == State.Playing || _state == State.Adventure || _state == State.Tutorial)
+                SfxManager.SetMusicBiome((int)CurrentBiome);
+
+            // The transformation sound starts when the player transforms (3D style: a whoosh,
+            // then the hum loop; legacy: the old sting, once) and is cut short (the hum fades)
+            // once they stop being transformed and actively playing. In battle the form is
+            // timed (TransformActive); in adventure it's a permanent puzzle form held until the
+            // level ends (PlayerForm != Knight). Gating on the play state stops it on the timer
+            // running out (OnTransformExpired adds the poof), a shield break (OnShielded adds
+            // the break), death, pause, or leaving the level, so it never lingers on another
+            // screen. Re-morphs and adventure form swaps keep the flag true, so nothing restarts.
             bool transformedNow =
                 (_state == State.Playing   && _sim.Mode == GameMode.Battle && _sim.TransformActive) ||
                 (_state == State.Adventure && _sim.PlayerForm != PieceType.Knight);
             if (transformedNow != _transformLooping)
             {
-                if (transformedNow) SfxManager.PlayLoop(Sfx.Transformation);
+                if (transformedNow && UIFactory.LegacyStyle) SfxManager.PlayLoop(Sfx.Transformation, loop: false);
+                else if (transformedNow)
+                {
+                    SfxManager.Play(Sfx.Transformation);
+                    SfxManager.PlayLoop(Sfx.TransformHum);
+                }
                 else SfxManager.StopLoop();
                 _transformLooping = transformedNow;
             }
@@ -1292,6 +1333,8 @@ namespace KnightsGauntlet.View
         private void EnterDead()
         {
             _state = State.Dead;
+            SfxManager.StopMusic(0.8f); // the loop fades under the falling phrase
+            SfxManager.PlayGameOverSting();
             if (theme.comicStyle)
             {
                 _view.PlayComicDefeat(_sim);

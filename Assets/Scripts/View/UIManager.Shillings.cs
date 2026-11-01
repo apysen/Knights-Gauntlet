@@ -104,6 +104,7 @@ namespace KnightsGauntlet.View
             {
                 f.active = false;
                 f.rt.gameObject.SetActive(false);
+                if (t >= 1f) SfxManager.Play(Sfx.CoinLand); // a soft clink as it drops into the counter
                 LandShilling(f.value); // landed: count it and bump the counter
                 return;
             }
