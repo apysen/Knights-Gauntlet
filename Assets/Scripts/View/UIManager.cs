@@ -59,7 +59,7 @@ namespace KnightsGauntlet.View
         private RectTransform _trappedPanel;   // the centered column, uniformly scaled to fit the device
         private RectTransform _trappedCanvasRt; // the trapped canvas, for the visible-area size
 
-        private GameMode _selMode = GameMode.Trap;
+        private GameMode _selMode = GameMode.Battle; // Battle is the main mode
         private Difficulty _selDiff = Difficulty.Medium;
         private Button _trapBtn, _battleBtn;
         private readonly Dictionary<Difficulty, Button> _diffBtns = new Dictionary<Difficulty, Button>();
@@ -349,7 +349,8 @@ namespace KnightsGauntlet.View
 
             var settings = MenuButton(screen.transform, "", ShowSettings, 48, 48, 18, textOnly: true);
             settings.name = "Settings";
-            AddIconChild(settings.gameObject, RoyalIcons.Get("settings"), UIFactory.Muted, 28);
+            if (!AddModelIcon(settings.transform, "IconModels/SettingsGear", 34, spin: true))
+                AddIconChild(settings.gameObject, RoyalIcons.Get("settings"), UIFactory.Muted, 28);
             _menuSettingsRt = settings.GetComponent<RectTransform>();
             _menuSettingsRt.anchorMin = _menuSettingsRt.anchorMax = _menuSettingsRt.pivot = new Vector2(0, 1);
             _menuSettingsRt.sizeDelta = new Vector2(48, 48);
@@ -375,9 +376,9 @@ namespace KnightsGauntlet.View
             MenuButton(_menuNavRt, "Scores", () => _gm.ShowLeaderboard(), 104, 52, 16, textOnly: true);
 
             BuildRunOptions();
-            var savedMode = (GameMode)PlayerPrefs.GetInt("kg_menu_mode", (int)GameMode.Trap);
+            var savedMode = (GameMode)PlayerPrefs.GetInt("kg_menu_mode", (int)GameMode.Battle);
             var savedDiff = (Difficulty)Mathf.Clamp(PlayerPrefs.GetInt("kg_menu_difficulty", (int)Difficulty.Medium), 0, 3);
-            SetMode(savedMode == GameMode.Battle ? GameMode.Battle : GameMode.Trap);
+            SetMode(savedMode == GameMode.Trap ? GameMode.Trap : GameMode.Battle);
             SetDiff(savedDiff);
         }
 
@@ -417,8 +418,8 @@ namespace KnightsGauntlet.View
             _ui.Label(col, "YOUR NEXT RUN", 30, UIFactory.Gold);
             _ui.Label(col, "Choose a mode", 16, UIFactory.Muted);
             var modeRow = _ui.Row(col, 10);
-            _trapBtn = MenuButton(modeRow, "Trap", () => SetMode(GameMode.Trap), 152, 60, 19);
             _battleBtn = MenuButton(modeRow, "Battle", () => SetMode(GameMode.Battle), 152, 60, 19);
+            _trapBtn = MenuButton(modeRow, "Trap", () => SetMode(GameMode.Trap), 152, 60, 19);
             _modeDescription = _ui.Label(col, "", 14, UIFactory.Muted, width: 320);
             MenuSpace(col, 8);
             _speedLabel = _ui.Label(col, "SCROLL SPEED", 14, UIFactory.Muted);
@@ -1190,8 +1191,8 @@ namespace KnightsGauntlet.View
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
             var col = _ui.Column(screen.transform, 14f);
             _ui.Label(col, "Tutorials", 28, UIFactory.Gold, FontStyles.Normal);
-            _ui.Button(col, "Trap Tutorial", () => _gm.StartTrapTutorial(Difficulty.Easy, replay: true), UIFactory.Gold, UIFactory.Bg, 240, 52, 16);
             _ui.Button(col, "Battle Tutorial", () => _gm.StartBattleTutorial(Difficulty.Easy, replay: true), UIFactory.Gold, UIFactory.Bg, 240, 52, 16);
+            _ui.Button(col, "Trap Tutorial", () => _gm.StartTrapTutorial(Difficulty.Easy, replay: true), UIFactory.Gold, UIFactory.Bg, 240, 52, 16);
             _ui.Button(col, "Back", () => ShowSettings(), UIFactory.Panel, UIFactory.Gold);
             _tutPick.SetActive(false);
         }
@@ -1202,7 +1203,12 @@ namespace KnightsGauntlet.View
         // or restart-arrow in its atlas, so we draw them as sprites instead.
         // The powerup's 3D model as a centred "Icon" child (modern style only). False when
         // it cannot be shown, so the caller falls back to the flat line icon.
-        private bool AddPowerupModel(Transform parent, PowerupInfo pu, float size)
+        private bool AddPowerupModel(Transform parent, PowerupInfo pu, float size) =>
+            AddModelIcon(parent, "PowerupModels/" + PowerupModelIcon.ModelOf(pu.Key), size);
+
+        // A 3D model as a centred UI icon. False (and nothing added) when the model is
+        // missing or the legacy look is on, so callers can fall back to a flat sprite.
+        private bool AddModelIcon(Transform parent, string resourcePath, float size, bool spin = false)
         {
             if (LegacyStyle) return false;
             var go = new GameObject("Icon", typeof(RectTransform), typeof(RawImage), typeof(PowerupModelIcon));
@@ -1210,9 +1216,46 @@ namespace KnightsGauntlet.View
             var rt = (RectTransform)go.transform;
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(size, size); rt.anchoredPosition = Vector2.zero;
-            if (go.GetComponent<PowerupModelIcon>().Initialize(pu.Key)) return true;
+            if (go.GetComponent<PowerupModelIcon>().InitializeModel(resourcePath, spin)) return true;
             Destroy(go);
             return false;
+        }
+
+        // A VFX's own animation, looping, centred in parent. False if its frames are missing.
+        private bool AddVfxLoop(Transform parent, VfxInfo vfx, float size)
+        {
+            var frames = VfxPlayer.Frames(vfx);
+            if (frames == null || frames.Length == 0) return false;
+            var icon = new GameObject("VfxLoop", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            icon.transform.SetParent(parent, false);
+            icon.GetComponent<LayoutElement>().ignoreLayout = true;
+            var rt = (RectTransform)icon.transform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(size, size); rt.anchoredPosition = Vector2.zero;
+            var img = icon.GetComponent<Image>();
+            img.sprite = frames[0]; img.preserveAspect = true; img.raycastTarget = false;
+            icon.AddComponent<VfxUiPreview>().Play(frames, vfx.Fps);
+            return true;
+        }
+
+        // The real 3D knight in the given skin, centred in parent. False (nothing added)
+        // in the legacy look or if the knight can't be built, so callers keep the glyph.
+        private bool AddSkinKnight(Transform parent, string skinId, float size, float alpha)
+        {
+            if (LegacyStyle || _theme == null) return false;
+            var go = new GameObject("SkinKnight", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement), typeof(SkinKnightIcon));
+            go.transform.SetParent(parent, false);
+            go.GetComponent<LayoutElement>().ignoreLayout = true;
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(size, size); rt.anchoredPosition = Vector2.zero;
+            if (!go.GetComponent<SkinKnightIcon>().Initialize(_theme, skinId, _gm != null ? _gm.MenuCamera : null))
+            {
+                Destroy(go);
+                return false;
+            }
+            go.GetComponent<RawImage>().color = new Color(1f, 1f, 1f, alpha);
+            return true;
         }
 
         private void AddIconChild(GameObject btn, Sprite sprite, Color color, float size)
@@ -1602,11 +1645,11 @@ namespace KnightsGauntlet.View
 
             _shopSkins = _ui.Column(col, 9f);
             foreach (var skin in Skins.Shop) BuildShopCosmeticRow(_shopSkins, skin.Name, skin.Color, skin.Price,
-                Skins.IsOwned(skin.Id), SaveData.GetSkin() == skin.Id, () => BuySkin(skin));
+                Skins.IsOwned(skin.Id), SaveData.GetSkin() == skin.Id, () => BuySkin(skin), skin.Id);
 
             _shopVfx = _ui.Column(col, 9f);
             foreach (var vfx in Vfx.All) BuildShopCosmeticRow(_shopVfx, vfx.Name, UIFactory.Hex("#B88CFF"), vfx.Price,
-                Vfx.IsOwned(vfx.Id), SaveData.GetVfx() == vfx.Id, () => BuyVfx(vfx));
+                Vfx.IsOwned(vfx.Id), SaveData.GetVfx() == vfx.Id, () => BuyVfx(vfx), vfx: vfx);
 
             // ── Powerups tab ──
             _shopPowerups = _ui.Column(col, 12f);
@@ -1624,18 +1667,26 @@ namespace KnightsGauntlet.View
             SetShopTab(0);
         }
 
-        private void BuildShopCosmeticRow(Transform parent, string name, Color swatchColor, int price, bool owned, bool equipped, System.Action buy)
+        // The swatch shows the item itself: a skin's 3D knight (skinId) or a VFX's looping
+        // animation (vfx). Anything that can't load falls back to a tinted knight glyph.
+        private void BuildShopCosmeticRow(Transform parent, string name, Color swatchColor, int price, bool owned, bool equipped, System.Action buy,
+            string skinId = null, VfxInfo vfx = null)
         {
             var row = _ui.Row(parent, 8f);
             var swatch = new GameObject("CosmeticSwatch", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             swatch.transform.SetParent(row, false);
             var le = swatch.GetComponent<LayoutElement>(); le.preferredWidth = le.minWidth = 48f; le.preferredHeight = le.minHeight = 48f;
             var img = swatch.GetComponent<Image>(); img.sprite = _ui.Circle(); img.color = UIFactory.Panel; img.raycastTarget = false;
-            var piece = _ui.Label(swatch.transform, "\u265E", 34, swatchColor, FontStyles.Normal, 48);
-            piece.font = _theme.glyphFont != null ? _theme.glyphFont : UIFactory.ChessFont();
-            piece.alignment = TextAlignmentOptions.Center;
-            UIFactory.Stretch(piece.rectTransform);
-            piece.GetComponent<LayoutElement>().ignoreLayout = true;
+            bool shown = skinId != null ? AddSkinKnight(swatch.transform, skinId, 44f, 1f)
+                       : vfx != null && AddVfxLoop(swatch.transform, vfx, 42f);
+            if (!shown)
+            {
+                var piece = _ui.Label(swatch.transform, "\u265E", 34, swatchColor, FontStyles.Normal, 48);
+                piece.font = _theme.glyphFont != null ? _theme.glyphFont : UIFactory.ChessFont();
+                piece.alignment = TextAlignmentOptions.Center;
+                UIFactory.Stretch(piece.rectTransform);
+                piece.GetComponent<LayoutElement>().ignoreLayout = true;
+            }
             _ui.Label(row, name, 15, UIFactory.Text, FontStyles.Normal, 180);
             var status = owned ? (equipped ? "Equipped" : "Owned") : price + " sh";
             var button = _ui.Button(row, status, owned ? (System.Action)null : buy,
@@ -1797,7 +1848,7 @@ namespace KnightsGauntlet.View
                 {
                     var item = skin;
                     BuildShopCosmeticRow(_shopSkins, item.Name, item.Color, item.Price,
-                        Skins.IsOwned(item.Id), SaveData.GetSkin() == item.Id, () => BuySkin(item));
+                        Skins.IsOwned(item.Id), SaveData.GetSkin() == item.Id, () => BuySkin(item), item.Id);
                 }
             }
             if (_shopVfx != null)
@@ -1807,7 +1858,7 @@ namespace KnightsGauntlet.View
                 {
                     var item = vfx;
                     BuildShopCosmeticRow(_shopVfx, item.Name, UIFactory.Hex("#B88CFF"), item.Price,
-                        Vfx.IsOwned(item.Id), SaveData.GetVfx() == item.Id, () => BuyVfx(item));
+                        Vfx.IsOwned(item.Id), SaveData.GetVfx() == item.Id, () => BuyVfx(item), vfx: item);
                 }
             }
             for (int i = 0; i < Powerups.All.Length && i < _powerupOwned.Length; i++)
@@ -1885,7 +1936,15 @@ namespace KnightsGauntlet.View
                 // The near-black Nightfall knight barely reads on the dark tile, so sit a
                 // soft red glow behind it (added before the glyph so it stays underneath).
                 if (!mystery && s.Id == Skins.Secret.Id) AddSkinGlow(btn.transform, 72f);
-                // the actual knight, tinted with the skin colour (dimmed if not owned);
+                // The real 3D knight in this skin, faded while locked so players can see
+                // what they're working toward. Falls back to the tinted glyph below.
+                if (!mystery && AddSkinKnight(btn.transform, s.Id, 60f, owned ? 1f : .28f))
+                {
+                    _ui.Label(cell, equipped == s.Id ? "Equipped" : s.Name, 12,
+                        equipped == s.Id ? UIFactory.Gold : (owned ? UIFactory.Text : UIFactory.Muted), FontStyles.Normal, 70);
+                    continue;
+                }
+                // the knight glyph, tinted with the skin colour (dimmed if not owned);
                 // a mystery skin shows a "?" instead until it's unlocked.
                 var tint = mystery ? UIFactory.Muted
                                    : (owned ? s.Color : new Color(s.Color.r, s.Color.g, s.Color.b, 0.20f));
@@ -2062,7 +2121,7 @@ namespace KnightsGauntlet.View
             for (int i = _achList.childCount - 1; i >= 0; i--) Destroy(_achList.GetChild(i).gameObject);
             string active = SaveData.GetSkin();
 
-            AchRow("Classic Gold", "The piece you start with.", "gold", true, active == "gold");
+            AchRow("Classic", "The piece you start with.", "gold", true, active == "gold");
             foreach (var d in Achievements.All)
                 AchRow(d.SkinName + ": " + d.Name, d.Desc, d.SkinId, Achievements.IsUnlocked(d.Id), active == d.SkinId);
         }

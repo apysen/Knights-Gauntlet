@@ -167,7 +167,7 @@ namespace KnightsGauntlet.View
             // Ported from the ACHIEVEMENTS skin definitions (+ the default gold).
             var defs = new (string id, string name, string hex)[]
             {
-                ("gold",    "Classic Gold", "#F0C040"),
+                ("gold",    "Classic",      "#F0C040"),
                 ("emerald", "Emerald",      "#3CDC78"),
                 ("crimson", "Crimson",      "#FF5A5A"),
                 ("violet",  "Violet",       "#B070FF"),

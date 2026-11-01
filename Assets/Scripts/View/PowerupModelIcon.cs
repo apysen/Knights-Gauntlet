@@ -9,13 +9,14 @@ namespace KnightsGauntlet.View
     // approach as SpinningCoinIcon, and sways gently so it reads as an object.
     //
     // Models come from Resources/PowerupModels (built by ArtSource/Powerups/
-    // build_powerups.py). Their imported materials are swapped for the piece shader,
+    // build_powerups.py) and Resources/IconModels (ArtSource/Icons/build_ui_icons.py). Their imported materials are swapped for the piece shader,
     // keeping each material's colour; any material named "Glass" gets the bubble film.
     [RequireComponent(typeof(RawImage))]
     public sealed class PowerupModelIcon : MonoBehaviour
     {
         private const float SwayAmplitude = 22f;  // degrees either side of the resting angle
         private const float SwayPeriod = 4f;      // seconds per full sway
+        private const float SpinPeriod = 14f;     // seconds per turn for spinning icons (the settings gear)
         private const float RestYaw = 180f;       // turns the imported model's front to the camera
         private const float RestPitch = 12f;      // tips the top toward the camera a little
         private const float Fill = .9f;           // share of the icon the model fills
@@ -30,15 +31,21 @@ namespace KnightsGauntlet.View
         private Camera _camera;
         private RenderTexture _texture;
         private float _time;
+        private bool _spin;
 
         public static string ModelOf(string key) =>
             key == "chronokinesis" ? "Hourglass" : key == "divine_path" ? "PathfinderMap" : "DivineCross";
 
         // Returns false when the model is missing, so callers can fall back to the flat icon.
-        public bool Initialize(string powerupKey)
+        public bool Initialize(string powerupKey) => InitializeModel("PowerupModels/" + ModelOf(powerupKey));
+
+        // Any Resources model. spin turns it slowly about its own facing axis (a gear
+        // turning) instead of swaying side to side.
+        public bool InitializeModel(string resourcePath, bool spin = false)
         {
-            var asset = Resources.Load<GameObject>("PowerupModels/" + ModelOf(powerupKey));
+            var asset = Resources.Load<GameObject>(resourcePath);
             if (asset == null) return false;
+            _spin = spin;
             _stage = new GameObject("PowerupIconStage");
             _stage.transform.position = new Vector3(-1000f - 20f * _stages++, 40f, 0f);
             _pivot = new GameObject("Pivot").transform;
@@ -83,12 +90,14 @@ namespace KnightsGauntlet.View
         {
             if (_camera == null) return;
             _time += Time.unscaledDeltaTime;
-            Pose(SwayAmplitude * Mathf.Sin(_time * Mathf.PI * 2f / SwayPeriod));
+            Pose(_spin ? _time * 360f / SpinPeriod : SwayAmplitude * Mathf.Sin(_time * Mathf.PI * 2f / SwayPeriod));
             _camera.Render();
         }
 
-        private void Pose(float sway) =>
-            _pivot.localRotation = Quaternion.Euler(RestPitch, RestYaw + sway, 0f);
+        private void Pose(float angle) =>
+            _pivot.localRotation = _spin
+                ? Quaternion.Euler(RestPitch, RestYaw, 0f) * Quaternion.Euler(0f, 0f, angle)
+                : Quaternion.Euler(RestPitch, RestYaw + angle, 0f);
 
         private static Bounds WorldBounds(GameObject root)
         {

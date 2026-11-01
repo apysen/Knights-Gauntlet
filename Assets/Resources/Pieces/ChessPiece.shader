@@ -109,7 +109,7 @@ Shader "Knight's Gauntlet/Chess Piece"
                 half diffuse = saturate(dot(normal, light));
                 half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor * _BoardTint;
                 // Recolor gold details per player without changing the painted
-                // enamel or shared enemy materials. Classic Gold keeps the source art.
+                // enamel or shared enemy materials. The Classic (default) skin keeps the source art.
                 half gold = saturate((color.r-color.b)*5) * saturate((color.g-color.b)*5);
                 half brightness = dot(color.rgb,half3(.2126,.7152,.0722));
                 half3 accent = _AccentColor.rgb * brightness / .72h;

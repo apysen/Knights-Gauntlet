@@ -46,8 +46,8 @@ namespace KnightsGauntlet.View
             _ui.Label(col, "KNIGHT'S GAUNTLET", 38, UIFactory.Gold, FontStyles.Normal);
 
             var modeRow = _ui.Row(col);
-            _trapBtn = _ui.Button(modeRow, "Trap\n<size=58%><color=#9098AD>Avoid obstacles</color></size>", () => SetMode(GameMode.Trap), UIFactory.Panel, UIFactory.Muted, 150, 68, 20);
             _battleBtn = _ui.Button(modeRow, "Battle\n<size=58%><color=#9098AD>Capture enemies</color></size>", () => SetMode(GameMode.Battle), UIFactory.Panel, UIFactory.Muted, 150, 68, 20);
+            _trapBtn = _ui.Button(modeRow, "Trap\n<size=58%><color=#9098AD>Avoid obstacles</color></size>", () => SetMode(GameMode.Trap), UIFactory.Panel, UIFactory.Muted, 150, 68, 20);
 
             _ui.Button(col, "Adventure", () => OnAdventurePressed(), UIFactory.Panel, UIFactory.Muted, 310, 60, 20);
 

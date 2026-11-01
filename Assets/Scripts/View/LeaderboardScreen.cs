@@ -22,7 +22,7 @@ namespace KnightsGauntlet.View
         private TMP_Text _status;
 
         private string _source = "online";
-        private string _category = "trap-hard";
+        private string _category = "battle-hard";
         private Button _personalTab, _onlineTab, _dailyTab;
         private GameObject _personalCats, _onlineCats, _dailyCats;
         private readonly Dictionary<string, Button> _catBtns = new Dictionary<string, Button>();
@@ -100,23 +100,23 @@ namespace KnightsGauntlet.View
 
             // Personal categories: one row per mode, all four difficulties.
             _personalCats = _ui.Column(col, 7f).gameObject;
-            var pTrap = _ui.Row(_personalCats.transform, 6f);
-            _ui.Label(pTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Normal, 56);
-            CatTab(pTrap, "personal", "trap-easy", "Easy"); CatTab(pTrap, "personal", "trap-medium", "Med");
-            CatTab(pTrap, "personal", "trap-hard", "Hard"); CatTab(pTrap, "personal", "trap-grandmaster", "GM");
             var pBat = _ui.Row(_personalCats.transform, 6f);
             _ui.Label(pBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Normal, 56);
             CatTab(pBat, "personal", "battle-easy", "Easy"); CatTab(pBat, "personal", "battle-medium", "Med");
             CatTab(pBat, "personal", "battle-hard", "Hard"); CatTab(pBat, "personal", "battle-grandmaster", "GM");
+            var pTrap = _ui.Row(_personalCats.transform, 6f);
+            _ui.Label(pTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Normal, 56);
+            CatTab(pTrap, "personal", "trap-easy", "Easy"); CatTab(pTrap, "personal", "trap-medium", "Med");
+            CatTab(pTrap, "personal", "trap-hard", "Hard"); CatTab(pTrap, "personal", "trap-grandmaster", "GM");
 
             // Online categories: Hard & GM per mode.
             _onlineCats = _ui.Column(col, 7f).gameObject;
-            var oTrap = _ui.Row(_onlineCats.transform, 6f);
-            _ui.Label(oTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Normal, 56);
-            CatTab(oTrap, "online", "trap-hard", "Hard"); CatTab(oTrap, "online", "trap-grandmaster", "GM");
             var oBat = _ui.Row(_onlineCats.transform, 6f);
             _ui.Label(oBat, "BATTLE", 12, UIFactory.Muted, FontStyles.Normal, 56);
             CatTab(oBat, "online", "battle-hard", "Hard"); CatTab(oBat, "online", "battle-grandmaster", "GM");
+            var oTrap = _ui.Row(_onlineCats.transform, 6f);
+            _ui.Label(oTrap, "TRAP", 12, UIFactory.Muted, FontStyles.Normal, 56);
+            CatTab(oTrap, "online", "trap-hard", "Hard"); CatTab(oTrap, "online", "trap-grandmaster", "GM");
 
             // Daily: a single date-seeded board shared by everyone, resets daily.
             _dailyCats = _ui.Column(col, 4f).gameObject;
@@ -224,8 +224,8 @@ namespace KnightsGauntlet.View
         private static string DefaultCategoryFor(string src)
         {
             if (src == "daily") return "daily-" + System.DateTime.Now.ToString("yyyyMMdd");
-            if (src == "online") return "trap-hard";
-            return "trap-easy"; // personal
+            if (src == "online") return "battle-hard";
+            return "battle-easy"; // personal
         }
 
         private void SetCategory(string key) { _category = key; Refresh(); }
