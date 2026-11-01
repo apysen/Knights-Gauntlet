@@ -444,8 +444,10 @@ namespace KnightsGauntlet.View
 
         private bool ConfigureModel(PieceType type, bool boss, bool ceramicPrototype, bool porcelain)
         {
-            string modelName = type == PieceType.Nightrider ? "knight" : type.ToString().ToLowerInvariant();
             _modelIsPorcelain = porcelain && type != PieceType.Trap;
+            // Only the Ink Porcelain set has a dedicated Nightrider; older sets reuse the knight.
+            string modelName = type == PieceType.Nightrider ? (_modelIsPorcelain ? "nightrider" : "knight") :
+                type.ToString().ToLowerInvariant();
             _modelIsCeramic = !_modelIsPorcelain && ceramicPrototype && (type == PieceType.Knight || type == PieceType.Nightrider ||
                 type == PieceType.Rook || type == PieceType.Bishop);
             string key = type == PieceType.Trap ? "BoardModels/HazardPlaque" :
@@ -593,6 +595,7 @@ namespace KnightsGauntlet.View
                             source.name.Contains("PaintClay") ? new Color32(0xAB,0x63,0x43,255) :
                             source.name.Contains("PaintJade") ? new Color32(0x45,0x81,0x68,255) :
                             source.name.Contains("PaintPlum") ? new Color32(0x76,0x3B,0x61,255) :
+                            source.name.Contains("PaintMidnight") ? new Color32(0x40,0x3A,0x86,255) :
                             new Color32(0xEE,0xE1,0xC4,255);
                         replacement.SetColor("_BaseColor", palette);
                     }
