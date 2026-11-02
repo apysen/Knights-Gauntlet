@@ -11,6 +11,7 @@ Shader "Knight's Gauntlet/Ink Porcelain"
         _SkinFX ("Shop skin finish", Float) = 0
         _SkinFade ("Skin opacity", Float) = 1
         _SkinScale ("Skin pattern scale", Float) = 1
+        _SkinFlash ("Skin flash", Float) = 0
     }
     SubShader
     {
@@ -26,7 +27,7 @@ Shader "Knight's Gauntlet/Ink Porcelain"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor, _AccentColor;
                 float _AccentStrength, _SkinRegion, _Surface, _PieceClip;
-                float _SkinFX, _SkinFade, _SkinScale;
+                float _SkinFX, _SkinFade, _SkinScale, _SkinFlash;
             CBUFFER_END
             #include "Assets/Resources/Pieces/PieceSkinFX.hlsl"
             float4 _KGBoardClip;

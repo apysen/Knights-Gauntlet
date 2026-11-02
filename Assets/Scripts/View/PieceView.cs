@@ -145,6 +145,7 @@ namespace KnightsGauntlet.View
                 ShowPose(ComicPose.Attack, duration);
                 return;
             }
+            TriggerSkinFlash();
             if (!_hopActive) CacheModelRestPose();
             _motionType = form;
             _attackDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.up;
@@ -383,6 +384,8 @@ namespace KnightsGauntlet.View
                 _skinScaleSent = 1f / Mathf.Max(.0001f, transform.lossyScale.x);
                 properties.SetFloat("_SkinFX", _skinFx);
                 properties.SetFloat("_SkinFade", 1f);
+                properties.SetFloat("_SkinFlash", 0f);
+                _skinFlash = 0f;
                 properties.SetFloat("_SkinScale", _skinScaleSent);
                 foreach (var renderer in _modelRenderers) renderer.SetPropertyBlock(properties);
                 spriteRenderer.enabled = false;

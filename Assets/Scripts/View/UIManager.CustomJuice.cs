@@ -229,7 +229,7 @@ namespace KnightsGauntlet.View
             if (changed)
             {
                 ClearShowcaseSlot();
-                if (mystery || !AddSkinKnight(_customShowSlot, s.Id, 136f, owned ? 1f : .4f))
+                if (mystery || !AddSkinKnight(_customShowSlot, s.Id, 136f, owned ? 1f : .4f, 220f, 1f, .58f))
                     ShowcaseGlyph(mystery ? "?" : "♞", mystery ? UIFactory.Muted : s.Color);
                 Center(_customShowSlot);
             }

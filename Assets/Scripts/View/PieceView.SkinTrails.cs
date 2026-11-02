@@ -10,6 +10,12 @@ namespace KnightsGauntlet.View
     //   Stained Glass jewel-coloured glass shards that scatter and glint
     //   Queensbane   red embers that drift up off the path
     //   Starforged   twinkling stardust, and now and then a shooting star
+    //   Mother of Pearl iridescent bubbles that float up and pop
+    //   Stormcaller  a crackling lightning arc along the jump, with sparks
+    //   Runestone    glowing rune glyphs that drift up and fade
+    //   Jade Dynasty blossom petals that flutter down
+    //   Clockwork    brass cogs that bounce on the board, with sparks
+    //   Heartwood    leaves that drift down and settle
     // Everything lives under this piece in its local units (Z- is up off the board), so
     // it rides the scrolling board. When the piece jumps again, live bits are shifted
     // back by the jump so they stay where they were dropped. Pooled; no per-hop allocation
@@ -24,7 +30,7 @@ namespace KnightsGauntlet.View
         private float _echoAge = float.MaxValue, _echoLife = 1f;
         private MaterialPropertyBlock _echoProperties;
 
-        private enum TrailBitKind { Coin, Shard, Ember, Dust, Streak }
+        private enum TrailBitKind { Coin, Shard, Ember, Dust, Streak, Bubble, Bolt, Spark, Rune, Petal, Cog, Leaf }
         private sealed class TrailBit
         {
             public TrailBitKind kind;
@@ -33,7 +39,7 @@ namespace KnightsGauntlet.View
             public SpriteRenderer sprite;
             public bool active;
             public Vector3 vel, spinAxis;
-            public float spin, life, maxLife, size, seed;
+            public float spin, life, maxLife, size, seed, terminal;
             public Color color;
         }
         private readonly List<TrailBit> _trailBits = new List<TrailBit>();
@@ -54,12 +60,18 @@ namespace KnightsGauntlet.View
             ShiftTrail(fromOffset);
             switch (_skinFx)
             {
-                case SkinFx.Phantom: SpawnEchoes(fromOffset, 3, .3f); break;
-                case SkinFx.Nightfall: SpawnEchoes(fromOffset, 4, .42f); break;
+                case SkinFx.Phantom: SpawnEchoes(fromOffset, 4, .42f); break;
+                case SkinFx.Nightfall: SpawnEchoes(fromOffset, 4, .58f); break;
                 case SkinFx.Gilded: SpawnCoins(fromOffset); break;
                 case SkinFx.StainedGlass: SpawnShards(fromOffset); break;
                 case SkinFx.Queensbane: SpawnEmbers(fromOffset); break;
                 case SkinFx.Starforged: SpawnStardust(fromOffset); break;
+                case SkinFx.Pearl: SpawnBubbles(fromOffset); break;
+                case SkinFx.Storm: SpawnLightning(fromOffset); break;
+                case SkinFx.Runestone: SpawnRunes(fromOffset); break;
+                case SkinFx.Jade: SpawnFalling(fromOffset, TrailBitKind.Petal, 12); break;
+                case SkinFx.Clockwork: SpawnCogs(fromOffset); break;
+                case SkinFx.Heartwood: SpawnLeaves(fromOffset); break;
             }
         }
 
@@ -75,6 +87,7 @@ namespace KnightsGauntlet.View
         {
             if (_echoAge < _echoLife) { _echoAge += dt; UpdateEchoes(); }
             if (_trailBits.Count > 0) UpdateTrailBits(dt);
+            UpdateSkinFlash(dt);
         }
 
         private void HideSkinTrail()
@@ -143,8 +156,8 @@ namespace KnightsGauntlet.View
                 // The copy nearest the start square is faintest.
                 float along = _echoCount > 1 ? i / (float)(_echoCount - 1) : 1f;
                 float fade = _echoFx == SkinFx.Nightfall
-                    ? life * Mathf.Lerp(.35f, .8f, along)          // dense shadows that thin out
-                    : life * life * Mathf.Lerp(.28f, .6f, along);  // airy ghosts
+                    ? life * Mathf.Lerp(.5f, .95f, along)          // dense shadows that thin out
+                    : life * Mathf.Lerp(.4f, .8f, along);           // airy ghosts
                 block.Clear();
                 block.SetFloat("_AccentStrength", 0f);
                 block.SetFloat("_SkinFX", _echoFx);
@@ -176,7 +189,7 @@ namespace KnightsGauntlet.View
 
         private void SpawnCoins(Vector3 fromOffset)
         {
-            const int count = 5;
+            const int count = 9;
             for (int k = 0; k < count; k++)
             {
                 var bit = GetTrailBit(TrailBitKind.Coin);
@@ -184,20 +197,20 @@ namespace KnightsGauntlet.View
                 float t = (k + .5f) / count;
                 Vector2 jitter = Random.insideUnitCircle * .08f;
                 bit.tr.localPosition = fromOffset * t + new Vector3(jitter.x, jitter.y, TrailFloor - Random.Range(.15f, .32f));
-                Vector2 kick = Random.insideUnitCircle * .9f;
-                bit.vel = new Vector3(kick.x, kick.y, -Random.Range(1.8f, 2.5f));
+                Vector2 kick = Random.insideUnitCircle * 1.3f;
+                bit.vel = new Vector3(kick.x, kick.y, -Random.Range(2.2f, 3f));
                 bit.tr.localRotation = Random.rotation;
                 bit.spinAxis = Random.onUnitSphere;
                 bit.spin = Random.Range(540f, 900f);
-                bit.maxLife = bit.life = Random.Range(.5f, .65f);
-                bit.size = Random.Range(.095f, .115f); // about 0.17-0.21 across
+                bit.maxLife = bit.life = Random.Range(.75f, .95f);
+                bit.size = Random.Range(.12f, .15f); // about 0.22-0.27 across
                 Activate(bit);
             }
         }
 
         private void SpawnShards(Vector3 fromOffset)
         {
-            const int count = 9;
+            const int count = 15;
             var block = _bitProperties ?? (_bitProperties = new MaterialPropertyBlock());
             for (int k = 0; k < count; k++)
             {
@@ -206,16 +219,16 @@ namespace KnightsGauntlet.View
                 float t = (k + .5f) / count;
                 Vector2 jitter = Random.insideUnitCircle * .1f;
                 bit.tr.localPosition = fromOffset * t + new Vector3(jitter.x, jitter.y, TrailFloor - Random.Range(.12f, .4f));
-                Vector2 kick = Random.insideUnitCircle.normalized * Random.Range(1.1f, 2.1f);
-                bit.vel = new Vector3(kick.x, kick.y, -Random.Range(.9f, 1.7f));
+                Vector2 kick = Random.insideUnitCircle.normalized * Random.Range(1.4f, 2.6f);
+                bit.vel = new Vector3(kick.x, kick.y, -Random.Range(1.2f, 2.1f));
                 bit.tr.localRotation = Random.rotation;
                 bit.spinAxis = Random.onUnitSphere;
                 bit.spin = Random.Range(720f, 1260f);
-                bit.maxLife = bit.life = Random.Range(.4f, .55f);
-                bit.size = Random.Range(.15f, .22f);
+                bit.maxLife = bit.life = Random.Range(.6f, .8f);
+                bit.size = Random.Range(.2f, .28f);
                 block.Clear();
                 // Over-bright so the lit shard still reads as glowing glass.
-                block.SetColor("_BaseColor", Jewels[Random.Range(0, Jewels.Length)] * 1.7f);
+                block.SetColor("_BaseColor", Jewels[Random.Range(0, Jewels.Length)] * 2.1f);
                 bit.renderer.SetPropertyBlock(block);
                 Activate(bit);
             }
@@ -223,7 +236,7 @@ namespace KnightsGauntlet.View
 
         private void SpawnEmbers(Vector3 fromOffset)
         {
-            const int count = 14;
+            const int count = 24;
             for (int k = 0; k < count; k++)
             {
                 var bit = GetTrailBit(TrailBitKind.Ember);
@@ -235,8 +248,8 @@ namespace KnightsGauntlet.View
                 bit.vel = new Vector3(Random.Range(-.3f, .3f), Random.Range(.3f, .65f), -Random.Range(.5f, 1f));
                 bit.tr.localRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 90f));
                 bit.spin = Random.Range(-240f, 240f);
-                bit.maxLife = bit.life = Random.Range(.55f, .9f);
-                bit.size = Random.Range(.06f, .1f);
+                bit.maxLife = bit.life = Random.Range(.8f, 1.2f);
+                bit.size = Random.Range(.08f, .13f);
                 Activate(bit);
             }
         }
@@ -248,7 +261,7 @@ namespace KnightsGauntlet.View
 
         private void SpawnStardust(Vector3 fromOffset)
         {
-            const int count = 16;
+            const int count = 26;
             for (int k = 0; k < count; k++)
             {
                 var bit = GetTrailBit(TrailBitKind.Dust);
@@ -258,14 +271,14 @@ namespace KnightsGauntlet.View
                 Vector2 drift = Random.insideUnitCircle * .25f;
                 bit.vel = new Vector3(drift.x, drift.y + .1f, -Random.Range(.05f, .3f));
                 bit.tr.localRotation = Quaternion.Euler(0f, 0f, 45f); // diamond sparkle
-                bit.maxLife = bit.life = Random.Range(.6f, 1f);
-                bit.size = Random.Range(.035f, .065f);
+                bit.maxLife = bit.life = Random.Range(.8f, 1.3f);
+                bit.size = Random.Range(.05f, .09f);
                 bit.seed = Random.Range(0f, 100f);
                 bit.color = StarColors[Random.Range(0, StarColors.Length)];
                 Activate(bit);
             }
             // Sometimes a shooting star streaks along the jump, past the piece.
-            if (Random.value < .4f)
+            if (Random.value < .7f)
             {
                 var star = GetTrailBit(TrailBitKind.Streak);
                 if (star == null) return;
@@ -273,8 +286,8 @@ namespace KnightsGauntlet.View
                 star.tr.localPosition = fromOffset * 1.25f + new Vector3(0f, 0f, TrailFloor - .55f);
                 star.vel = dir * 7f;
                 star.tr.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-                star.maxLife = star.life = .32f;
-                star.size = .05f;
+                star.maxLife = star.life = .42f;
+                star.size = .07f;
                 star.color = new Color(.88f, .92f, 1f);
                 Activate(star);
             }
@@ -311,6 +324,7 @@ namespace KnightsGauntlet.View
                     bit.tr.localScale = new Vector3(bit.size * Mathf.Lerp(3f, 10f, k), bit.size * .5f, 1f);
                     continue;
                 }
+                if (UpdateNewTrailBit(bit, k, dt, floor)) continue;
                 if (bit.kind == TrailBitKind.Ember)
                 {
                     bit.vel *= 1f - 1.5f * dt; // drag
@@ -349,16 +363,16 @@ namespace KnightsGauntlet.View
         private TrailBit GetTrailBit(TrailBitKind kind)
         {
             foreach (var bit in _trailBits) if (!bit.active && bit.kind == kind) return bit;
-            if (_trailBits.Count >= 64) return null;
+            if (_trailBits.Count >= MaxTrailBits && !EvictIdleTrailBit()) return null;
             var item = new TrailBit { kind = kind };
             int layer = spriteRenderer != null ? spriteRenderer.sortingLayerID : 0;
             int order = spriteRenderer != null ? spriteRenderer.sortingOrder : 0;
-            if (kind == TrailBitKind.Ember || kind == TrailBitKind.Dust || kind == TrailBitKind.Streak)
+            if (kind != TrailBitKind.Coin && kind != TrailBitKind.Shard)
             {
                 var go = new GameObject("Skin" + kind);
                 go.transform.SetParent(transform, false);
                 item.sprite = go.AddComponent<SpriteRenderer>();
-                item.sprite.sprite = BoardView.UnitSquare();
+                item.sprite.sprite = TrailSprite(kind);
                 item.sprite.sortingLayerID = layer;
                 item.sprite.sortingOrder = order + 1;
                 item.renderer = item.sprite;
@@ -387,6 +401,23 @@ namespace KnightsGauntlet.View
             item.tr.gameObject.SetActive(false);
             _trailBits.Add(item);
             return item;
+        }
+
+        // The pool holds bits of every kind this piece has ever used, so after switching
+        // skins it can be full of idle bits the current trail never asks for. Free one of
+        // those to make room; without this, a full pool silently stopped the trail.
+        private const int MaxTrailBits = 160;
+        private bool EvictIdleTrailBit()
+        {
+            for (int i = 0; i < _trailBits.Count; i++)
+            {
+                var bit = _trailBits[i];
+                if (bit.active) continue;
+                if (bit.tr != null) Destroy(bit.tr.gameObject);
+                _trailBits.RemoveAt(i);
+                return true;
+            }
+            return false;
         }
 
         private static void Activate(TrailBit bit)

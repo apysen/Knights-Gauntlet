@@ -11,6 +11,7 @@ Shader "Knight's Gauntlet/Matte Ceramic Prototype"
         _SkinFX ("Shop skin finish", Float) = 0
         _SkinFade ("Skin opacity", Float) = 1
         _SkinScale ("Skin pattern scale", Float) = 1
+        _SkinFlash ("Skin flash", Float) = 0
     }
     SubShader
     {
@@ -30,7 +31,7 @@ Shader "Knight's Gauntlet/Matte Ceramic Prototype"
                 float _SkinRegion;
                 float _PieceClip;
                 float _SkinEye;
-                float _SkinFX, _SkinFade, _SkinScale;
+                float _SkinFX, _SkinFade, _SkinScale, _SkinFlash;
             CBUFFER_END
             #include "Assets/Resources/Pieces/PieceSkinFX.hlsl"
             float4 _KGBoardClip;

@@ -21,7 +21,8 @@ namespace KnightsGauntlet.View
     // whichever piece the player is, so they carry through every Battle transformation.
     public static class SkinFx
     {
-        public const int None = 0, StainedGlass = 1, Phantom = 2, Gilded = 3, Queensbane = 4, Nightfall = 5, Starforged = 6;
+        public const int None = 0, StainedGlass = 1, Phantom = 2, Gilded = 3, Queensbane = 4, Nightfall = 5, Starforged = 6,
+            Pearl = 7, Storm = 8, Runestone = 9, Jade = 10, Clockwork = 11, Heartwood = 12;
     }
 
     // Single source of truth for skin ids → colours, used by GetSkinTint, the
@@ -43,23 +44,27 @@ namespace KnightsGauntlet.View
             new SkinInfo { Id = "magma",   Name = "Magma",   Color = Hex("#FF8A3C"), Source = SkinSource.Achievement },
         };
 
-        // Buyable with shillings. Colours chosen to not clash with the above.
+        // Buyable with shillings. Plain recolours are 2,500; shader finishes are 25,000.
         public static readonly SkinInfo[] Shop =
         {
-            new SkinInfo { Id = "teal",   Name = "Teal",   Color = Hex("#2ED9C3"), Price = 3000,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "rose",   Name = "Rose",   Color = Hex("#FF6FA5"), Price = 3000,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "sky",    Name = "Sky",    Color = Hex("#4FA8FF"), Price = 4000,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "lime",   Name = "Lime",   Color = Hex("#B6E33B"), Price = 4000,  Source = SkinSource.Shop },
-            new SkinInfo { Id = "amber",  Name = "Amber",  Color = Hex("#FFB300"), Price = 5000, Source = SkinSource.Shop },
-            new SkinInfo { Id = "coral",  Name = "Coral",  Color = Hex("#FF7A5C"), Price = 5000, Source = SkinSource.Shop },
-            new SkinInfo { Id = "indigo", Name = "Indigo", Color = Hex("#6C5CE7"), Price = 6000, Source = SkinSource.Shop },
-            new SkinInfo { Id = "silver", Name = "Silver", Color = Hex("#C9D2E0"), Price = 7500, Source = SkinSource.Shop },
+            new SkinInfo { Id = "teal",   Name = "Teal",   Color = Hex("#2ED9C3"), Price = 2500, Source = SkinSource.Shop },
+            new SkinInfo { Id = "rose",   Name = "Rose",   Color = Hex("#FF6FA5"), Price = 2500, Source = SkinSource.Shop },
+            new SkinInfo { Id = "sky",    Name = "Sky",    Color = Hex("#4FA8FF"), Price = 2500, Source = SkinSource.Shop },
+            new SkinInfo { Id = "lime",   Name = "Lime",   Color = Hex("#B6E33B"), Price = 2500, Source = SkinSource.Shop },
+            new SkinInfo { Id = "indigo", Name = "Indigo", Color = Hex("#6C5CE7"), Price = 2500, Source = SkinSource.Shop },
+            new SkinInfo { Id = "silver", Name = "Silver", Color = Hex("#C9D2E0"), Price = 2500, Source = SkinSource.Shop },
             // Premium finishes: full retextures rather than colour tints.
-            new SkinInfo { Id = "stainedglass", Name = "Stained Glass", Color = Hex("#3F6BFF"), Glow = Hex("#FFC66B"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.StainedGlass },
-            new SkinInfo { Id = "phantom",      Name = "Phantom",       Color = Hex("#9FF3FF"), Glow = Hex("#7FF5FF"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Phantom },
-            new SkinInfo { Id = "gilded",       Name = "Golden Gilded", Color = Hex("#FFD36B"), Glow = Hex("#FFC94A"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Gilded },
-            new SkinInfo { Id = "queensbane",   Name = "Queensbane",    Color = Hex("#D9DEE6"), Glow = Hex("#FF3A2A"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Queensbane },
-            new SkinInfo { Id = "starforged",   Name = "Starforged",    Color = Hex("#7B5CFF"), Glow = Hex("#8A7CFF"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Starforged },
+            new SkinInfo { Id = "stainedglass", Name = "Stained Glass", Color = Hex("#3F6BFF"), Glow = Hex("#FFC66B"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.StainedGlass },
+            new SkinInfo { Id = "phantom",      Name = "Phantom",       Color = Hex("#9FF3FF"), Glow = Hex("#7FF5FF"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Phantom },
+            new SkinInfo { Id = "gilded",       Name = "Golden Gilded", Color = Hex("#FFD36B"), Glow = Hex("#FFC94A"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Gilded },
+            new SkinInfo { Id = "queensbane",   Name = "Queensbane",    Color = Hex("#D9DEE6"), Glow = Hex("#FF3A2A"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Queensbane },
+            new SkinInfo { Id = "starforged",   Name = "Starforged",    Color = Hex("#7B5CFF"), Glow = Hex("#8A7CFF"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Starforged },
+            new SkinInfo { Id = "pearl",        Name = "Mother of Pearl", Color = Hex("#F2E6F0"), Glow = Hex("#FFD6F2"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Pearl },
+            new SkinInfo { Id = "stormcaller",  Name = "Stormcaller",   Color = Hex("#3A4660"), Glow = Hex("#8CCBFF"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Storm },
+            new SkinInfo { Id = "runestone",    Name = "Runestone",     Color = Hex("#8A8C90"), Glow = Hex("#4CE6FF"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Runestone },
+            new SkinInfo { Id = "jade",         Name = "Jade Dynasty",  Color = Hex("#3FAF74"), Glow = Hex("#7CF0A8"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Jade },
+            new SkinInfo { Id = "clockwork",    Name = "Clockwork",     Color = Hex("#C8913E"), Glow = Hex("#FFB24A"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Clockwork },
+            new SkinInfo { Id = "heartwood",    Name = "Heartwood",     Color = Hex("#8A5A30"), Glow = Hex("#B8E05A"), Price = 25000, Source = SkinSource.Shop, Fx = SkinFx.Heartwood },
         };
 
         // Secret "Mastery" reward: a black knight with a red glowing eye. Unlocks only
