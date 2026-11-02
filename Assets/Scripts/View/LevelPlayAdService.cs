@@ -15,7 +15,7 @@ namespace KnightsGauntlet.View
         private readonly string _appKey, _bannerId, _rewardedId;
         private LevelPlayBannerAd _banner;
         private LevelPlayRewardedAd _rewarded;
-        private volatile bool _wantBanner, _bannerLoaded; // touched from SDK callback threads
+        private volatile bool _wantBanner; // touched from SDK callback threads
         private Action _onReward, _onUnavailable;
 
         public LevelPlayAdService(string androidAppKey, string iosAppKey,
@@ -82,9 +82,10 @@ namespace KnightsGauntlet.View
                 _banner = new LevelPlayBannerAd(_bannerId, cfg);
                 // Java listener callbacks can arrive off the Unity main thread, so this only
                 // re-applies the wanted state; the native Show/Hide calls are posted to the UI thread.
-                _banner.OnAdLoaded     += _ => { _bannerLoaded = true; ApplyBanner(); };
+                _banner.OnAdLoaded     += _ => ApplyBanner();
                 _banner.OnAdLoadFailed += err => Debug.LogWarning("[Ads] banner load failed: " + err);
-                _banner.LoadAd();
+                _banner.LoadAd();  // with DisplayOnLoad off this hides the view...
+                ApplyBanner();     // ...so re-show it right away if a menu already wants it
             }
 
             if (!string.IsNullOrEmpty(_rewardedId))
@@ -105,13 +106,16 @@ namespace KnightsGauntlet.View
 
         // While hidden, auto-refresh is paused too, so no fresh ad can load (and surface)
         // during a run. Refresh resumes when a menu screen asks for the banner again.
+        // ShowAd is NOT gated on the banner having loaded: the iOS SDK won't load into a hidden banner
+        // view, so waiting for OnAdLoaded before showing deadlocks and no ad ever appears.
+        // An unloaded banner view is transparent, so showing it early is harmless.
         private void ApplyBanner()
         {
             if (_banner == null) return;
             if (_wantBanner)
             {
                 _banner.ResumeAutoRefresh();
-                if (_bannerLoaded) _banner.ShowAd();
+                _banner.ShowAd();
             }
             else
             {

@@ -18,7 +18,8 @@ namespace KnightsGauntlet.View
         private const string DailyDateKey = "kg_daily_date";     // yyyyMMdd of last daily play
         private const string DailyUsedKey = "kg_daily_used";     // attempts used today
 
-        public const int StartingShillings = 0;
+        public const int StartingShillings = 5000;   // new players start with this wallet
+        public const int StartingPowerups = 3;       // ...and this many of every powerup
         public const int DailyAttemptsPerDay = 10;
 
         // ── Name (permanent once set) ────────────────────────────────────────
@@ -118,7 +119,7 @@ namespace KnightsGauntlet.View
         public static int GetPowerup(string id)
         {
             if (_powerupCache.TryGetValue(id, out int v)) return v;
-            v = PlayerPrefs.GetInt("kg_pu_" + id, 0);
+            v = PlayerPrefs.GetInt("kg_pu_" + id, StartingPowerups); // never-set key = new player
             _powerupCache[id] = v;
             return v;
         }
@@ -160,6 +161,21 @@ namespace KnightsGauntlet.View
                 PlayerPrefs.SetString(OwnedKey, string.Join(",", set));
                 PlayerPrefs.Save();
             }
+        }
+
+        // Amber and Coral were retired from the shop (Nov 2026). Anyone who bought one
+        // gets its 5,000 shillings back once, and is moved to Classic if it was equipped.
+        private static readonly string[] RetiredSkins = { "amber", "coral" };
+        private const int RetiredSkinRefund = 5000;
+        public static void RefundRetiredSkins()
+        {
+            var set = GetOwnedSkins();
+            int refund = 0;
+            foreach (var id in RetiredSkins) if (set.Remove(id)) refund += RetiredSkinRefund;
+            if (System.Array.IndexOf(RetiredSkins, GetSkin()) >= 0) PlayerPrefs.SetString(SkinKey, "gold");
+            if (refund == 0) { PlayerPrefs.Save(); return; }
+            PlayerPrefs.SetString(OwnedKey, string.Join(",", set));
+            AddShillings(refund); // saves
         }
 
         // ── Movement VFX (equipped + purchased) ──────────────────────────────

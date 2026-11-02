@@ -113,7 +113,7 @@ namespace KnightsGauntlet.View
         private float _chronoRewindRate, _chronoRewindRemaining; // Chronokinesis: gradual board rewind (cells/sec, seconds left)
         public float ChronoRemaining => _chronoRemaining;
         public float DivineRemaining => _divineRemaining;
-        private float _furyRemaining; // Berserker Draught (Battle): seconds of 3x multiplier gain left
+        private float _furyRemaining; // Berserker Draught (Battle): seconds of 5x multiplier gain left
 
         // Divine Path (adventure only): the solved optimal route, shown until the level ends.
         private bool _divinePathActive;
@@ -133,7 +133,8 @@ namespace KnightsGauntlet.View
         private int _advMoves, _advGoalCol, _advGoalRow;
         private State _prePause;
         private readonly System.Collections.Generic.List<TutStep> _tut = new System.Collections.Generic.List<TutStep>();
-        private class TutStep { public string caption; public bool infoOnly; public System.Action setup; public int targetCol, targetRow; }
+        private class TutStep { public string caption; public bool infoOnly; public System.Action setup; public int targetCol, targetRow; public UIManager.HudFocus focus; }
+        private float _tutAdvanceIn = -1f; // after a lesson is cleared: a beat to see the move land
 
         public int Score => _sim != null ? _sim.Score : 0;
         public int RunShillings => _sim != null ? _sim.RunShillings : 0;
@@ -152,6 +153,7 @@ namespace KnightsGauntlet.View
             // disabled so targetFrameRate is actually honoured.
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
+            SaveData.RefundRetiredSkins();
 
             if (theme == null)
             {
@@ -617,7 +619,7 @@ namespace KnightsGauntlet.View
             if (_view != null) _view.StopRally();
         }
 
-        // ── Berserker Draught (Battle): 3x multiplier gain per capture ───────
+        // ── Berserker Draught (Battle): 5x multiplier gain per capture ───────
         private bool ActivateBerserker()
         {
             if (!WarHornUsable || _furyRemaining > 0f || !_sim.Alive) return false;
@@ -799,7 +801,7 @@ namespace KnightsGauntlet.View
             _adventureBiomeOverride = null;
             _board.ResetBackground();
             SfxManager.PlayMusic(mode == GameMode.Battle ? Music.Battle : Music.Trap, (int)BoardBiome.Grass);
-            _tutMode = mode; _tutDiff = diff; _tutReplay = replay;
+            _tutMode = mode; _tutDiff = diff; _tutReplay = replay; _tutAdvanceIn = -1f;
             _sim.TutorialSetup(mode);
             _view.SetPlayerForm(PieceType.Knight, CurrentSkin());
             _view.ClearCoachMark();
@@ -810,36 +812,41 @@ namespace KnightsGauntlet.View
             TutorialAdvance();
         }
 
+        // One static board for the whole Trap lesson: the traps are laid out once and the
+        // knight's landings carry over, so every leap stays on screen and each lesson picks
+        // up where the last one landed (no reset between lessons).
+        //   row 4: traps everywhere but the gap at col 2
+        //   rows 2-3: traps on every forward leap from (2,4), so the way on is backward
         private void BuildTrapTutorial()
         {
             _tut.Clear();
             _tut.Add(new TutStep
             {
                 caption = "Tap the glowing square to leap in an L-shape, like a chess knight.",
-                setup = () => { _sim.TutorialClear(); _sim.TutorialSetPlayer(2, 6); },
-                targetCol = 3, targetRow = 4
+                setup = () =>
+                {
+                    _sim.TutorialClear(); _sim.TutorialSetPlayer(2, 8);
+                    _sim.TutorialAddTrap(0, 4); _sim.TutorialAddTrap(1, 4);
+                    _sim.TutorialAddTrap(3, 4); _sim.TutorialAddTrap(4, 4);
+                    _sim.TutorialAddTrap(1, 2); _sim.TutorialAddTrap(3, 2);
+                    _sim.TutorialAddTrap(0, 3); _sim.TutorialAddTrap(4, 3);
+                },
+                targetCol = 3, targetRow = 6
             });
             _tut.Add(new TutStep
             {
                 caption = "Traps fall in rows. Leap through the gap to keep climbing.",
-                setup = () =>
-                {
-                    _sim.TutorialClear(); _sim.TutorialSetPlayer(2, 6);
-                    _sim.TutorialAddTrap(0, 4); _sim.TutorialAddTrap(1, 4);
-                    _sim.TutorialAddTrap(2, 4); _sim.TutorialAddTrap(4, 4);
-                },
-                targetCol = 3, targetRow = 4
+                targetCol = 2, targetRow = 4
             });
             _tut.Add(new TutStep
             {
-                caption = "No safe leap forward? Sometimes you jump backward to open a new path.",
-                setup = () =>
-                {
-                    _sim.TutorialClear(); _sim.TutorialSetPlayer(2, 5);
-                    _sim.TutorialAddTrap(1, 3); _sim.TutorialAddTrap(3, 3);
-                    _sim.TutorialAddTrap(0, 4); _sim.TutorialAddTrap(4, 4);
-                },
-                targetCol = 0, targetRow = 6
+                caption = "Every leap forward from here lands on a trap! Sometimes you jump backward to open a new path.",
+                targetCol = 0, targetRow = 5
+            });
+            _tut.Add(new TutStep
+            {
+                caption = "See? Stepping back opened a new path. Leap forward through it.",
+                targetCol = 1, targetRow = 3
             });
             _tut.Add(new TutStep
             {
@@ -863,7 +870,8 @@ namespace KnightsGauntlet.View
             });
             _tut.Add(new TutStep
             {
-                caption = "Capture again on your very next move to build a combo. The dots under your chess icon fill toward a transform, and each capture is worth more.",
+                caption = "Capture again on your very next move to build a combo. The three dots under your piece icon (top of the screen) fill toward a transform, and each capture is worth more.",
+                focus = UIManager.HudFocus.CapturePips,
                 setup = () =>
                 {
                     _sim.TutorialClear(); _sim.TutorialSetPlayer(3, 4);
@@ -893,7 +901,8 @@ namespace KnightsGauntlet.View
             });
             _tut.Add(new TutStep
             {
-                caption = "You transformed! You stay this piece for 5 seconds, and every capture refills that timer, so keep hunting. Use your new range to strike the enemy.",
+                caption = "You transformed! The ring around your piece icon is your 5-second timer, and every capture refills it, so keep hunting. Use your new range to strike the enemy.",
+                focus = UIManager.HudFocus.TransformTimer,
                 setup = () =>
                 {
                     _sim.TutorialClear(); _sim.TutorialSetPlayer(3, 1);
@@ -918,18 +927,30 @@ namespace KnightsGauntlet.View
             {
                 _sim.TutorialUnlock();
                 _view.ClearCoachMark();
-                _ui.ShowTutorial(s.caption, true);
+                _ui.ShowTutorial(s.caption, true, _tutStep, _tut.Count);
             }
             else
             {
                 _sim.TutorialLock(s.targetCol, s.targetRow);
                 _view.SetCoachMark(s.targetCol, s.targetRow);
-                _ui.ShowTutorial(s.caption, false);
+                _ui.ShowTutorial(s.caption, false, _tutStep, _tut.Count);
+            }
+            if (s.focus != UIManager.HudFocus.None)
+            {
+                var r = _view.MenuPlayerRect(cam);
+                _ui.TutorialFocusHud(s.focus, r.center);
             }
         }
 
         private void HandleTutorialInput()
         {
+            if (_tutAdvanceIn >= 0f)
+            {
+                _tutAdvanceIn -= Time.unscaledDeltaTime;
+                if (_tutAdvanceIn < 0f) TutorialAdvance();
+                return;
+            }
+            if (_ui.TutorialFocusBusy) return; // let the HUD spotlight finish first
             if (OverUI()) return;
             if (GetTapDown(out Vector2 screenPos))
             {
@@ -946,12 +967,16 @@ namespace KnightsGauntlet.View
                 _view.PlayMoveVfx();
                 var s = _tut[_tutStep];
                 if (!s.infoOnly && _sim.PlayerCol == s.targetCol && Mathf.RoundToInt(_sim.PlayerY) == s.targetRow)
-                    TutorialAdvance();
+                {
+                    _ui.TutorialStepCleared(_tutStep); // praise + sparks before the next lesson slides in
+                    _view.ClearCoachMark();
+                    _tutAdvanceIn = .8f;               // a beat to watch the leap land
+                }
             }
         }
 
         public void TutorialContinue() { if (_state == State.Tutorial) TutorialAdvance(); }
-        public void TutorialSkip() { if (_state == State.Tutorial) FinishTutorial(); }
+        public void TutorialSkip() { if (_state == State.Tutorial) { _tutAdvanceIn = -1f; FinishTutorial(); } }
 
         private void FinishTutorial()
         {
@@ -1425,10 +1450,19 @@ namespace KnightsGauntlet.View
             if (_state != State.Playing || !_sim.Alive) return;
             if (OverUI()) return;
 
+            bool go = false;
+            int col = 0; float simY = 0f;
             if (GetTapDown(out Vector2 screenPos))
             {
                 Vector3 world = _board.ScreenToWorld(cam, screenPos);
-                var (col, simY) = _board.WorldToCell(world);
+                (col, simY) = _board.WorldToCell(world);
+                go = true;
+            }
+#if UNITY_EDITOR
+            else go = AutopilotStep(out col, out simY);
+#endif
+            if (go)
+            {
                 _trapLeveledUpThisMove = false; // set by HandleTrapLevelUp if this move levels up
                 int fromCol = _sim.PlayerCol;
                 float fromY = _sim.PlayerY;
@@ -1478,6 +1512,27 @@ namespace KnightsGauntlet.View
                 }
             }
         }
+
+#if UNITY_EDITOR
+        // Store footage: Tools > Store Footage (FootageRecorder) lets the game play itself,
+        // taking the solver's best move (the Divine Intervention heuristic) on a steady beat.
+        // Editor only; never compiled into a build.
+        public static float AutopilotInterval;   // seconds between moves; 0 = off
+        private float _autopilotTimer;
+
+        private bool AutopilotStep(out int col, out float simY)
+        {
+            col = 0; simY = 0f;
+            if (AutopilotInterval <= 0f) return false;
+            _autopilotTimer += Time.deltaTime;
+            if (_autopilotTimer < AutopilotInterval) return false;
+            _autopilotTimer = 0f;
+            var m = _sim.BestMove();
+            if (!m.HasValue) return false;
+            col = m.Value.Col; simY = m.Value.Y;
+            return true;
+        }
+#endif
 
         private void EnterDead()
         {

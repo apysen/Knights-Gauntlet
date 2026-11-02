@@ -23,20 +23,26 @@ namespace KnightsGauntlet.View
         private Camera _camera;
         private RenderTexture _texture;
         private bool _dirty = true;
+        private float _tilt;
 
         // referenceCamera (optional) supplies the menu's renderer settings, as the menu
         // knight portrait does. Returns false if the knight could not be built.
-        public bool Initialize(GameTheme theme, string skinId, Camera referenceCamera = null)
+        // type/isPlayer render any board piece instead (enemy pieces, trap tokens), and
+        // tilt (degrees, 0 = side-on portrait, 90 = straight down) gives the board's
+        // looking-down angle, which flat pieces like the trap token need to read at all.
+        public bool Initialize(GameTheme theme, string skinId, Camera referenceCamera = null,
+                               PieceType type = PieceType.Knight, bool isPlayer = true, float tilt = 0f)
         {
             if (theme == null) return false;
+            _tilt = tilt;
             _stage = new GameObject("SkinIconStage");
             _stage.transform.position = new Vector3(3000f + 40f * _stages++, 0f, 0f);
-            var model = new GameObject("Knight", typeof(SpriteRenderer), typeof(PieceView));
+            var model = new GameObject(type.ToString(), typeof(SpriteRenderer), typeof(PieceView));
             model.transform.SetParent(_stage.transform, false);
             _piece = model.GetComponent<PieceView>();
             _piece.enabled = false; // icon pieces must not add shadows to the gameplay board
             _piece.spriteRenderer = model.GetComponent<SpriteRenderer>();
-            _piece.Apply(theme, PieceType.Knight, true, skinId);
+            _piece.Apply(theme, type, isPlayer, isPlayer ? skinId : null);
             _piece.SetModelRotation(0f);
             foreach (var t in _stage.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = StageLayer;
             // Production shaders may clip to board coordinates; this stage has no board.
@@ -70,7 +76,7 @@ namespace KnightsGauntlet.View
 
             // Models stand along -Z on the board; looking along +Y shows them upright,
             // the same view as the menu portrait. Then frame the knight's real extent.
-            var angle = Quaternion.Euler(-90f, 0f, 0f);
+            var angle = Quaternion.Euler(-90f + _tilt, 0f, 0f);
             _camera.transform.SetPositionAndRotation(_stage.transform.position - angle * Vector3.forward * 15f, angle);
             Rect bounds = MenuKnightPreview.ProjectedRect(_piece, _camera);
             float half = TextureSize * .5f;
@@ -148,6 +154,47 @@ namespace KnightsGauntlet.View
                 return null;
             }
             Icons[skinId] = icon;
+            return icon.Texture;
+        }
+
+        private static void Clear()
+        {
+            if (_root != null) Object.Destroy(_root);
+            _root = null;
+            Icons.Clear();
+        }
+    }
+
+    // Shared renders of board pieces for 2D diagrams (How to Play, "Was I trapped?"):
+    // the real 3D enemy pieces, trap token and the player's skinned knight, seen from
+    // the board camera's tilt. One small render per kind, reused by every image.
+    public static class PieceIconCache
+    {
+        public const float PieceTilt = 28f, TokenTilt = 62f;
+
+        private static GameObject _root;
+        private static GameTheme _theme;
+        private static readonly Dictionary<string, SkinKnightIcon> Icons = new Dictionary<string, SkinKnightIcon>();
+
+        // Null if it can't be built (no theme, model failed), so callers can fall back.
+        public static Texture Get(GameTheme theme, PieceType type, bool isPlayer, string skinId = null)
+        {
+            if (theme == null) return null;
+            if (_root == null || _theme != theme) Clear(); // domain reload is off: stale entries
+            _theme = theme;
+            string key = type + "|" + isPlayer + "|" + (isPlayer ? skinId : "");
+            if (Icons.TryGetValue(key, out var cached) && cached != null) return cached.Texture;
+            if (_root == null) _root = new GameObject("PieceIconCache");
+            var go = new GameObject("Icon " + key, typeof(RectTransform), typeof(RawImage), typeof(SkinKnightIcon));
+            go.transform.SetParent(_root.transform, false);
+            var icon = go.GetComponent<SkinKnightIcon>();
+            float tilt = type == PieceType.Trap ? TokenTilt : PieceTilt;
+            if (!icon.Initialize(theme, skinId, Camera.main, type, isPlayer, tilt))
+            {
+                Object.Destroy(go);
+                return null;
+            }
+            Icons[key] = icon;
             return icon.Texture;
         }
 

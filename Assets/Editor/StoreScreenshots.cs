@@ -22,8 +22,12 @@ namespace KnightsGauntlet.EditorTools
             new Size("iPhone 6.9in (1320x2868)", 1320, 2868),   // App Store, required; Apple scales it down for smaller iPhones
             new Size("iPad 13in (2064x2752)",    2064, 2752),   // App Store, required (app runs on iPad); also fine for Play tablets
             new Size("Android phone (1080x1920)",1080, 1920),   // Google Play: max 2:1 aspect, so the tall iPhone shots don't qualify
-            new Size("iPhone Duo unfolded (2180x2460)", 2180, 2460), // not a required store size; for marketing / if ASC asks for one
+            new Size("iPhone 6.3in (1206x2622)", 1206, 2622),   // App Store Connect asks for 6.1"/6.3" too (also accepts 1179x2556)
+            new Size("iPhone Duo (2007x2853)",   2007, 2853),   // App Store Connect's Duo slot (also accepts 1398x2034)
         };
+
+        // Only the Duo size, for re-shooting that slot without redoing the rest.
+        static readonly Size[] DuoOnly = { new Size("iPhone Duo (2007x2853)", 2007, 2853) };
 
         // Not store sizes: a layout check for foldables (iPhone Duo). The Duo's inner panel is
         // reported as anywhere from ~8:9 (2180x2460) to ~3:4; 3:4 is already covered by the iPad
@@ -56,6 +60,9 @@ namespace KnightsGauntlet.EditorTools
 
         [MenuItem("Tools/Store Screenshots/Capture All Sizes _F9")]
         static void CaptureAll() => Capture(Sizes, DateTime.Now.ToString("yyyy-MM-dd"));
+
+        [MenuItem("Tools/Store Screenshots/Capture Duo Only")]
+        static void CaptureDuo() => Capture(DuoOnly, DateTime.Now.ToString("yyyy-MM-dd"));
 
         [MenuItem("Tools/Store Screenshots/Foldable Check (not for the store)")]
         static void CaptureFoldable() => Capture(FoldableSizes, Path.Combine("Foldable check", DateTime.Now.ToString("yyyy-MM-dd")));

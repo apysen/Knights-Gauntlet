@@ -49,7 +49,7 @@ namespace KnightsGauntlet.View
                     _cardTitle = "PATH REVEALED"; _cardSubtitle = "FOLLOW THE GREEN STEPS";
                     _cardAccent = UIFactory.Hex("#F2C46B"); _cardFlare = new Color(.95f, .75f, .4f); break;
                 case PowerupId.Berserker:
-                    _cardTitle = "FURY!"; _cardSubtitle = "EVERY CAPTURE BUILDS 3X THE MULTIPLIER";
+                    _cardTitle = "FURY!"; _cardSubtitle = "EVERY CAPTURE BUILDS 5X THE MULTIPLIER";
                     _cardAccent = UIFactory.Hex("#FF8A4A"); _cardFlare = new Color(1f, .3f, .1f); break;
                 default: return; // the War Horn runs its own rally
             }

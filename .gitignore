@@ -115,3 +115,5 @@ InitTestScene*.unity*
 mono_crash.*
 sysinfo.txt
 # END unity vcs doctor
+
+__pycache__/

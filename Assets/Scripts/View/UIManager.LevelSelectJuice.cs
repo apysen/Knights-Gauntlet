@@ -121,9 +121,9 @@ namespace KnightsGauntlet.View
         // A shimmer sweeping across a three-star tile, rippling across the grid.
         private void AddTileGlint(Button tile, int index)
         {
-            if (tile.GetComponent<RectMask2D>() == null) tile.gameObject.AddComponent<RectMask2D>();
+            var clip = UIFactory.ShapeClip(tile.transform, tile.targetGraphic as Image);
             var g = new GameObject("Glint", typeof(RectTransform), typeof(Image));
-            g.transform.SetParent(tile.transform, false);
+            g.transform.SetParent(clip, false);
             var grt = (RectTransform)g.transform;
             grt.sizeDelta = new Vector2(30f, 84f * 2.2f); grt.localRotation = Quaternion.Euler(0, 0, -20f);
             var img = g.GetComponent<Image>(); img.sprite = UISprites.SoftGlow(); img.raycastTarget = false;

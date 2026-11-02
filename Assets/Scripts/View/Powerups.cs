@@ -54,12 +54,12 @@ namespace KnightsGauntlet.View
             Cost = 3000, Duration = 0f,
         };
 
-        // Battle-only, timed: each capture adds three times its usual multiplier gain.
-        public const int BerserkerGainScale = 3;
+        // Battle-only, timed: each capture adds five times its usual multiplier gain.
+        public const int BerserkerGainScale = 5;
         public static readonly PowerupInfo Berserker = new PowerupInfo
         {
             Id = PowerupId.Berserker, Key = "berserker",
-            Name = "Berserker Draught", Blurb = "Battle: A fiery brew that makes every capture build your multiplier three times as fast.",
+            Name = "Berserker Draught", Blurb = "Battle: A fiery brew that makes every capture build your multiplier five times as fast.",
             Cost = 2500, Duration = 15f,
         };
 

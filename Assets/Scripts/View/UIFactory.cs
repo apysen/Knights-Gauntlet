@@ -370,6 +370,25 @@ namespace KnightsGauntlet.View
             return go;
         }
 
+        // A stencil clip with the same sprite (and slicing) as `shape`, stretched over
+        // `host`, so a shine swept inside it follows the rounded corners instead of the
+        // hard rectangle a RectMask2D gives. The clip graphic itself is never drawn.
+        public static RectTransform ShapeClip(Transform host, Image shape)
+        {
+            var go = new GameObject("ShineClip", typeof(RectTransform), typeof(Image), typeof(Mask));
+            go.transform.SetParent(host, false);
+            var rt = (RectTransform)go.transform; Stretch(rt);
+            var img = go.GetComponent<Image>(); img.raycastTarget = false; img.color = Color.white;
+            if (shape != null)
+            {
+                img.sprite = shape.sprite; img.type = shape.type;
+                img.pixelsPerUnitMultiplier = shape.pixelsPerUnitMultiplier; img.preserveAspect = shape.preserveAspect;
+            }
+            go.GetComponent<Mask>().showMaskGraphic = false;
+            go.AddComponent<LayoutElement>().ignoreLayout = true;
+            return rt;
+        }
+
         public static void Stretch(RectTransform rt)
         {
             rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;

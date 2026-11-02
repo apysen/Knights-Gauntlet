@@ -167,9 +167,16 @@ namespace KnightsGauntlet.View
             if (rank == 1)
             {
                 // Shimmer that sweeps the leader's row now and then.
-                row.AddComponent<RectMask2D>();
+                // Clipped to the gold band's own shape, so the sweep follows its rounded ends.
+                var clip = UIFactory.ShapeClip(body, band);
+                if (band != null)
+                {
+                    var brt = band.rectTransform;
+                    clip.anchorMin = brt.anchorMin; clip.anchorMax = brt.anchorMax;
+                    clip.offsetMin = brt.offsetMin; clip.offsetMax = brt.offsetMax;
+                }
                 var g = new GameObject("Glint", typeof(RectTransform), typeof(Image));
-                g.transform.SetParent(body, false);
+                g.transform.SetParent(clip, false);
                 _glint = (RectTransform)g.transform; _glintRow = rowRt;
                 _glint.sizeDelta = new Vector2(40f, RowH * 2.2f); _glint.localRotation = Quaternion.Euler(0f, 0f, -20f);
                 var gi = g.GetComponent<Image>(); gi.sprite = UISprites.SoftGlow(); gi.raycastTarget = false; gi.color = new Color(1f, 1f, 1f, .35f);

@@ -40,7 +40,7 @@ namespace KnightsGauntlet.Core
         public int ComboMultiplier { get; private set; } = 1;
         // The highest multiplier reached this run (Battle). The War Horn powerup restores it.
         public int PeakMultiplier { get; private set; } = 1;
-        // Scales how much each capture adds to the multiplier (the Berserker Draught sets 3
+        // Scales how much each capture adds to the multiplier (the Berserker Draught sets 5
         // while active). Driven by the view layer, which owns the powerup's real-time timer.
         public int ComboGainScale = 1;
         public bool Alive { get; private set; }

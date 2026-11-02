@@ -79,15 +79,17 @@ namespace KnightsGauntlet.View
         private System.Action _howtoOnDone;     // for first-time tutorials: start the run on "Got it"
         private Coroutine _toastCo;
 
-        private static readonly Color CheckerA = UIFactory.Hex("#2D2D4E");
-        private static readonly Color CheckerB = UIFactory.Hex("#1E1E35");
+        // Modern "Was I trapped?" board matches the in-game one (grass tiles, gold targets).
+        private static Color CheckerA => UIFactory.LegacyStyle ? UIFactory.Hex("#2D2D4E") : UIFactory.Hex("#5B8661");
+        private static Color CheckerB => UIFactory.LegacyStyle ? UIFactory.Hex("#1E1E35") : UIFactory.Hex("#497350");
         private static readonly Color TrapCell = new Color(0.78f, 0.20f, 0.20f, 0.35f);
         private static readonly Color TrapGlyph = UIFactory.Hex("#CC3333");
-        private static readonly Color PathCell = new Color(0.24f, 0.86f, 0.47f, 0.42f);
-        private static readonly Color PathText = UIFactory.Hex("#D8FFE6");
-        private static readonly Color KnightCell = new Color(0.94f, 0.75f, 0.25f, 0.20f);
+        private static Color PathCell => UIFactory.LegacyStyle ? new Color(0.24f, 0.86f, 0.47f, 0.42f) : new Color(.66f, .58f, .27f, .92f);
+        private static Color PathText => UIFactory.LegacyStyle ? UIFactory.Hex("#D8FFE6") : Color.white;
+        private static Color KnightCell => UIFactory.LegacyStyle ? new Color(0.94f, 0.75f, 0.25f, 0.20f) : new Color(0f, 0f, 0f, 0f);
         private static readonly Color BadgeBg = new Color(0.047f, 0.086f, 0.157f, 0.9f);
         private static readonly Color BadgeText = UIFactory.Hex("#BFEAFF");
+        private RectTransform _trapKnightRing; // modern: the gold ring under the knight
         private const float CellPx = 81f; // "Was I trapped?" grid cell size (drives glyphs/badges/trail too)
 
         public void Init(GameManager gm, GameTheme theme)
@@ -191,6 +193,9 @@ namespace KnightsGauntlet.View
             UpdateCustomJuice();
             UpdateSettingsJuice();
             UpdateLevelSelectJuice();
+            UpdateTutorialJuice();
+            UpdateHowToJuice();
+            UpdateTrappedJuice();
             if (_hud != null && _hud.activeSelf && _scoreText != null && _gm.Score != _lastScoreShown)
             {
                 _lastScoreShown = _gm.Score;
@@ -217,6 +222,53 @@ namespace KnightsGauntlet.View
                 UpdatePowerupButtons();
             }
             if (_menu != null && _menu.activeSelf && relayout) LayoutMenu();
+            if (_custom != null && _custom.activeSelf && relayout) LayoutCornerBackArrow(_customBackRt);
+        }
+
+        // A round back arrow pinned to the top-left corner, clear of notches (see LayoutCornerBackArrow).
+        private RectTransform _customBackRt;
+        private RectTransform CornerBackArrow(Transform parent, System.Action action)
+        {
+            var button = _ui.Button(parent, "", action, UIFactory.Panel, UIFactory.Gold, 48, 48, 26, clickSfx: Sfx.TabSelect);
+            button.name = "BackArrow";
+            // Drawn from three bars rather than a font glyph, so it is bold and sits dead centre.
+            var icon = new GameObject("Arrow", typeof(RectTransform));
+            icon.transform.SetParent(button.transform, false);
+            var irt = (RectTransform)icon.transform;
+            irt.anchorMin = irt.anchorMax = irt.pivot = new Vector2(.5f, .5f);
+            irt.sizeDelta = Vector2.zero;
+            const float thick = 5f, tipX = -10f;
+            ArrowBar(irt, new Vector2(21f, thick), new Vector2(.5f, .5f), new Vector2(.5f, 0f), 0f);
+            ArrowBar(irt, new Vector2(13f, thick), new Vector2(thick * .5f / 13f, .5f), new Vector2(tipX, 0f), 45f);
+            ArrowBar(irt, new Vector2(13f, thick), new Vector2(thick * .5f / 13f, .5f), new Vector2(tipX, 0f), -45f);
+            var le = button.GetComponent<LayoutElement>();
+            if (le != null) le.ignoreLayout = true;
+            var rt = button.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0, 1);
+            rt.sizeDelta = new Vector2(48, 48);
+            return rt;
+        }
+
+        private static void ArrowBar(RectTransform parent, Vector2 size, Vector2 pivot, Vector2 pos, float angle)
+        {
+            var go = new GameObject("Bar", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(.5f, .5f);
+            rt.pivot = pivot; rt.sizeDelta = size; rt.anchoredPosition = pos;
+            rt.localRotation = Quaternion.Euler(0f, 0f, angle);
+            var img = go.GetComponent<Image>(); img.color = UIFactory.Gold; img.raycastTarget = false;
+        }
+
+        // Same corner inset as the main menu's settings gear.
+        private void LayoutCornerBackArrow(RectTransform rt)
+        {
+            if (rt == null) return;
+            var canvas = rt.GetComponentInParent<Canvas>();
+            float scale = canvas != null && canvas.scaleFactor > 0f ? canvas.scaleFactor : 1f;
+            float top = Mathf.Max(24, (Screen.height - Screen.safeArea.yMax) / scale + 12);
+            float left = Screen.safeArea.xMin / scale + 24;
+            rt.anchoredPosition = new Vector2(left, -top);
         }
 
         // ── Visibility ───────────────────────────────────────────────────────
@@ -236,6 +288,8 @@ namespace KnightsGauntlet.View
             if (_dailyIntro != null) _dailyIntro.SetActive(false);
             if (_dailyReward != null) _dailyReward.SetActive(false);
             if (_tutorial != null) _tutorial.SetActive(false);
+            _tutStepShown = -1;
+            ResetTutorialFocus();
             if (_tutPick != null) _tutPick.SetActive(false);
             if (_advResult != null) _advResult.SetActive(false);
             if (_advIntro != null) _advIntro.SetActive(false);
@@ -1255,13 +1309,6 @@ namespace KnightsGauntlet.View
 
             _tutorial.SetActive(false);
         }
-        public void ShowTutorial(string caption, bool continueBtn)
-        {
-            if (_tutCaption != null) _tutCaption.text = caption;
-            if (_tutContinueBtn != null) _tutContinueBtn.SetActive(continueBtn);
-            if (_tutorial != null) _tutorial.SetActive(true);
-        }
-        public void HideTutorial() { if (_tutorial != null) _tutorial.SetActive(false); }
 
         // Chooser: pick which mode's interactive tutorial to (re)play.
         private void BuildTutorialPick()
@@ -1320,7 +1367,9 @@ namespace KnightsGauntlet.View
 
         // The real 3D knight in the given skin, centred in parent. False (nothing added)
         // in the legacy look or if the knight can't be built, so callers keep the glyph.
-        private bool AddSkinKnight(Transform parent, string skinId, float size, float alpha)
+        // auraSize > 0 also plays the skin's trail as a looping aura around the knight
+        // (SkinAura), so players can see a premium trail before buying it.
+        private bool AddSkinKnight(Transform parent, string skinId, float size, float alpha, float auraSize = 0f, float auraAlpha = 1f, float auraBitScale = 1f)
         {
             if (LegacyStyle || _theme == null) return false;
             var go = new GameObject("SkinKnight", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement), typeof(SkinKnightIcon));
@@ -1335,6 +1384,7 @@ namespace KnightsGauntlet.View
                 return false;
             }
             go.GetComponent<RawImage>().color = new Color(1f, 1f, 1f, alpha);
+            if (auraSize > 0f) SkinAura.Attach(parent, go.GetComponent<RawImage>(), skinId, auraSize, auraAlpha, auraBitScale);
             return true;
         }
 
@@ -2132,7 +2182,8 @@ namespace KnightsGauntlet.View
             _tabVfx = _ui.Button(tabs, "VFX", () => SetCustomTab(1), UIFactory.Panel, UIFactory.Muted, 130, 42, 15);
 
             _customGrid = _ui.Column(col, 10f);
-            _ui.Button(col, "Back", () => ShowMenu(), UIFactory.Gold, UIFactory.Bg, 220, 50, 22);
+            // A corner back arrow instead of a Back button, so the grid has room for all its rows.
+            _customBackRt = CornerBackArrow(screen.transform, () => ShowMenu());
 
             _skinPopup = new GameObject("SkinPopup", typeof(RectTransform), typeof(Image));
             _skinPopup.transform.SetParent(canvas.transform, false);
@@ -2441,13 +2492,14 @@ namespace KnightsGauntlet.View
             _howtoPrev = _ui.Button(nav, "<", () => FlipHowTo(-1), UIFactory.Panel, UIFactory.Gold, 58, 46, 20, clickSfx: Sfx.PageTurn);
             _howtoPager = _ui.Label(nav, "", 12, UIFactory.Muted, FontStyles.Normal, 60);
             _howtoNext = _ui.Button(nav, ">", () => FlipHowTo(1), UIFactory.Panel, UIFactory.Gold, 58, 46, 20, clickSfx: Sfx.PageTurn);
-            _ui.Button(col, "Got it", () => OnHowToDone(), UIFactory.Gold, UIFactory.Bg);
+            var gotIt = _ui.Button(col, "Got it", () => OnHowToDone(), UIFactory.Gold, UIFactory.Bg);
+            SetupHowToJuice(screen, col, gotIt);
         }
         private void ShowHowTo(bool returnToPause)
         {
             _howtoReturnPause = returnToPause; _howtoOnDone = null;
             _howtoPages = AllHowTo; _howtoIdx = 0;
-            HideAll(); RenderHowTo(); _howto.SetActive(true);
+            HideAll(); RenderHowTo(); _howto.SetActive(true); HowToOpened();
             _gm.SetBanner(true);
         }
         // First-time mode tutorial: walk a subset of pages, then run onDone.
@@ -2455,7 +2507,7 @@ namespace KnightsGauntlet.View
         {
             _howtoReturnPause = false; _howtoOnDone = onDone;
             _howtoPages = pages; _howtoIdx = 0;
-            HideAll(); RenderHowTo(); _howto.SetActive(true);
+            HideAll(); RenderHowTo(); _howto.SetActive(true); HowToOpened();
         }
         private void OnHowToDone()
         {
@@ -2467,6 +2519,8 @@ namespace KnightsGauntlet.View
         }
         private void FlipHowTo(int d)
         {
+            if (_howtoFlipT >= 0f) return;          // mid-flip: let it land first
+            if (BeginHowToFlip(d)) return;          // modern: animated card flip does the turn
             _howtoIdx = Mathf.Clamp(_howtoIdx + d, 0, _howtoPages.Length - 1);
             RenderHowTo();
         }
@@ -2479,6 +2533,7 @@ namespace KnightsGauntlet.View
             _howtoPager.text = (_howtoIdx + 1) + " / " + _howtoPages.Length;
             _howtoPrev.interactable = _howtoIdx > 0;
             _howtoNext.interactable = _howtoIdx < _howtoPages.Length - 1;
+            DressHowToPage(page);
         }
 
         // ── Achievement toast ────────────────────────────────────────────────
@@ -2549,11 +2604,19 @@ namespace KnightsGauntlet.View
             _trappedContent.anchorMin = _trappedContent.anchorMax = new Vector2(0.5f, 1f);
             _trappedContent.pivot = new Vector2(0.5f, 1f);
             _trappedScroll.content = _trappedContent;
+            if (!LegacyStyle)
+            {
+                // The board's dark grout shows between the tiles, inside a thin gold edge.
+                var grout = content.AddComponent<Image>(); grout.color = UIFactory.Hex("#1D2E40"); grout.raycastTarget = false;
+                var edge = content.AddComponent<Outline>();
+                edge.effectColor = new Color(.87f, .73f, .41f, .85f); edge.effectDistance = new Vector2(3f, -3f);
+            }
 
-            _ui.Label(col, "Green = a path you could have taken (in order). Blue = your last moves.", 17, UIFactory.Muted, FontStyles.Normal, 480);
-            _ui.Button(col, "Back", CloseTrapped, UIFactory.Panel, UIFactory.Gold, 300, 66, 21);
+            var legend = _ui.Label(col, "Green = a path you could have taken (in order). Blue = your last moves.", 17, UIFactory.Muted, FontStyles.Normal, 480);
+            var back = _ui.Button(col, "Back", CloseTrapped, UIFactory.Panel, UIFactory.Gold, 300, 66, 21);
+            SetupTrappedJuice(screen, col, legend, back);
         }
-        private void ShowTrapped() { _gameOver.SetActive(false); _trapped.SetActive(true); Populate(_analysis); FitTrapped(); }
+        private void ShowTrapped() { _gameOver.SetActive(false); _trapped.SetActive(true); Populate(_analysis); FitTrapped(); TrappedOpened(); }
         private void CloseTrapped() { _trapped.SetActive(false); _gameOver.SetActive(true); }
 
         // Uniformly scale the whole screen to fit the device: ~10% smaller by default, and
@@ -2580,6 +2643,7 @@ namespace KnightsGauntlet.View
         private void Populate(DeathAnalysis a)
         {
             for (int i = _trappedContent.childCount - 1; i >= 0; i--) Destroy(_trappedContent.GetChild(i).gameObject);
+            ClearTrappedFx();
 
             if (!a.Escaped)
             {
@@ -2620,25 +2684,53 @@ namespace KnightsGauntlet.View
             foreach (var t in a.Traps)
             {
                 if (!InRange(t.relRow)) continue;
-                Cell(t.col, t.relRow - relTop, TrapCell);
-                GlyphCell(t.col, t.relRow - relTop, "\u2715", TrapGlyph, true);
+                if (LegacyStyle) Cell(t.col, t.relRow - relTop, TrapCell);
+                var token = LegacyStyle ? null : PieceCell(t.col, t.relRow - relTop, PieceType.Trap, false);
+                _trapXs.Add(token != null ? token : GlyphCell(t.col, t.relRow - relTop, "\u2715", TrapGlyph, true).rectTransform);
             }
             for (int i = 0; i < a.Path.Count; i++)
             {
                 var s = a.Path[i];
                 if (!InRange(s.RelRow)) continue;
-                Cell(s.Col, s.RelRow - relTop, PathCell);
-                GlyphCell(s.Col, s.RelRow - relTop, (i + 1).ToString(), PathText, false);
+                var pc = Cell(s.Col, s.RelRow - relTop, PathCell);
+                if (!LegacyStyle)
+                {
+                    TargetRing(pc.rectTransform);
+                    // Centre pivot so the reveal pops the whole square (fill + ring) from its middle.
+                    var prt = pc.rectTransform;
+                    prt.pivot = new Vector2(.5f, .5f);
+                    prt.anchoredPosition += new Vector2(prt.sizeDelta.x * .5f, -prt.sizeDelta.y * .5f);
+                }
+                var num = GlyphCell(s.Col, s.RelRow - relTop, (i + 1).ToString(), PathText, false);
+                if (!LegacyStyle)
+                {
+                    num.font = UIFactory.ComicFont(); num.fontSize = CellPx * .56f;
+                    num.outlineWidth = .25f; num.outlineColor = new Color32(0x1A, 0x0E, 0x04, 0xFF);
+                }
+                _trapPath.Add(new TrapPathFx { cell = pc, glyph = num });
             }
             // Connect the player's last-10 landings with a thin blue line.
             for (int i = 0; i + 1 < a.Trail.Count; i++)
             {
                 var pa = a.Trail[i]; var pb = a.Trail[i + 1];
                 if (!InRange(pa.relRow) || !InRange(pb.relRow)) continue;
-                TrailLine(pa.col, pa.relRow - relTop, pb.col, pb.relRow - relTop);
+                _trapLines.Add(TrailLine(pa.col, pa.relRow - relTop, pb.col, pb.relRow - relTop));
             }
             Cell(a.PlayerCol, -relTop, KnightCell);
-            GlyphCell(a.PlayerCol, -relTop, "\u265E", UIFactory.Gold, true);
+            RectTransform knight = null;
+            if (!LegacyStyle)
+            {
+                // The player's ring under their own skinned knight, as on the board.
+                var ring = new GameObject("knightRing", typeof(RectTransform), typeof(Image));
+                ring.transform.SetParent(_trappedContent, false);
+                var rrt = (RectTransform)ring.transform; _trapKnightRing = rrt;
+                rrt.anchorMin = rrt.anchorMax = new Vector2(0, 1); rrt.pivot = new Vector2(.5f, .5f);
+                rrt.sizeDelta = Vector2.one * CellPx * .86f;
+                rrt.anchoredPosition = new Vector2(a.PlayerCol * CellPx + CellPx * .5f, relTop * CellPx - CellPx * .62f);
+                var ri = ring.GetComponent<Image>(); ri.sprite = UISprites.MoveRing(); ri.color = UIFactory.Hex("#EBBC40"); ri.raycastTarget = false;
+                knight = PieceCell(a.PlayerCol, -relTop, PieceType.Knight, true);
+            }
+            _trapKnight = knight != null ? knight : GlyphCell(a.PlayerCol, -relTop, "\u265E", UIFactory.Gold, true).rectTransform;
             // Group the last-10 move numbers by cell, so a tile the knight landed on
             // more than once lists every move number (e.g. "1,3,5") in one badge instead
             // of stacking badges where a later move hides an earlier one.
@@ -2650,35 +2742,52 @@ namespace KnightsGauntlet.View
                 if (!cellMoves.TryGetValue(key, out var list)) { list = new List<int>(); cellMoves[key] = list; }
                 list.Add(tr.moveNum);
             }
+            RectTransform knightBadge = null;
             foreach (var kv in cellMoves)
             {
                 kv.Value.Sort();
-                Badge(kv.Key.Item1, kv.Key.Item2 - relTop, string.Join(",", kv.Value));
+                var badge = Badge(kv.Key.Item1, kv.Key.Item2 - relTop, string.Join(",", kv.Value));
+                // On the knight's own square the 3D knight fills the top, so its badge sits at the bottom.
+                if (!LegacyStyle && kv.Key.Item1 == a.PlayerCol && kv.Key.Item2 == 0)
+                {
+                    badge.anchoredPosition += new Vector2(0f, -CellPx * .66f);
+                    knightBadge = badge;
+                }
+                _trapBadges.Add(badge);
             }
 
+            if (!LegacyStyle)
+            {
+                // The knight stands in front of the trail and its move badges.
+                if (_trapKnightRing != null) _trapKnightRing.SetAsLastSibling();
+                if (_trapKnight != null) _trapKnight.SetAsLastSibling();
+                if (knightBadge != null) knightBadge.SetAsLastSibling(); // its move numbers stay readable
+            }
             int knightRowIdx = -relTop;
             _trappedScroll.verticalNormalizedPosition = rows > 1
                 ? Mathf.Clamp01(1f - (float)knightRowIdx / (rows - 1)) : 1f;
+            _trapVerdictColor = _trappedVerdict.color;
         }
 
-        private void TrailLine(int c0, int r0, int c1, int r1)
+        private (RectTransform rt, float len) TrailLine(int c0, int r0, int c1, int r1)
         {
             Vector2 pa = new Vector2(c0 * CellPx + CellPx * 0.5f, -(r0 * CellPx) - CellPx * 0.5f);
             Vector2 pb = new Vector2(c1 * CellPx + CellPx * 0.5f, -(r1 * CellPx) - CellPx * 0.5f);
-            Vector2 mid = (pa + pb) * 0.5f;
             Vector2 d = pb - pa;
             float len = d.magnitude;
             float ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
             var go = new GameObject("trailLine", typeof(RectTransform));
             go.transform.SetParent(_trappedContent, false);
             var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0.5f, 0.5f);
+            // Pivot at the start so the line can draw itself from move to move.
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0f, 0.5f);
             rt.sizeDelta = new Vector2(len, 5f);
-            rt.anchoredPosition = mid;
+            rt.anchoredPosition = pa;
             rt.localRotation = Quaternion.Euler(0, 0, ang);
             var img = go.AddComponent<Image>();
             img.color = new Color(0.435f, 0.827f, 1f, 0.75f); // #6FD3FF
             img.raycastTarget = false;
+            return (rt, len);
         }
 
         private Image Cell(int col, int rowIdx, Color color)
@@ -2689,10 +2798,53 @@ namespace KnightsGauntlet.View
             rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0, 1);
             rt.sizeDelta = new Vector2(CellPx, CellPx);
             rt.anchoredPosition = new Vector2(col * CellPx, -rowIdx * CellPx);
-            var img = go.AddComponent<Image>(); img.color = color;
+            if (!LegacyStyle)
+            {
+                // Tiles sit on dark grout (the viewport behind shows through the gaps).
+                const float gap = 3f;
+                rt.sizeDelta = new Vector2(CellPx - gap, CellPx - gap);
+                rt.anchoredPosition += new Vector2(gap * .5f, -gap * .5f);
+            }
+            var img = go.AddComponent<Image>(); img.color = color; img.raycastTarget = false;
             return img;
         }
-        private void GlyphCell(int col, int rowIdx, string text, Color color, bool useGlyphFont)
+
+        // A real 3D board piece (trap token, the player's knight) standing in a cell.
+        // Null if it can't be rendered, so the caller falls back to the glyph.
+        private RectTransform PieceCell(int col, int rowIdx, PieceType type, bool player)
+        {
+            var tex = PieceIconCache.Get(_theme, type, player, player ? SaveData.GetSkin() : null);
+            if (tex == null) return null;
+            var go = new GameObject(type == PieceType.Trap ? "trap" : "knight", typeof(RectTransform), typeof(RawImage));
+            go.transform.SetParent(_trappedContent, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(.5f, .5f);
+            bool token = type == PieceType.Trap;
+            rt.sizeDelta = Vector2.one * CellPx * (token ? .9f : 1.45f);
+            rt.anchoredPosition = new Vector2(col * CellPx + CellPx * .5f, -rowIdx * CellPx - CellPx * (token ? .5f : .36f));
+            var img = go.GetComponent<RawImage>(); img.texture = tex; img.raycastTarget = false;
+            return rt;
+        }
+
+        // Gold ring inside a path tile, the board's move-target look.
+        private static void TargetRing(RectTransform cell)
+        {
+            const float thick = 4f, inset = 5f;
+            for (int i = 0; i < 4; i++)
+            {
+                var g = new GameObject("ring", typeof(RectTransform), typeof(Image));
+                g.transform.SetParent(cell, false);
+                var rt = (RectTransform)g.transform;
+                bool horizontal = i < 2;
+                rt.anchorMin = horizontal ? new Vector2(0f, i == 0 ? 1f : 0f) : new Vector2(i == 2 ? 0f : 1f, 0f);
+                rt.anchorMax = horizontal ? new Vector2(1f, i == 0 ? 1f : 0f) : new Vector2(i == 2 ? 0f : 1f, 1f);
+                rt.pivot = horizontal ? new Vector2(.5f, i == 0 ? 1f : 0f) : new Vector2(i == 2 ? 0f : 1f, .5f);
+                rt.sizeDelta = horizontal ? new Vector2(-inset * 2f, thick) : new Vector2(thick, -inset * 2f);
+                rt.anchoredPosition = horizontal ? new Vector2(0f, i == 0 ? -inset : inset) : new Vector2(i == 2 ? inset : -inset, 0f);
+                var img = g.GetComponent<Image>(); img.color = UIFactory.Hex("#EBBC40"); img.raycastTarget = false;
+            }
+        }
+        private TMP_Text GlyphCell(int col, int rowIdx, string text, Color color, bool useGlyphFont)
         {
             var go = new GameObject("glyph", typeof(RectTransform));
             go.transform.SetParent(_trappedContent, false);
@@ -2705,8 +2857,10 @@ namespace KnightsGauntlet.View
             else if (_ui.Font) t.font = _ui.Font;
             t.text = text; t.color = color; t.fontSize = CellPx * 0.5f;
             t.alignment = TextAlignmentOptions.Center; t.fontStyle = FontStyles.Normal;
+            t.raycastTarget = false;
+            return t;
         }
-        private void Badge(int col, int rowIdx, string text)
+        private RectTransform Badge(int col, int rowIdx, string text)
         {
             var go = new GameObject("badge", typeof(RectTransform));
             go.transform.SetParent(_trappedContent, false);
@@ -2739,6 +2893,7 @@ namespace KnightsGauntlet.View
             // Pin the pill flush to the tile's top-left corner (pivot is top-left) so it
             // clears the green path number, which sits centred in the tile.
             rt.anchoredPosition = new Vector2(col * CellPx, -rowIdx * CellPx);
+            return rt;
         }
     }
 }

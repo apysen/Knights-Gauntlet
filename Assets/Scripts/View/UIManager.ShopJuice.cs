@@ -66,7 +66,9 @@ namespace KnightsGauntlet.View
             bool customOn = _custom != null && _custom.activeSelf && !LegacyStyle;
             bool settingsOn = _settings != null && _settings.activeSelf && !LegacyStyle;
             bool levelsOn = _levelSelect != null && _levelSelect.activeSelf && !LegacyStyle;
-            if (!marketOn && !treasuryOn && !menuOn && !runOn && !customOn && !settingsOn && !levelsOn) return;
+            bool lessonOn = !LegacyStyle && ((_tutorial != null && _tutorial.activeSelf) || (_howto != null && _howto.activeSelf)
+                || (_trapped != null && _trapped.activeSelf));
+            if (!marketOn && !treasuryOn && !menuOn && !runOn && !customOn && !settingsOn && !levelsOn && !lessonOn) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _shopTime += dt;
             bool reduced = SaveData.IsReducedEffects();
@@ -337,9 +339,9 @@ namespace KnightsGauntlet.View
             var crt = coin.rectTransform;
             crt.anchorMin = crt.anchorMax = new Vector2(0f, .5f); crt.pivot = new Vector2(0f, .5f);
             crt.anchoredPosition = new Vector2(10f, 0f);
-            btn.gameObject.AddComponent<RectMask2D>();
+            var clip = UIFactory.ShapeClip(btn.transform, btn.targetGraphic as Image);
             var glintGo = new GameObject("Glint", typeof(RectTransform), typeof(Image));
-            glintGo.transform.SetParent(btn.transform, false);
+            glintGo.transform.SetParent(clip, false);
             var grt = (RectTransform)glintGo.transform;
             grt.sizeDelta = new Vector2(34f, height * 2.2f); grt.localRotation = Quaternion.Euler(0, 0, -20f);
             var gimg = glintGo.GetComponent<Image>(); gimg.sprite = UISprites.SoftGlow(); gimg.raycastTarget = false;
@@ -357,7 +359,7 @@ namespace KnightsGauntlet.View
             if (btn.targetGraphic is Image img) img.color = can ? UIFactory.Gold : Color.Lerp(UIFactory.Panel, Color.black, .25f);
             var label = btn.GetComponentInChildren<TMP_Text>();
             if (label != null) label.color = can ? UIFactory.Bg : UIFactory.Muted;
-            var glint = btn.transform.Find("Glint");
+            var glint = btn.transform.Find("ShineClip/Glint");
             if (glint != null) glint.GetComponent<Image>().enabled = can;
         }
 

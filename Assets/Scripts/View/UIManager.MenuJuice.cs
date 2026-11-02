@@ -257,9 +257,9 @@ namespace KnightsGauntlet.View
         // A shimmer that sweeps across a button now and then (shared with the shop).
         private void AddGlint(Button btn, float height)
         {
-            if (btn.GetComponent<RectMask2D>() == null) btn.gameObject.AddComponent<RectMask2D>();
+            var clip = UIFactory.ShapeClip(btn.transform, btn.targetGraphic as Image);
             var glintGo = new GameObject("Glint", typeof(RectTransform), typeof(Image));
-            glintGo.transform.SetParent(btn.transform, false);
+            glintGo.transform.SetParent(clip, false);
             var grt = (RectTransform)glintGo.transform;
             grt.sizeDelta = new Vector2(44f, height * 2.2f); grt.localRotation = Quaternion.Euler(0, 0, -20f);
             var gimg = glintGo.GetComponent<Image>(); gimg.sprite = UISprites.SoftGlow(); gimg.raycastTarget = false;

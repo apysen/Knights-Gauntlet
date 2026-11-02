@@ -290,12 +290,14 @@ namespace KnightsGauntlet.View
             bool adventure = _advMovesLabel.gameObject.activeSelf;
             bool battle = !adventure && _gm.CurrentMode == GameMode.Battle;
             bool trap = !tutorial && !adventure && !battle;
-            bool compactBattle = battle && !tutorial;
+            // The battle tutorial uses the real battle row (multiplier, piece icon, capture
+            // dots) so its lessons can point at them.
+            bool compactBattle = battle;
             if (_hudWasTutorial != tutorial || _hudBattleLayout != compactBattle)
             {
                 _hudWasTutorial = tutorial; _hudBattleLayout = compactBattle; LayoutModernHud();
             }
-            _hudStatus.gameObject.SetActive(!tutorial && !trap);
+            _hudStatus.gameObject.SetActive(!trap && (!tutorial || battle));
             _hudHeader.Find("HeaderDivider").gameObject.SetActive(!trap && !compactBattle);
             _topBarRt.sizeDelta = new Vector2(-(Screen.width - StageCurtains.ColumnWidthPx) / HudScale(), TopOffsetCanvas() + (trap || compactBattle ? 60 : HudTopContentH));
             _battleForm.gameObject.SetActive(compactBattle);
@@ -319,7 +321,7 @@ namespace KnightsGauntlet.View
             if (tutorial)
             {
                 HudValue(_hudContext, "TUTORIAL · " + _gm.PlayerForm.ToString().ToUpperInvariant());
-                return;
+                if (!battle) return;
             }
             if (adventure)
             {
@@ -375,37 +377,9 @@ namespace KnightsGauntlet.View
             }
         }
 
-        private void BuildModernTutorial()
-        {
-            _tutorial = _ui.CreateCanvas("Tutorial", 110, new Vector2(HudRefW, HudRefH)).gameObject;
-            _tutorialCard = HudSurface(_tutorial.transform, "LessonCard", UIFactory.Bg);
-            _tutorialCard.anchorMin = _tutorialCard.anchorMax = _tutorialCard.pivot = new Vector2(.5f, 1);
-            _tutCaption = HudText(_tutorialCard, "Lesson", "", 14, UIFactory.Text, 0, 0, 500, 44);
-            _tutCaption.textWrappingMode = TextWrappingModes.Normal; _tutCaption.alignment = TextAlignmentOptions.TopLeft;
-            _tutCaption.fontSizeMin = 12;
-            _tutorialActions = HudRect(_tutorial.transform, "LessonActions", 0, 0, 500, 44);
-            _tutorialActions.anchorMin = _tutorialActions.anchorMax = _tutorialActions.pivot = new Vector2(.5f, 0);
-            var skip = MenuButton(_tutorialActions, "Skip tutorial", () => _gm.TutorialSkip(), 140, 44, 15, textOnly: true);
-            skip.name = "SkipTutorial";
-            var cont = MenuButton(_tutorialActions, "Continue", () => _gm.TutorialContinue(), 156, 44, 16, primary: true);
-            cont.name = "ContinueTutorial"; _tutContinueBtn = cont.gameObject;
-            LayoutModernTutorial(); _tutorial.SetActive(false);
-        }
         // Horizontal centre for HUD content (canvas units). Phones follow the safe area;
         // with curtained side bars (tablets) the play column sits in the screen's middle.
         private static float HudCenterX() => StageCurtains.SideBarPx >= 1f ? 0f
             : (Screen.safeArea.center.x - Screen.width * .5f) / HudScale();
-        private void LayoutModernTutorial()
-        {
-            if (_tutorialCard == null) return;
-            float center = HudCenterX();
-            _tutorialCard.sizeDelta = new Vector2(_hudContentWidth, 44);
-            _tutorialCard.anchoredPosition = new Vector2(center, -TopOffsetCanvas() - 62);
-            _tutCaption.rectTransform.sizeDelta = new Vector2(_hudContentWidth, 44);
-            _tutorialActions.sizeDelta = new Vector2(_hudContentWidth, 44);
-            _tutorialActions.anchoredPosition = new Vector2(center, BottomBarCanvas() - 48);
-            HudPlace((RectTransform)_tutorialActions.Find("SkipTutorial"), 0, 0, 140, 44);
-            HudPlace((RectTransform)_tutContinueBtn.transform, _hudContentWidth - 156, 0, 156, 44);
-        }
     }
 }
