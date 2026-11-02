@@ -112,6 +112,9 @@ namespace KnightsGauntlet.View
             { Sfx.RallySlam,       "SFX/Rally Slam" },
             { Sfx.PowerupBerserker, "SFX/Powerup Berserker" },
             { Sfx.FuryCrackle,     "SFX/Fury Crackle" },
+            // Adventure goal reached: horn call over Bb, C, landing on D major (MusicBuild/
+            // build_level_complete.py). The pixel style keeps the old "Adventure Mode Next Level".
+            { Sfx.AdventureNextLevel, "SFX/Adventure Level Complete" },
             // Main menu (synthesized, MusicBuild/build_warhorn.py). Played on the UI voice.
             { Sfx.MenuEntrance,    "SFX/Menu Entrance Whoosh" },
             { Sfx.MenuTitleTinks,  "SFX/Menu Title Tinks" },
