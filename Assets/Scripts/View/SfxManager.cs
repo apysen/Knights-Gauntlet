@@ -67,7 +67,6 @@ namespace KnightsGauntlet.View
         private int _lastCaptureClip = -1;
         private AudioClip _legacyCaptureClip;
         private const string LegacyCapturePath = "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square)";
-        private float _lastCaptureHapticTime = -1f;
 
         // Shilling chain, the classic platformer coin run: each pickup soon after the
         // last climbs one step up a major scale, capped at an octave so it never
@@ -407,38 +406,6 @@ namespace KnightsGauntlet.View
                 source.pitch = Mathf.Lerp(0.98f, 1.10f, combo) * Random.Range(0.97f, 1.03f);
                 source.PlayOneShot(clip, SfxVolume * Mathf.Lerp(1.00f, 1.15f, combo));
             }
-            _instance.PulseCaptureHaptic();
-        }
-
-        private void PulseCaptureHaptic()
-        {
-            if (!Application.isMobilePlatform || !SaveData.IsCaptureHaptics()) return;
-            if (Time.unscaledTime - _lastCaptureHapticTime < 0.10f) return;
-            _lastCaptureHapticTime = Time.unscaledTime;
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-            try
-            {
-                using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-                using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
-                using (var vibrator = activity.Call<AndroidJavaObject>("getSystemService", "vibrator"))
-                using (var version = new AndroidJavaClass("android.os.Build$VERSION"))
-                {
-                    if (vibrator == null) return;
-                    int sdk = version.GetStatic<int>("SDK_INT");
-                    if (sdk >= 26)
-                    {
-                        using (var effectClass = new AndroidJavaClass("android.os.VibrationEffect"))
-                        using (var effect = effectClass.CallStatic<AndroidJavaObject>("createOneShot", 28L, 110))
-                            vibrator.Call("vibrate", effect);
-                    }
-                    else vibrator.Call("vibrate", 28L);
-                }
-            }
-            catch { Handheld.Vibrate(); }
-#elif UNITY_IOS && !UNITY_EDITOR
-            Handheld.Vibrate();
-#endif
         }
 
         // Plays a gameplay sound on the dedicated loop voice until StopLoop is called.
