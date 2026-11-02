@@ -165,12 +165,17 @@ namespace KnightsGauntlet.View
         private int _layoutW, _layoutH;
         private Rect _layoutSafe;
         private bool _forceLayout = true;
+        private float _layoutScale;
         private bool ScreenChanged()
         {
             var safe = Screen.safeArea;
-            if (!_forceLayout && Screen.width == _layoutW && Screen.height == _layoutH && safe == _layoutSafe)
+            // The CanvasScaler can update its scaleFactor a frame after the screen size changes,
+            // so a layout done on the resize frame uses a stale scale. Watch the scale too.
+            float scale = _menuCanvas != null ? _menuCanvas.scaleFactor : 1f;
+            if (!_forceLayout && Screen.width == _layoutW && Screen.height == _layoutH && safe == _layoutSafe
+                && Mathf.Approximately(scale, _layoutScale))
                 return false;
-            _layoutW = Screen.width; _layoutH = Screen.height; _layoutSafe = safe;
+            _layoutW = Screen.width; _layoutH = Screen.height; _layoutSafe = safe; _layoutScale = scale;
             _forceLayout = false;
             return true;
         }
@@ -1756,6 +1761,15 @@ namespace KnightsGauntlet.View
 
             // Compact status line for errors ("not enough shillings") / confirmations.
             _marketMsg = _ui.Label(col, "", 17, UIFactory.Gold, FontStyles.Normal, 300);
+            // Always exactly one line tall, whether empty or showing a long message, so the
+            // column never reflows: long text shrinks to fit instead of wrapping.
+            _marketMsg.textWrappingMode = TextWrappingModes.NoWrap;
+            _marketMsg.overflowMode = TextOverflowModes.Overflow;
+            _marketMsg.enableAutoSizing = true;
+            _marketMsg.fontSizeMax = _marketMsg.fontSize;
+            _marketMsg.fontSizeMin = _marketMsg.fontSize * 0.6f;
+            var msgLe = _marketMsg.GetComponent<LayoutElement>();
+            msgLe.minHeight = msgLe.preferredHeight = _marketMsg.fontSize * 1.4f;
 
             _ui.Button(col, "Back", () => ShowMenu(), UIFactory.Gold, UIFactory.Bg, 220, 50, 22);
             _marketFx = ShopFxLayer(screen.transform);

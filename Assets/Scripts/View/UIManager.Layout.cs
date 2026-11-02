@@ -152,14 +152,16 @@ namespace KnightsGauntlet.View
     {
         private Rect _last;
         private Vector2 _screen;
+        private float _unit;
         private void LateUpdate()
         {
             var safe = Screen.safeArea;
             var screen = new Vector2(Screen.width, Screen.height);
-            if (safe == _last && screen == _screen) return;
-            _last = safe; _screen = screen;
             var canvas = GetComponentInParent<Canvas>();
             float unit = Mathf.Max(.001f, canvas.scaleFactor);
+            // Watch the scale factor too: it can update a frame after the screen size changes.
+            if (safe == _last && screen == _screen && Mathf.Approximately(unit, _unit)) return;
+            _last = safe; _screen = screen; _unit = unit;
             var rect = (RectTransform)transform;
             rect.offsetMin = new Vector2(safe.xMin / unit + 24, safe.yMin / unit + 96);
             rect.offsetMax = new Vector2(-(Screen.width - safe.xMax) / unit - 24,

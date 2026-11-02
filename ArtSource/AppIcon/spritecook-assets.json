@@ -1,0 +1,6 @@
+{
+  "assets": [
+    { "asset_id": "9e702332-b066-4a9f-8dee-dcb91126517f", "file": "gauntlet_a.png", "label": "App icon gauntlet grip A (knight faces right)" },
+    { "asset_id": "0d441acd-b0f6-4092-b870-d67c50587811", "file": "gauntlet_b.png", "label": "App icon gauntlet grip B (knight faces left)" }
+  ]
+}
