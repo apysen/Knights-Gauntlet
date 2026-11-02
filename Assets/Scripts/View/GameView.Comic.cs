@@ -59,6 +59,9 @@ namespace KnightsGauntlet.View
             _lastCaptureSlash = -1;
             _enemyMotions.Clear();
             CancelTransientAnimations();
+            // Popups survive ordinary moves (they finish on their own), but a full reset
+            // (new run, restart, revive) clears them.
+            foreach (var popup in _popups) { popup.active = false; popup.tmp.gameObject.SetActive(false); }
         }
 
         // Presentation never owns input or simulation timing. A fresh successful
@@ -78,7 +81,6 @@ namespace KnightsGauntlet.View
                 trail.active = false;
                 trail.ribbon.gameObject.SetActive(false);
             }
-            foreach (var popup in _popups) { popup.active = false; popup.tmp.gameObject.SetActive(false); }
             foreach (var particle in _particles) { particle.active = false; particle.tr.gameObject.SetActive(false); }
             foreach (var voxel in _voxelParticles) { voxel.active = false; voxel.tr.gameObject.SetActive(false); }
         }

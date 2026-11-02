@@ -441,7 +441,7 @@ namespace KnightsGauntlet.View
             UpdateQueenShield(sim, dt);
             UpdateCoachMark();
             UpdateGoalFlag();
-            AnimatePopups(dt);
+            AnimatePopups(sim, dt);
             AnimateCoinBursts(dt);
             AnimateParticles(dt);
             AnimateVoxelParticles();
@@ -571,58 +571,6 @@ namespace KnightsGauntlet.View
                 arr[i] = Sprite.Create(tex, new Rect(i * fw, 0, fw, fh), new Vector2(0.5f, 0.5f), fh);
             return arr;
         }
-
-        // ── Popups (+score / xCombo / shielded!) ─────────────────────────────
-        // Floating text that rises and fades, mirroring the web version's popups.
-        public void SpawnPopup(int col, float y, string text, Color color)
-        {
-            var item = GetPopup();
-            item.active = true;
-            item.alpha = 1.25f;
-            item.color = color;
-            item.tmp.text = text;
-            var c = color; c.a = 1f; item.tmp.color = c;
-            item.tmp.gameObject.SetActive(true);
-            item.tmp.transform.position = _board.CellToWorld(col, y);
-        }
-
-        private void AnimatePopups(float dt)
-        {
-            if (_popups.Count == 0) return;
-            float drift = (_board != null ? _board.cellSize : 1f) * 0.9f;
-            for (int i = 0; i < _popups.Count; i++)
-            {
-                var it = _popups[i];
-                if (!it.active) continue;
-                it.alpha -= dt * 1.4f;
-                if (it.alpha <= 0f) { it.active = false; it.tmp.gameObject.SetActive(false); continue; }
-                var pos = it.tmp.transform.position; pos.y += drift * dt; it.tmp.transform.position = pos;
-                var c = it.color; c.a = Mathf.Clamp01(it.alpha); it.tmp.color = c;
-            }
-        }
-
-        private PopupItem GetPopup()
-        {
-            for (int i = 0; i < _popups.Count; i++) if (!_popups[i].active) return _popups[i];
-            var go = new GameObject("Popup");
-            go.transform.SetParent(_popupsRoot, false);
-            go.transform.localScale = Vector3.one * _board.cellSize;
-            var tmp = go.AddComponent<TextMeshPro>();
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontStyle = FontStyles.Normal;
-            // Keep score lettering compact enough to leave the next move visible.
-            tmp.enableAutoSizing = true; tmp.fontSizeMin = 1; tmp.fontSizeMax = 4.5f;
-            tmp.rectTransform.sizeDelta = new Vector2(8f, 1f);
-            if (_theme != null && _theme.popupFont != null) tmp.font = _theme.popupFont;
-            else if (_theme != null && _theme.uiFont != null) tmp.font = _theme.uiFont;
-            var mr = go.GetComponent<MeshRenderer>();
-            if (mr != null) mr.sortingOrder = 20;
-            var item = new PopupItem { tmp = tmp };
-            _popups.Add(item);
-            return item;
-        }
-
-        private class PopupItem { public TextMeshPro tmp; public float alpha; public bool active; public Color color; }
 
         // Captured pieces break into tiny 3D cubes. The old 2D burst remains for
         // non-capture events such as Trap mode level-ups.

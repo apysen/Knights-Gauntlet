@@ -199,7 +199,7 @@ namespace KnightsGauntlet.View
             };
             _sim.OnShielded += () =>
             {
-                _view.SpawnPopup(_sim.PlayerCol, _sim.PlayerY - 0.3f, "shielded!", PopupShield);
+                _view.SpawnPlayerPopup(_sim, 0, "shielded!", PopupShield, 1.1f);
                 SfxManager.Play(Sfx.ShieldBreak);
             };
             _sim.OnTransformExpired += () => SfxManager.Play(Sfx.Untransform);
@@ -1454,18 +1454,25 @@ namespace KnightsGauntlet.View
                 else if (!_trapLeveledUpThisMove) SfxManager.Play(Sfx.PieceMove);
                 if (result.Captures != null)
                 {
+                    int popupLine = 0; // multi-captures stack their popups instead of overlapping
                     foreach (var cap in result.Captures)
                     {
                         int impactCol = _legacy2D ? cap.Col : _sim.PlayerCol;
                         float impactY = _legacy2D ? cap.Y : _sim.PlayerY;
                         _view.PlayComicCapture(_sim, cap.NewMultiplier);
                         _view.SpawnCaptureVoxelBurst(impactCol, impactY, BurstColor(cap.Type), cap.NewMultiplier);
-                        _view.SpawnPopup(impactCol, impactY - 0.42f, "+" + cap.PointsGained, PopupGain);
-                        // Under the Berserker Draught the gain popup burns red-orange and says so.
+                        // Both lines float above the piece's head: the combo just over it,
+                        // the score gain above that, popping in a beat later. Bigger combos
+                        // get a bigger combo line.
+                        // Under the Berserker Draught the combo popup burns red-orange and says so.
                         bool fury = _sim.ComboGainScale > 1;
-                        _view.SpawnPopup(impactCol, impactY + 0.14f,
+                        float comboScale = 1f + Mathf.Min(cap.NewMultiplier - 1, 8) * 0.05f + (fury ? 0.1f : 0f);
+                        float stagger = popupLine * 0.06f;
+                        _view.SpawnPlayerPopup(_sim, popupLine,
                             "X" + cap.NewMultiplier + " (+" + cap.MultiplierDelta + (fury ? " FURY" : "") + ")",
-                            fury ? PopupFury : PopupCombo);
+                            fury ? PopupFury : PopupCombo, comboScale, stagger);
+                        _view.SpawnPlayerPopup(_sim, popupLine + 1, "+" + cap.PointsGained, PopupGain, 1.15f, stagger + 0.07f);
+                        popupLine += 2;
                         if (fury) { _view.PlayFuryCapture(impactCol, impactY); SfxManager.Play(Sfx.FuryCrackle); }
                     }
                 }
