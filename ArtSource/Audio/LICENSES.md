@@ -8,7 +8,7 @@ Proof: each OpenGameArt page lists "License(s): CC0" in its license field (check
 
 The whole score (Score Menu, Score Trap/Battle/Adventure Meadow/Bridge/Castle, Score Boss, the four Launch phrases and Game Over Theme) and the transformation set (`SFX/Transform Whoosh.wav`, `Transform Hum.wav`, `Transform Poof.wav`, `Transform Break.wav`) are original compositions for this game, written and rendered by `MusicBuild/build_music.py`. See `MusicBuild/README.md`.
 
-They grow out of the game's own earlier Logic bounces (`SFX/MenuTheme.wav`, `Transformation.wav`, `Adventure Mode Next Level.wav`, still used by the legacy pixel style); see the README for what was carried over. They are played on these samples, retuned and cut per note (none is used as a recording of music):
+They grow out of the game's own earlier Logic bounces (`SFX/MenuTheme.wav`, `Transformation.wav`, `Adventure Mode Next Level.wav`, since removed with the legacy pixel style); see the README for what was carried over. They are played on these samples, retuned and cut per note (none is used as a recording of music):
 
 | Instrument in the score | Source | Author | License | Files (repo paths) |
 |---|---|---|---|---|
