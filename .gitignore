@@ -89,3 +89,29 @@ Assets/Resources/SupabaseConfig.asset.meta
 /Assets/Thaleah_PixelFont.meta
 # Unity Version Control (Plastic) local workspace metadata
 .plastic/
+
+# BEGIN unity vcs doctor
+# Unity ignore rules kept current by `unity vcs doctor --fix`. Managed block: edits here are overwritten. To opt out of a rule, negate it below this block (for example `!*.log`).
+*.blend1
+*.blend1.meta
+*.log
+*.mdb
+*.mdb.meta
+*.pdb.meta
+*.pidb.meta
+*.slnx
+*.unitypackage.meta
+.consulo/
+/ServerData
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Aa]ssets/AddressableAssetsData/link.xml*
+/[Aa]ssets/Addressables_Temp*
+/[Aa]ssets/StreamingAssets/aa*
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+/[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+/[Aa]ssets/[Ss]ceneDependencyCache*
+InitTestScene*.unity*
+mono_crash.*
+sysinfo.txt
+# END unity vcs doctor

@@ -34,3 +34,11 @@
 *.otf   filter=lfs diff=lfs merge=lfs -text
 *.fbx   filter=lfs diff=lfs merge=lfs -text
 *.obj   filter=lfs diff=lfs merge=lfs -text
+
+# BEGIN unity vcs doctor
+# Unity attributes kept current by `unity vcs doctor --fix`. Managed block: edits here are overwritten. To opt out of a rule, override it below this block.
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.dll filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+# END unity vcs doctor
