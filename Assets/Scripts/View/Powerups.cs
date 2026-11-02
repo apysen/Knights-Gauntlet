@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace KnightsGauntlet.View
 {
-    public enum PowerupId { Chronokinesis, DivineIntervention, DivinePath }
+    public enum PowerupId { Chronokinesis, DivineIntervention, DivinePath, WarHorn, Berserker }
 
     // A consumable in-run powerup. Bought in the shop's Powerups tab, spent from the
     // in-game activation buttons. Effects are applied in GameManager; this is just the
@@ -32,7 +32,7 @@ namespace KnightsGauntlet.View
         public static readonly PowerupInfo DivineIntervention = new PowerupInfo
         {
             Id = PowerupId.DivineIntervention, Key = "divine",
-            Name = "Divine Intervention", Blurb = "A divine whisper guides your hand toward the perfect moves.",
+            Name = "Divine Intervention", Blurb = "Trap: A divine whisper guides your hand toward the perfect moves.",
             Cost = 2000, Duration = 20f,
         };
 
@@ -45,11 +45,31 @@ namespace KnightsGauntlet.View
             Cost = 5000, Duration = 0f,
         };
 
-        public static readonly PowerupInfo[] All = { Chronokinesis, DivineIntervention, DivinePath };
+        // Battle-only: restores the combo multiplier to the highest it reached this run.
+        // Instant (no duration); only usable while the current streak is below that peak.
+        public static readonly PowerupInfo WarHorn = new PowerupInfo
+        {
+            Id = PowerupId.WarHorn, Key = "war_horn",
+            Name = "War Horn", Blurb = "Battle: One blast of the old war horn and your greatest streak charges back into the fight.",
+            Cost = 3000, Duration = 0f,
+        };
+
+        // Battle-only, timed: each capture adds three times its usual multiplier gain.
+        public const int BerserkerGainScale = 3;
+        public static readonly PowerupInfo Berserker = new PowerupInfo
+        {
+            Id = PowerupId.Berserker, Key = "berserker",
+            Name = "Berserker Draught", Blurb = "Battle: A fiery brew that makes every capture build your multiplier three times as fast.",
+            Cost = 2500, Duration = 15f,
+        };
+
+        public static readonly PowerupInfo[] All = { Chronokinesis, WarHorn, Berserker, DivineIntervention, DivinePath }; // shop order
 
         public static PowerupInfo Get(PowerupId id)
             => id == PowerupId.Chronokinesis ? Chronokinesis
              : id == PowerupId.DivineIntervention ? DivineIntervention
+             : id == PowerupId.WarHorn ? WarHorn
+             : id == PowerupId.Berserker ? Berserker
              : DivinePath;
 
         // The shop and HUD share the same line icon family.
@@ -58,10 +78,14 @@ namespace KnightsGauntlet.View
         public static Sprite IconOf(string key)
         {
             string cacheKey = (UIFactory.LegacyStyle ? "legacy:" : "modern:") + key;
-            if (_icons.TryGetValue(cacheKey, out var s)) return s;
+            // Domain reload is off (Enter Play Mode Options), so this static cache outlives Play
+            // sessions while the runtime-made sprites in it are destroyed on exit: rebuild those.
+            if (_icons.TryGetValue(cacheKey, out var s) && s != null) return s;
+            string royal = key == "chronokinesis" ? "time" : key == "divine_path" ? "path" : key == "war_horn" ? "horn" : key == "berserker" ? "potion" : "shield";
             s = UIFactory.LegacyStyle ? Resources.Load<Sprite>("LegacyUI/" +
-                (key == "chronokinesis" ? "Chronokinesis" : key == "divine_path" ? "Pathfinder" : "Holy Cross")) :
-                RoyalIcons.Get(key == "chronokinesis" ? "time" : key == "divine_path" ? "path" : "shield");
+                (key == "chronokinesis" ? "Chronokinesis" : key == "divine_path" ? "Pathfinder" : key == "war_horn" ? "War Horn" : key == "berserker" ? "Berserker" : "Holy Cross")) : null;
+            // No legacy pixel icon yet (the War Horn): fall back to the line icon.
+            if (s == null) s = RoyalIcons.Get(royal);
             _icons[cacheKey] = s;
             return s;
         }

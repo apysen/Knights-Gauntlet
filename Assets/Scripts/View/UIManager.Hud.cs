@@ -78,7 +78,10 @@ namespace KnightsGauntlet.View
             _divineBtn = MakePowerupButton(_hudFooter, Powerups.DivineIntervention, out _divineBtnRt, out _divineCount, out _divineRadial);
             _chronoBtn = MakePowerupButton(_hudFooter, Powerups.Chronokinesis, out _chronoBtnRt, out _chronoCount, out _chronoRadial);
             _pathBtn = MakePowerupButton(_hudFooter, Powerups.DivinePath, out _pathBtnRt, out _pathCount, out _pathRadial);
+            _hornBtn = MakePowerupButton(_hudFooter, Powerups.WarHorn, out _hornBtnRt, out _hornCount, out _hornRadial);
+            _furyBtn = MakePowerupButton(_hudFooter, Powerups.Berserker, out _furyBtnRt, out _furyCount, out _furyRadial);
             CompactPowerup(_divineBtn, _divineCount); CompactPowerup(_chronoBtn, _chronoCount); CompactPowerup(_pathBtn, _pathCount);
+            CompactPowerup(_hornBtn, _hornCount); CompactPowerup(_furyBtn, _furyCount);
             _enemyBarRt = HudRect(_hudFooter, "EnemyTimer", 0, 6, 300, 52);
             _enemyBarRoot = _enemyBarRt.gameObject;
             var timerLabel = HudText(_enemyBarRt, "TimerCaption", "NEXT ENEMY MOVE", 12, UIFactory.Muted, 0, 0, 300, 22);
@@ -171,6 +174,7 @@ namespace KnightsGauntlet.View
             var handle = HudSurface(track, "Handle", UIFactory.Gold); UIFactory.Stretch(handle);
             _tallScrollbar.handleRect = handle; _tallScrollbar.targetGraphic = handle.GetComponent<Image>();
             _tallScrollbar.onValueChanged.AddListener(OnTallScrollChanged); track.gameObject.SetActive(false);
+            track.gameObject.AddComponent<JuicyScrollbar>().Setup(UIFactory.Gold, UIFactory.Hex("#26354A"), 14f, 20f);
         }
         private void BuildBattleFormIndicator()
         {
@@ -199,10 +203,14 @@ namespace KnightsGauntlet.View
             if (_hudHeader == null) return;
             _battleMultiplierAlignmentDirty = true;
             float unit = HudScale();
-            _hudContentWidth = Mathf.Min(720, Screen.safeArea.width / unit - 40);
-            float center = (Screen.safeArea.center.x - Screen.width * .5f) / unit;
-            _topBarRt.sizeDelta = new Vector2(0, TopBarCanvas()); _topBarRt.anchoredPosition = Vector2.zero;
-            _bottomBarRt.sizeDelta = new Vector2(0, BottomBarCanvas()); _bottomBarRt.anchoredPosition = Vector2.zero;
+            // Everything stays inside the play column (narrower than the screen on tablets,
+            // where curtains fill the side bars).
+            float sideBars = (Screen.width - StageCurtains.ColumnWidthPx) / unit;
+            _hudContentWidth = Mathf.Min(720, Mathf.Min(Screen.safeArea.width, StageCurtains.ColumnWidthPx) / unit - 40);
+            float center = HudCenterX();
+            _topBarRt.sizeDelta = new Vector2(-sideBars, TopBarCanvas()); _topBarRt.anchoredPosition = Vector2.zero;
+            _bottomBarRt.sizeDelta = new Vector2(-sideBars, BottomBarCanvas()); _bottomBarRt.anchoredPosition = Vector2.zero;
+            if (_tallScrollbar != null) ((RectTransform)_tallScrollbar.transform).anchoredPosition = new Vector2(-4 - sideBars * .5f, 0);
             _hudHeader.sizeDelta = new Vector2(_hudContentWidth, 104);
             _hudHeader.anchoredPosition = new Vector2(center, -TopOffsetCanvas() - 2);
             const float footerHeight = 52;
@@ -238,10 +246,17 @@ namespace KnightsGauntlet.View
                 segment.rectTransform.sizeDelta = new Vector2(segment.rectTransform.sizeDelta.x, 10);
             }
             float buttonHeight = Mathf.Min(44, footerHeight - 8);
-            HudPlace(_divineBtnRt, _hudContentWidth - 160, 4, 76, buttonHeight);
-            HudPlace(_chronoBtnRt, _hudContentWidth - 76, 4, 76, buttonHeight);
+            // Slots run right to left. Trap: Chronokinesis, Divine. Battle: Chronokinesis,
+            // Berserker, War Horn (three buttons, so the row tightens a little).
+            bool battle = _hornBtn != null && _hornBtn.gameObject.activeSelf;
+            float buttonWidth = battle ? 68 : 76, buttonStep = battle ? 74 : 84;
+            HudPlace(_chronoBtnRt, _hudContentWidth - buttonWidth, 4, buttonWidth, buttonHeight);
+            HudPlace(_divineBtnRt, _hudContentWidth - buttonWidth - buttonStep, 4, buttonWidth, buttonHeight);
+            HudPlace(_furyBtnRt, _hudContentWidth - buttonWidth - buttonStep, 4, buttonWidth, buttonHeight);
+            HudPlace(_hornBtnRt, _hudContentWidth - buttonWidth - 2 * buttonStep, 4, buttonWidth, buttonHeight);
             HudPlace(_pathBtnRt, _hudContentWidth - 76, 4, 76, buttonHeight);
-            _enemyBarRt.sizeDelta = new Vector2(_hudContentWidth - 188, footerHeight - 8);
+            float rowWidth = battle ? buttonWidth + 2 * buttonStep : 160;
+            _enemyBarRt.sizeDelta = new Vector2(_hudContentWidth - rowWidth - 28, footerHeight - 8);
             _enemyBarRt.anchoredPosition = new Vector2(0, -4);
             var timerTrack = (RectTransform)_enemyBarRt.Find("TimerTrack");
             timerTrack.anchoredPosition = new Vector2(0, -(footerHeight - 18));
@@ -282,7 +297,7 @@ namespace KnightsGauntlet.View
             }
             _hudStatus.gameObject.SetActive(!tutorial && !trap);
             _hudHeader.Find("HeaderDivider").gameObject.SetActive(!trap && !compactBattle);
-            _topBarRt.sizeDelta = new Vector2(0, TopOffsetCanvas() + (trap || compactBattle ? 60 : HudTopContentH));
+            _topBarRt.sizeDelta = new Vector2(-(Screen.width - StageCurtains.ColumnWidthPx) / HudScale(), TopOffsetCanvas() + (trap || compactBattle ? 60 : HudTopContentH));
             _battleForm.gameObject.SetActive(compactBattle);
             _hudStatusRight.gameObject.SetActive(!compactBattle);
             _hudContext.gameObject.SetActive(!_modeBadgeRt.gameObject.activeSelf);
@@ -376,10 +391,14 @@ namespace KnightsGauntlet.View
             cont.name = "ContinueTutorial"; _tutContinueBtn = cont.gameObject;
             LayoutModernTutorial(); _tutorial.SetActive(false);
         }
+        // Horizontal centre for HUD content (canvas units). Phones follow the safe area;
+        // with curtained side bars (tablets) the play column sits in the screen's middle.
+        private static float HudCenterX() => StageCurtains.SideBarPx >= 1f ? 0f
+            : (Screen.safeArea.center.x - Screen.width * .5f) / HudScale();
         private void LayoutModernTutorial()
         {
             if (_tutorialCard == null) return;
-            float center = (Screen.safeArea.center.x - Screen.width * .5f) / HudScale();
+            float center = HudCenterX();
             _tutorialCard.sizeDelta = new Vector2(_hudContentWidth, 44);
             _tutorialCard.anchoredPosition = new Vector2(center, -TopOffsetCanvas() - 62);
             _tutCaption.rectTransform.sizeDelta = new Vector2(_hudContentWidth, 44);

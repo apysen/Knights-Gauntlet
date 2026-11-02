@@ -243,6 +243,9 @@ namespace KnightsGauntlet.View
             _chronoBtn = MakeLegacyPowerupButton(canvas.transform, Powerups.Chronokinesis, out _chronoBtnRt, out _chronoCount, out _chronoRadial);
             // Adventure-only Divine Path button (takes the same slot as chrono; only one HUD is up at a time).
             _pathBtn = MakeLegacyPowerupButton(canvas.transform, Powerups.DivinePath, out _pathBtnRt, out _pathCount, out _pathRadial);
+            // Battle-only War Horn, left of Divine Intervention.
+            _hornBtn = MakeLegacyPowerupButton(canvas.transform, Powerups.WarHorn, out _hornBtnRt, out _hornCount, out _hornRadial);
+            _furyBtn = MakeLegacyPowerupButton(canvas.transform, Powerups.Berserker, out _furyBtnRt, out _furyCount, out _furyRadial);
 
             // Enemy-move timer (battle only): "ENEMY MOVE" label above a filling bar.
             _enemyBarRoot = new GameObject("EnemyBar", typeof(RectTransform));
@@ -282,13 +285,16 @@ namespace KnightsGauntlet.View
         private void LayoutLegacyHud()
         {
             float topOffset = TopOffsetCanvas();
-            if (_topBarRt != null) _topBarRt.sizeDelta = new Vector2(0f, TopBarCanvas());
-            if (_bottomBarRt != null) _bottomBarRt.sizeDelta = new Vector2(0f, BottomBarCanvas());
+            // Keep the corners inside the play column (tablets have curtained side bars).
+            float side = (Screen.width - StageCurtains.ColumnWidthPx) * .5f / HudScale();
+            if (_topBarRt != null) _topBarRt.sizeDelta = new Vector2(-2f * side, TopBarCanvas());
+            if (_bottomBarRt != null) _bottomBarRt.sizeDelta = new Vector2(-2f * side, BottomBarCanvas());
 
             float rowY = -(topOffset + 6f);          // top of the score / button row
-            if (_scoreRt != null) _scoreRt.anchoredPosition = new Vector2(24f, rowY);
-            if (_pauseRt != null) _pauseRt.anchoredPosition = new Vector2(-16f, rowY);
-            if (_restartRt != null) _restartRt.anchoredPosition = new Vector2(-64f, rowY);
+            if (_scoreRt != null) _scoreRt.anchoredPosition = new Vector2(24f + side, rowY);
+            if (_pauseRt != null) _pauseRt.anchoredPosition = new Vector2(-16f - side, rowY);
+            if (_restartRt != null) _restartRt.anchoredPosition = new Vector2(-64f - side, rowY);
+            if (_tallScrollbar != null) ((RectTransform)_tallScrollbar.transform).anchoredPosition = new Vector2(-6f - side, 0f);
             if (_advMovesRt != null) _advMovesRt.anchoredPosition = new Vector2(0f, rowY + 2f);
             if (_modeBadgeRt != null) _modeBadgeRt.anchoredPosition = new Vector2(0f, rowY); // top-centre, in line with the row
             if (_bossHudRt != null) _bossHudRt.anchoredPosition = new Vector2(0f, rowY - 46f); // below the level/move label
@@ -298,6 +304,8 @@ namespace KnightsGauntlet.View
             float puY = rowY - 48f;
             if (_chronoBtnRt != null) _chronoBtnRt.anchoredPosition = new Vector2(-16f, puY);
             if (_divineBtnRt != null) _divineBtnRt.anchoredPosition = new Vector2(-64f, puY);
+            if (_hornBtnRt != null) _hornBtnRt.anchoredPosition = new Vector2(-112f, puY);
+            if (_furyBtnRt != null) _furyBtnRt.anchoredPosition = new Vector2(-64f, puY); // Battle: Divine's slot (Trap only)
             if (_pathBtnRt != null) _pathBtnRt.anchoredPosition = new Vector2(-16f, puY); // adventure slot
         }
 

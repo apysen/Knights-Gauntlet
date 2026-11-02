@@ -1,7 +1,10 @@
-"""Builds the three powerup icon models and exports one FBX each.
+"""Builds the powerup icon models and exports one FBX each.
 
 Run headless:
-  blender -b --python ArtSource/Powerups/build_powerups.py -- <fbx_out_dir> [<preview_dir>]
+  blender -b --python ArtSource/Powerups/build_powerups.py -- <fbx_out_dir> [<preview_dir>] [<Model,Model>]
+
+The optional third argument exports only the named models (e.g. WarHorn), leaving
+the other FBX files untouched.
 
 Models are Z-up, front facing -Y, roughly 2 units tall, origin at the visual
 centre. Material names are what Unity keys off (see PowerupModelIcon.cs):
@@ -12,7 +15,8 @@ from mathutils import Vector, Matrix
 
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 FBX_DIR = argv[0] if argv else os.path.dirname(os.path.abspath(__file__))
-PREVIEW_DIR = argv[1] if len(argv) > 1 else None
+PREVIEW_DIR = argv[1] if len(argv) > 1 and argv[1] not in ('', '-') else None
+ONLY = set(argv[2].split(',')) if len(argv) > 2 else None
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -30,6 +34,12 @@ PALETTE = {
     'Brass':     ((.86, .62, .28), .85, .3),
     'Dial':      ((.97, .94, .86), 0, .6),
     'Steel':     ((.72, .75, .80), .8, .3),
+    'Ivory':     ((.94, .87, .72), 0, .45),
+    'Leather':   ((.42, .22, .10), 0, .7),
+    'Banner':    ((.78, .10, .12), 0, .75),
+    'Shadow':    ((.10, .06, .04), 0, .9),
+    'Brew':      ((1.0, .30, .06), 0, .25),
+    'BrewFoam':  ((1.0, .78, .35), 0, .4),
 }
 MATS = {}
 for name, (color, metal, rough) in PALETTE.items():
@@ -251,6 +261,123 @@ def pathfinder():
     r.rotation_euler = (math.radians(58), 0, math.radians(-8))
     return r
 
+# ── War Horn: ivory horn with gold bands, a leather strap and a red tassel ────
+def sweep(name, centers, radii, mat, parent, segments=32, cap_start=True, cap_end=True):
+    """A tube along a polyline in the XZ plane (the icon's front plane), its radius
+    varying per point. Ring frames use the in-plane normal and the Y axis."""
+    bm = bmesh.new()
+    rings = []
+    y_axis = Vector((0, 1, 0))
+    for i, (c, r) in enumerate(zip(centers, radii)):
+        a = centers[max(0, i - 1)]; b = centers[min(len(centers) - 1, i + 1)]
+        t = (b - a).normalized()
+        n = t.cross(y_axis).normalized()
+        rings.append([bm.verts.new(c + r * (math.cos(k * 2 * math.pi / segments) * n +
+                                             math.sin(k * 2 * math.pi / segments) * y_axis))
+                      for k in range(segments)])
+    for ra, rb in zip(rings, rings[1:]):
+        for k in range(segments):
+            j = (k + 1) % segments
+            bm.faces.new((ra[k], ra[j], rb[j], rb[k]))
+    if cap_start: bm.faces.new(list(reversed(rings[0])))
+    if cap_end: bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    mesh = bpy.data.meshes.new(name); bm.to_mesh(mesh); bm.free()
+    return smooth(obj_from_mesh(name, mesh, mat, parent), 60)
+
+def ring_at(name, center, axis, major, minor, mat, parent):
+    o = primitive(bpy.ops.mesh.primitive_torus_add, name, mat, parent, location=center,
+                  major_radius=major, minor_radius=minor, major_segments=40, minor_segments=10)
+    o.rotation_mode = 'QUATERNION'
+    o.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis.normalized())
+    return o
+
+def war_horn():
+    r = root('WarHorn')
+    # Centre line: a crescent arc rising toward the bell on the right.
+    steps = 64
+    def centre(t):
+        a = math.radians(198 - 148 * t)
+        return Vector((1.1 * math.cos(a), 0, -.42 + .9 * math.sin(a) + .3 * t * t))
+    def radius(t):
+        rr = .07 + .29 * t ** 1.6
+        if t > .86: rr += .15 * ((t - .86) / .14) ** 2  # the bell flares out at the mouth
+        return rr
+    ts = [i / steps for i in range(steps + 1)]
+    pts = [centre(t) for t in ts]
+    sweep('Horn', pts, [radius(t) for t in ts], 'Ivory', r, segments=40, cap_end=False)
+    def tangent(t, d=.01):
+        return (centre(min(1, t + d)) - centre(max(0, t - d))).normalized()
+    # Dark throat inside the bell, recessed so the mouth reads as open.
+    throat_t = .965
+    ring_at('BellRim', centre(1), tangent(1), radius(1) - .005, .045, 'Gold', r)
+    o = primitive(bpy.ops.mesh.primitive_cylinder_add, 'Throat', 'Shadow', r, location=centre(throat_t),
+                  radius=radius(throat_t) * .96, depth=.02, vertices=40)
+    o.rotation_mode = 'QUATERNION'; o.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(tangent(throat_t))
+    # Gold bands along the body, and a gold mouthpiece cup at the narrow end.
+    for i, t in enumerate((.22, .48, .72)):
+        ring_at('Band%d' % i, centre(t), tangent(t), radius(t) + .006, .022 + .012 * t, 'Gold', r)
+    tip, back = centre(0), -tangent(0)
+    lathe_obj = lathe('Mouthpiece', [(0, 0), (.05, 0), (.075, .04), (.07, .07), (.045, .1), (.04, .16), (0, .16)],
+                      'Gold', r, segments=24)
+    lathe_obj.rotation_mode = 'QUATERNION'
+    lathe_obj.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(-back)
+    lathe_obj.location = tip + back * .15
+    # Leather carry strap slung under the horn between two gold rings.
+    a_t, b_t = .3, .76
+    a, b = centre(a_t) - Vector((0, 0, radius(a_t))), centre(b_t) - Vector((0, 0, radius(b_t)))
+    strap = []
+    for i in range(33):
+        u = i / 32
+        strap.append(a.lerp(b, u) + Vector((0, -.02, -.42 * math.sin(math.pi * u))))
+    sweep('Strap', strap, [.032] * len(strap), 'Leather', r, segments=12)
+    for name, p in (('StrapRingA', a), ('StrapRingB', b)):
+        ring_at(name, p, Vector((1, 0, 0)), .055, .016, 'Gold', r)
+    # A red tassel hanging from the middle of the strap.
+    mid = strap[16]
+    primitive(bpy.ops.mesh.primitive_uv_sphere_add, 'TasselKnot', 'Gold', r, location=mid - Vector((0, 0, .06)),
+              scale=(.06, .06, .06), segments=16, ring_count=8)
+    lathe('Tassel', [(0, 0), (.12, .03), (.10, .16), (.05, .26), (0, .28)], 'Banner', r, segments=20,
+          offset=(mid.x, mid.y, mid.z - .4))
+    # Lean the bell up and to the right, and tip it slightly toward the viewer.
+    r.rotation_euler = (math.radians(-8), 0, math.radians(0))
+    r.location = (0, 0, .05)
+    return r
+
+# ── Berserker Draught: a round flask of burning red brew ──────────────────────
+def berserker_draught():
+    r = root('BerserkerDraught')
+    # Glass flask: round belly, slim neck, a lip at the top.
+    flask = [(0, 0), (.30, .01), (.52, .12), (.63, .32), (.64, .52), (.57, .74), (.40, .9), (.2, .99),
+             (.16, 1.05), (.16, 1.4), (.2, 1.43), (.21, 1.48), (.15, 1.5), (.0, 1.5)]
+    lathe('Glass', flask, 'Glass', r, segments=48)
+    # The brew fills the belly up to a frothy surface, a touch inside the glass.
+    brew = [(0, .03), (.28, .04), (.49, .14), (.59, .32), (.6, .52), (.55, .7), (0, .7)]
+    lathe('Brew', brew, 'Brew', r, segments=48)
+    lathe('Foam', [(0, .69), (.55, .69), (.53, .74), (.3, .77), (0, .78)], 'BrewFoam', r, segments=48)
+    # Bubbles rising through the brew.
+    for i, (x, z, s_) in enumerate(((-.18, .3, .07), (.12, .45, .05), (.25, .22, .06), (-.05, .58, .04), (.0, .16, .05))):
+        primitive(bpy.ops.mesh.primitive_uv_sphere_add, 'Bubble%d' % i, 'BrewFoam', r, location=(x, -.42, z),
+                  scale=(s_, s_, s_), segments=12, ring_count=6)
+    # Cork, gold neck band and a gold band round the belly.
+    lathe('Cork', [(0, 1.38), (.15, 1.38), (.17, 1.5), (.19, 1.66), (.17, 1.7), (0, 1.7)], 'Wood', r, segments=24)
+    primitive(bpy.ops.mesh.primitive_torus_add, 'NeckBand', 'Gold', r, location=(0, 0, 1.1),
+              major_radius=.175, minor_radius=.03, major_segments=32, minor_segments=8)
+    primitive(bpy.ops.mesh.primitive_torus_add, 'BellyBand', 'Gold', r, location=(0, 0, .52),
+              major_radius=.645, minor_radius=.032, major_segments=64, minor_segments=8)
+    # A gold rune medallion on the front of the band.
+    primitive(bpy.ops.mesh.primitive_cylinder_add, 'Medallion', 'Gold', r, location=(0, -.66, .52),
+              rotation=(math.pi / 2, 0, 0), radius=.13, depth=.05, vertices=32)
+    primitive(bpy.ops.mesh.primitive_cylinder_add, 'Rune', 'Banner', r, location=(0, -.69, .52),
+              rotation=(math.pi / 2, 0, 0), radius=.07, depth=.02, vertices=3)
+    # Cord tied round the neck with a hanging tag.
+    primitive(bpy.ops.mesh.primitive_torus_add, 'Cord', 'Leather', r, location=(0, 0, 1.22),
+              major_radius=.18, minor_radius=.022, major_segments=32, minor_segments=8)
+    tag = prism('Tag', [(-.1, 0), (.1, 0), (.1, -.24), (0, -.3), (-.1, -.24)], .03, 'Parchment', r, bevel=.008, y=-.2)
+    tag.location = (.24, 0, 1.2); tag.rotation_euler = (0, math.radians(-18), 0)
+    r.location = (0, 0, -.82)
+    return r
+
 # ── Export ───────────────────────────────────────────────────────────────────
 def bake(root_obj):
     """Apply modifiers and every transform into the meshes, flattening the hierarchy
@@ -283,9 +410,13 @@ def export(root_obj, path):
 def preview(root_obj, path):
     for o in scene.objects:
         o.hide_render = not (o == root_obj or o in root_obj.children_recursive)
-    cam_data = bpy.data.cameras.new('PreviewCam'); cam_data.type = 'ORTHO'; cam_data.ortho_scale = 2.6
+    cam_data = bpy.data.cameras.new('PreviewCam'); cam_data.type = 'ORTHO'
+    pts = [o.matrix_world @ Vector(c) for o in root_obj.children_recursive if o.type == 'MESH' for c in o.bound_box]
+    span = max(max(p.x for p in pts) - min(p.x for p in pts), max(p.z for p in pts) - min(p.z for p in pts))
+    cam_data.ortho_scale = max(2.6, span * 1.1)
     cam = bpy.data.objects.new('PreviewCam', cam_data); scene.collection.objects.link(cam)
-    cam.location = (0, -6, 0); cam.rotation_euler = (math.radians(90), 0, 0)
+    mid = sum(pts, Vector()) / len(pts)
+    cam.location = (mid.x, -6, mid.z); cam.rotation_euler = (math.radians(90), 0, 0)
     scene.camera = cam
     scene.render.engine = 'BLENDER_WORKBENCH'
     scene.display.shading.light = 'STUDIO'
@@ -297,7 +428,8 @@ def preview(root_obj, path):
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(cam)
 
-models = {'Hourglass': hourglass(), 'DivineCross': divine_cross(), 'PathfinderMap': pathfinder()}
+builders = {'Hourglass': hourglass, 'DivineCross': divine_cross, 'PathfinderMap': pathfinder, 'WarHorn': war_horn, 'BerserkerDraught': berserker_draught}
+models = {name: build() for name, build in builders.items() if ONLY is None or name in ONLY}
 # Keep them apart while building previews, then export each at the origin.
 os.makedirs(FBX_DIR, exist_ok=True)
 for name, obj in models.items():

@@ -10,7 +10,7 @@ namespace KnightsGauntlet.View
     // category grid, crowns for the top three, and each row's equipped-skin glyph
     // tinted by the theme. Rows use explicit anchoring (not a layout group) so the
     // rank, score, crown and skin never clip at the edges.
-    public class LeaderboardScreen : MonoBehaviour
+    public partial class LeaderboardScreen : MonoBehaviour
     {
         private GameTheme _theme;
         private LeaderboardClient _client;
@@ -82,6 +82,7 @@ namespace KnightsGauntlet.View
             if (_dailyTab != null) UIFactory.StyleToggle(_dailyTab, false);
             Refresh();
             _root.SetActive(true);
+            OpenJuice();
         }
 
         private void Build()
@@ -91,7 +92,7 @@ namespace KnightsGauntlet.View
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
             var col = _ui.Column(screen.transform, 12f);
 
-            _ui.Label(col, "Leaderboard", 30, UIFactory.Gold, FontStyles.Normal);
+            BuildTitle(col);
 
             var srcRow = _ui.Row(col, 10f);
             _personalTab = _ui.Button(srcRow, "Personal", () => SetSource("personal"), UIFactory.Panel, UIFactory.Muted, 122, 50, 15);
@@ -127,6 +128,7 @@ namespace KnightsGauntlet.View
             BuildScroll(col);
 
             _ui.Button(col, "\u2190 Back", () => _root.SetActive(false), UIFactory.Bg, UIFactory.Gold, 220, 50, 16, true);
+            BuildJuice((RectTransform)screen.transform, srcRow);
 
             SetSource("online");
         }
@@ -206,6 +208,13 @@ namespace KnightsGauntlet.View
             sb.handleRect = hRt; sb.targetGraphic = hImg;
 
             _scroll.verticalScrollbar = sb;
+            if (Juicy)
+            {
+                // A rubber-band list, and a bar that swells and glows while it moves.
+                _scroll.movementType = ScrollRect.MovementType.Elastic;
+                _scroll.elasticity = .12f;
+                sbGo.AddComponent<JuicyScrollbar>().Setup(UIFactory.Gold, new Color(1f, 1f, 1f, .08f), 5f, 9f);
+            }
             _scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
         }
 
@@ -276,6 +285,7 @@ namespace KnightsGauntlet.View
         private void ClearList()
         {
             for (int i = _listContent.childCount - 1; i >= 0; i--) Destroy(_listContent.GetChild(i).gameObject);
+            ClearJuiceRows();
         }
 
         // Each row is a fixed-height container with explicitly anchored children, so
@@ -302,9 +312,10 @@ namespace KnightsGauntlet.View
             Color rowColor = top ? UIFactory.Gold : RowText;
 
             // crown (top 3 only), anchored far left
+            TMP_Text crown = null;
             if (rank <= 3)
             {
-                var crown = Glyph(go.transform, "\u2654", 22, rank == 1 ? Gold : rank == 2 ? Silver : Bronze,
+                crown = Glyph(go.transform, "\u2654", 22, rank == 1 ? Gold : rank == 2 ? Silver : Bronze,
                                   _theme != null ? _theme.glyphFont : null, TextAlignmentOptions.Center);
                 AnchorLeft(crown.rectTransform, LeftPad, 30);
             }
@@ -352,6 +363,7 @@ namespace KnightsGauntlet.View
                                TextAlignmentOptions.Right, FontStyles.Normal);
                 AnchorRight(rw.rectTransform, 8f, RewardW);
             }
+            DecorateRow(go, rank, row, score, crown);
         }
 
         private TMP_Text Glyph(Transform parent, string text, float size, Color color,

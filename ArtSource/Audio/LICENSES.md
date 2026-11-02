@@ -42,6 +42,14 @@ All clips below were processed with ffmpeg before import: downmixed to mono, lea
 | Powerup Chronokinesis.wav | PowerupChrono | https://kenney.nl/assets/impact-sounds | Kenney | CC0 | impactBell_heavy_000.ogg, reversed into a swell |
 | Powerup Divine.wav | PowerupDivine | https://opengameart.org/content/magic-words-healing-sound-effect | Spring Spring | CC0 | health_restore.wav |
 | Powerup Divine Path.wav | PowerupPath | https://kenney.nl/assets/rpg-audio | Kenney | CC0 | bookFlip1.ogg |
+| Powerup War Horn.wav | PowerupWarHorn (War Horn blast) | https://github.com/sgossner/VSCO-2-CE | Versilian Studios | CC0 | built by `MusicBuild/build_warhorn.py`: F horn and tenor trombone sustains and staccatos (D-A open fifth), giant mallet drum, timpani (D), crash cymbal; synthesized hall reverb |
+| Rally Tick.wav | RallyTick (War Horn count-up, pitched in code) | same | same | CC0 | built by `build_warhorn.py`: glockenspiel D, plus a synthesized noise click |
+| Rally Slam.wav | RallySlam (War Horn count lands) | same | same | CC0 | built by `build_warhorn.py`: giant mallet drum, timpani, tenor drum, crash, F horn and trombone staccatos (D major), glockenspiel; synthesized crack and reverb |
+| Powerup Berserker.wav | PowerupBerserker (Berserker Draught) | https://github.com/sgossner/VSCO-2-CE | Versilian Studios | CC0 | built by `build_warhorn.py`: giant mallet drum, tenor drum, timpani (D), tenor trombone staccatos (D2 A2 D3), F horn sustains (D4, Eb4); cork pop, gulp, flame roar, crackles and reverb synthesized |
+| Fury Crackle.wav | FuryCrackle (captures under the draught) | | | | synthesized in `build_warhorn.py` (noise flame burst and crackles), no recording |
+| Menu Entrance Whoosh.wav | MenuEntrance (main menu entrance swell) | | | | synthesized in `build_warhorn.py` (swept band noise, reverb), no recording |
+| Menu Title Tinks.wav | MenuTitleTinks (one tink per 3D title letter) | | | | synthesized in `build_warhorn.py` (inharmonic sine partials on a D minor pentatonic), no recording |
+| Knight Clank 1-3.wav | KnightTap (tapping the menu knight, round robin) | | | | synthesized in `build_warhorn.py` (inharmonic plate partials, noise click, low body), no recording |
 
 ## Processing
 

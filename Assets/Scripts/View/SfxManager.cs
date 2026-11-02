@@ -28,7 +28,15 @@ namespace KnightsGauntlet.View
         PowerupChrono,   // Chronokinesis activated
         PowerupDivine,   // Divine Intervention activated
         PowerupPath,     // Divine Path (adventure) activated
-        TransformHum     // the quiet loop while a transformation lasts
+        TransformHum,    // the quiet loop while a transformation lasts
+        PowerupWarHorn,  // War Horn (battle) activated: the horn blast
+        RallyTick,       // War Horn count-up step (use PlayRallyTick for the rising pitch)
+        RallySlam,       // War Horn count lands on the peak multiplier
+        PowerupBerserker, // Berserker Draught (battle) activated: pop, gulp, flame, hit
+        FuryCrackle,     // a capture made while the draught burns (quiet fire burst)
+        MenuEntrance,    // main menu entrance: a soft airy swell (UI group)
+        MenuTitleTinks,  // main menu entrance: one tiny tink per 3D title letter landing (UI group)
+        KnightTap        // main menu: tapped the knight portrait, a light armour clank (UI group)
     }
 
     // One shared AudioSource that plays short UI/gameplay sounds. Clips live in
@@ -99,17 +107,28 @@ namespace KnightsGauntlet.View
             { Sfx.TransformHum,    "SFX/Transform Hum" },
             { Sfx.Untransform,     "SFX/Transform Poof" },  // the form's timer ran out
             { Sfx.ShieldBreak,     "SFX/Transform Break" }, // the form shattered taking a hit
+            // The War Horn rally (SfxManager.Rally.cs, built by MusicBuild/build_warhorn.py).
+            { Sfx.PowerupWarHorn,  "SFX/Powerup War Horn" },
+            { Sfx.RallyTick,       "SFX/Rally Tick" },
+            { Sfx.RallySlam,       "SFX/Rally Slam" },
+            { Sfx.PowerupBerserker, "SFX/Powerup Berserker" },
+            { Sfx.FuryCrackle,     "SFX/Fury Crackle" },
+            // Main menu (synthesized, MusicBuild/build_warhorn.py). Played on the UI voice.
+            { Sfx.MenuEntrance,    "SFX/Menu Entrance Whoosh" },
+            { Sfx.MenuTitleTinks,  "SFX/Menu Title Tinks" },
+            { Sfx.KnightTap,       "SFX/Knight Clank" },    // Knight Clank 1-3, round robin
         };
 
         // Per-sound trim (dB) on top of the file's own level, plus a minimum gap so a
         // burst of coins landing together doesn't pile up into one loud clatter.
         private static float BankTrimDb(Sfx id) => id == Sfx.CoinLand ? -2f : 0f;
-        private static float BankMinGap(Sfx id) => id == Sfx.CoinLand ? 0.06f : 0f;
+        private static float BankMinGap(Sfx id) => id == Sfx.CoinLand ? 0.06f : id == Sfx.FuryCrackle || id == Sfx.KnightTap ? 0.08f : 0f;
         // Melodic or musical sounds get no pitch jitter (the shilling chain sets its own).
-        private static bool BankJitterPitch(Sfx id) => id == Sfx.PieceMove || id == Sfx.CoinLand || id == Sfx.QueenShieldPop;
+        private static bool BankJitterPitch(Sfx id) => id == Sfx.PieceMove || id == Sfx.CoinLand || id == Sfx.QueenShieldPop || id == Sfx.FuryCrackle;
 
         // Sounds that belong on the UI group rather than SFX.
-        private static bool IsUi(Sfx id) => id == Sfx.PlaySelect || id == Sfx.TabSelect || id == Sfx.PageTurn;
+        private static bool IsUi(Sfx id) => id == Sfx.PlaySelect || id == Sfx.TabSelect || id == Sfx.PageTurn ||
+                                            id == Sfx.MenuEntrance || id == Sfx.MenuTitleTinks || id == Sfx.KnightTap;
 
         // ── Default volumes ──────────────────────────────────────────────────
         // EDIT THESE to change the out-of-the-box volume levels (0 = silent, 1 = full).
@@ -209,6 +228,7 @@ namespace KnightsGauntlet.View
             _uiSrc.priority = 64;
 
             InitMusic(musicGroup);
+            InitRally(sfxGroup);
 
             _loopSrc = gameObject.AddComponent<AudioSource>();
             _loopSrc.playOnAwake = false;
@@ -298,21 +318,44 @@ namespace KnightsGauntlet.View
         {
             if (id == Sfx.PieceCapture) { PlayCapture(1); return; }
             if (_instance == null || Muted) return;
-            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(id, out var bank)) { _instance.PlayBank(id, bank); return; }
+            if (id == Sfx.RallyTick) { PlayRallyTick(0f); return; }
+            if (!UIFactory.LegacyStyle && IsRallySting(id)) { _instance.PlayRallySting(id); return; }
+            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(id, out var bank))
+            {
+                if (IsUi(id)) _instance.PlayUiBank(id, bank); else _instance.PlayBank(id, bank);
+                return;
+            }
             if (_instance._clips.TryGetValue(id, out var clip) && clip != null)
                 (IsUi(id) ? _instance._uiSrc : _instance._src).PlayOneShot(clip,
                     SfxVolume * (id == Sfx.PieceMove && !UIFactory.LegacyStyle ? 0.68f : 1f));
         }
 
-        private void PlayBank(Sfx id, Bank bank)
+        // Picks the next round-robin clip (never the same one twice running), or -1 if the
+        // sound fired again inside its minimum gap.
+        private static int PickBank(Sfx id, Bank bank)
         {
             float now = Time.unscaledTime;
-            if (now - bank.LastTime < BankMinGap(id)) return;
+            if (now - bank.LastTime < BankMinGap(id)) return -1;
             bank.LastTime = now;
             int count = bank.Clips.Count;
             int pick = Random.Range(0, count - (count > 1 && bank.Last >= 0 ? 1 : 0));
             if (count > 1 && bank.Last >= 0 && pick >= bank.Last) pick++;
             bank.Last = pick;
+            return pick;
+        }
+
+        // UI-group sounds of the 3D style: the round robin alone gives the variety, no pitch
+        // jitter, since the UI voice is shared with the menu taps.
+        private void PlayUiBank(Sfx id, Bank bank)
+        {
+            int pick = PickBank(id, bank);
+            if (pick >= 0) _uiSrc.PlayOneShot(bank.Clips[pick], SfxVolume);
+        }
+
+        private void PlayBank(Sfx id, Bank bank)
+        {
+            int pick = PickBank(id, bank);
+            if (pick < 0) return;
             var source = _bankSources[_bankSourceIndex++ % _bankSources.Length];
             // +/-4% pitch and +/-1.5 dB on the round-robin sounds; musical stings stay as written.
             bool jitter = BankJitterPitch(id);

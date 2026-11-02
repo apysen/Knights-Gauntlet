@@ -10,7 +10,9 @@ namespace KnightsGauntlet.View
 
         public static Sprite Get(string name)
         {
-            if (Cache.TryGetValue(name, out var sprite)) return sprite;
+            // Domain reload is off (Enter Play Mode Options), so this static cache outlives Play
+            // sessions while the runtime-made sprites in it are destroyed on exit: rebuild those.
+            if (Cache.TryGetValue(name, out var sprite) && sprite != null) return sprite;
             const int n = 96;
             var lines = new List<Vector4>();
             void Line(float x, float y, float xx, float yy) => lines.Add(new Vector4(x, y, xx, yy));
@@ -51,6 +53,23 @@ namespace KnightsGauntlet.View
                     Path(.25f,.20f,.25f,.50f,.73f,.50f,.73f,.82f);
                     Path(.58f,.68f,.73f,.83f,.88f,.68f);
                     Path(.17f,.20f,.25f,.28f,.33f,.20f,.25f,.12f,.17f,.20f); break;
+                case "horn":
+                    // A curved war horn: bell on the right, mouthpiece low left, a
+                    // carry strap underneath and three sound lines out of the bell.
+                    Path(.16f,.30f,.30f,.42f,.46f,.52f,.62f,.58f,.74f,.60f,.78f,.82f);
+                    Path(.16f,.30f,.20f,.24f,.36f,.30f,.52f,.36f,.66f,.38f,.80f,.36f,.78f,.82f);
+                    Path(.30f,.36f,.42f,.20f,.62f,.24f,.66f,.38f);
+                    Line(.86f,.70f,.94f,.74f); Line(.87f,.59f,.95f,.59f); Line(.86f,.48f,.94f,.44f); break;
+                case "potion":
+                    // A round-bellied flask with a cork and a flame rising off it.
+                    for (int i = 0; i < 40; i++)
+                    {
+                        float a = (115f + i * 7.75f) * Mathf.Deg2Rad, b = a + 7.75f * Mathf.Deg2Rad;
+                        Line(.5f + Mathf.Cos(a)*.27f,.36f + Mathf.Sin(a)*.27f,.5f + Mathf.Cos(b)*.27f,.36f + Mathf.Sin(b)*.27f);
+                    }
+                    Path(.39f,.60f,.42f,.63f,.42f,.74f); Path(.61f,.60f,.58f,.63f,.58f,.74f);
+                    Line(.38f,.76f,.62f,.76f); Line(.28f,.38f,.72f,.38f);
+                    Path(.50f,.80f,.45f,.88f,.50f,.96f,.55f,.88f,.50f,.80f); break;
                 default:
                     Path(.20f,.69f,.31f,.33f,.69f,.33f,.80f,.69f,.62f,.56f,.50f,.82f,.38f,.56f,.20f,.69f);
                     Line(.32f,.22f,.68f,.22f); break;
@@ -73,7 +92,7 @@ namespace KnightsGauntlet.View
             }
             texture.SetPixels(pixels); texture.Apply();
             sprite = Sprite.Create(texture,new Rect(0,0,n,n),new Vector2(.5f,.5f),n);
-            Cache.Add(name,sprite);
+            Cache[name] = sprite;
             return sprite;
         }
     }

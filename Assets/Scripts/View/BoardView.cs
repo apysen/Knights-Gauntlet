@@ -127,7 +127,9 @@ namespace KnightsGauntlet.View
             _lastInset = topInsetFrac; _lastBottomInset = bottomInsetFrac;
             _lastCameraLegacy2D = _legacy2D;
             cellW = cellSize;
-            float aspect = (float)Screen.width / Mathf.Max(1, Screen.height);
+            // Fit to the play column: on tablets that is a fixed phone shape, so the board
+            // keeps its phone proportions and the extra width becomes curtained side bars.
+            float aspect = StageCurtains.ColumnAspect((float)Screen.width / Mathf.Max(1, Screen.height));
             float top = Mathf.Clamp(topInsetFrac, 0f, 0.45f);
             float bottom = Mathf.Clamp(bottomInsetFrac, 0f, 0.45f);
             if (_legacy2D)

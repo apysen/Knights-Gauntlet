@@ -34,7 +34,7 @@ namespace KnightsGauntlet.View
         private bool _spin;
 
         public static string ModelOf(string key) =>
-            key == "chronokinesis" ? "Hourglass" : key == "divine_path" ? "PathfinderMap" : "DivineCross";
+            key == "chronokinesis" ? "Hourglass" : key == "divine_path" ? "PathfinderMap" : key == "war_horn" ? "WarHorn" : key == "berserker" ? "BerserkerDraught" : "DivineCross";
 
         // Returns false when the model is missing, so callers can fall back to the flat icon.
         public bool Initialize(string powerupKey) => InitializeModel("PowerupModels/" + ModelOf(powerupKey));
@@ -107,7 +107,7 @@ namespace KnightsGauntlet.View
             return b;
         }
 
-        private static void Convert(Renderer renderer)
+        internal static void Convert(Renderer renderer)
         {
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;

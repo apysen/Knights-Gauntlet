@@ -18,7 +18,15 @@ namespace KnightsGauntlet.View
         public int ThreeStarLimit => _advLevel != null ? _advLevel.ThreeStar : 0;
         public int TwoStarLimit => _advLevel != null ? _advLevel.TwoStar : 0;
         public float SurvivalSeconds => _sim != null ? _sim.ElapsedTime : 0f;
-        public int ScoreMultiplier => _sim != null ? _sim.ComboMultiplier : 1;
+        // While the War Horn rally plays, the HUD counts up toward the restored peak
+        // instead of jumping straight to it (captures made mid-rally still add on top).
+        public int ScoreMultiplier => _sim == null ? 1 : _view != null && _view.RallyPlaying
+            ? Mathf.Max(1, _sim.ComboMultiplier - (_view.RallyTo - _view.RallyShown)) : _sim.ComboMultiplier;
+        // The War Horn banner (UIManager.Rally) reads the rally clock and numbers from here.
+        public float RallyTime => _view != null && _view.RallyPlaying ? _view.RallyTime : -1f;
+        public int RallyFrom => _view != null ? _view.RallyFrom : 1;
+        public int RallyTo => _view != null ? _view.RallyTo : 1;
+        public int RallyShown => _view != null ? _view.RallyShown : 1;
         public int TransformationCaptures => _sim != null ? _sim.CaptureChain : 0;
         public float TransformationSeconds => _sim != null ? _sim.TransformRemaining : 0f;
         public bool Legacy2DActive => _legacy2D;
@@ -69,6 +77,7 @@ namespace KnightsGauntlet.View
         private UIManager _ui;
         private LeaderboardClient _lb;
         private LeaderboardScreen _lbScreen;
+        private StageCurtains _curtains;   // tablet side bars; part at the start of a run
         private AchievementTracker _ach;
         // The iOS TestFlight build currently crashes inside Google's AdMob SDK during
         // LevelPlay startup because this project has no AdMob application ID configured
@@ -104,6 +113,7 @@ namespace KnightsGauntlet.View
         private float _chronoRewindRate, _chronoRewindRemaining; // Chronokinesis: gradual board rewind (cells/sec, seconds left)
         public float ChronoRemaining => _chronoRemaining;
         public float DivineRemaining => _divineRemaining;
+        private float _furyRemaining; // Berserker Draught (Battle): seconds of 3x multiplier gain left
 
         // Divine Path (adventure only): the solved optimal route, shown until the level ends.
         private bool _divinePathActive;
@@ -132,6 +142,7 @@ namespace KnightsGauntlet.View
 
         private static readonly Color PopupGain = new Color32(0x9B, 0xE8, 0xA0, 0xFF);
         private static readonly Color PopupCombo = new Color32(0xFF, 0xD0, 0x60, 0xFF);
+        private static readonly Color PopupFury = new Color32(0xFF, 0x7A, 0x3A, 0xFF);
         private static readonly Color PopupShield = new Color32(0xFF, 0x9A, 0x5C, 0xFF);
 
         private void Start()
@@ -163,6 +174,8 @@ namespace KnightsGauntlet.View
             }
             _shake = cam.GetComponent<CameraShake>();
             if (_shake == null) _shake = cam.gameObject.AddComponent<CameraShake>();
+            _curtains = cam.GetComponent<StageCurtains>();
+            if (_curtains == null) _curtains = cam.gameObject.AddComponent<StageCurtains>();
 
             var bgo = new GameObject("Board"); bgo.transform.SetParent(transform, false);
             _board = bgo.AddComponent<BoardView>();
@@ -297,6 +310,7 @@ namespace KnightsGauntlet.View
             _view.SetPlayerForm(_sim.PlayerForm, CurrentSkin());
             _state = State.Playing;
             _ui.ShowHud();
+            if (_curtains != null) _curtains.Part();
         }
 
         // Daily challenge: Grandmaster rules at medium scroll speed, identical
@@ -327,6 +341,7 @@ namespace KnightsGauntlet.View
             _view.SetPlayerForm(_sim.PlayerForm, CurrentSkin());
             _state = State.Playing;
             _ui.ShowHud(showBadge: false); // daily hides the "TRAP · …" mode badge
+            if (_curtains != null) _curtains.Part();
         }
 
         public void PauseGame() { if (_state != State.Playing && _state != State.Adventure) return; _prePause = _state; _state = State.Paused; SfxManager.SetMusicPaused(true); _ui.ShowPause(_prePause == State.Adventure); }
@@ -542,11 +557,20 @@ namespace KnightsGauntlet.View
         // if not in play, already active, or the player owns none.
         public bool PowerupsUsable => _state == State.Playing && !_daily && _sim != null && (_sim.Mode == GameMode.Battle || _sim.Mode == GameMode.Trap);
         private bool PowerupsAllowed => PowerupsUsable;
-        public float PowerupRemaining(PowerupId id) => id == PowerupId.Chronokinesis ? _chronoRemaining : _divineRemaining;
+        public float PowerupRemaining(PowerupId id) => id == PowerupId.Chronokinesis ? _chronoRemaining
+            : id == PowerupId.Berserker ? _furyRemaining : _divineRemaining;
+
+        // War Horn is Battle-only and only worth spending while the streak is below its peak.
+        public bool WarHornUsable => PowerupsUsable && _sim.Mode == GameMode.Battle;
+        public bool DivineUsable => PowerupsUsable && _sim.Mode == GameMode.Trap;
+        public bool WarHornReady => WarHornUsable && _sim.Alive && _sim.ComboMultiplier < _sim.PeakMultiplier && !_view.RallyPlaying;
+        public int PeakMultiplier => _sim != null ? _sim.PeakMultiplier : 1;
 
         public bool ActivatePowerup(PowerupId id)
         {
             if (!PowerupsAllowed) return false;
+            if (id == PowerupId.WarHorn) return ActivateWarHorn();
+            if (id == PowerupId.Berserker) return ActivateBerserker();
             if (id == PowerupId.Chronokinesis)
             {
                 if (_chronoRemaining > 0f) return false;
@@ -558,21 +582,121 @@ namespace KnightsGauntlet.View
                 float rewind = _sim.PlayerY - chronoTargetRow;
                 if (rewind > 0f) { _chronoRewindRate = rewind / rewindSeconds; _chronoRewindRemaining = rewindSeconds; }
                 SfxManager.Play(Sfx.PowerupChrono);
+                _view.PlayChronoFx(_sim);
+                PowerupPunch("#73E6FF", .022f, .32f);
+                Haptics.Play(Haptics.TickTock, Haptics.TickTockAmp, strong: true);
                 return true;
             }
-            if (_divineRemaining > 0f) return false;
+            // Divine Intervention is Trap-only (Battle has the War Horn and Berserker Draught).
+            if (!DivineUsable || _divineRemaining > 0f) return false;
             if (!SaveData.TrySpendPowerup(Powerups.DivineIntervention.Key)) return false;
             _divineRemaining = Powerups.DivineIntervention.Duration;
             SfxManager.Play(Sfx.PowerupDivine);
             SfxManager.DuckMusic(2f);
+            Vector3? best = null;
+            var move = _sim.BestMove();
+            if (move.HasValue) best = _board.CellToWorld(move.Value.Col, move.Value.Y);
+            _view.PlayDivineFx(_sim, best);
+            PowerupPunch("#FFF1C4", .016f, .30f);
+            Haptics.Play(Haptics.Swell, Haptics.SwellAmp, strong: true);
             return true;
         }
 
         // True while the effect is running (HUD shows a countdown / disabled button).
         public bool PowerupActive(PowerupId id)
-            => id == PowerupId.Chronokinesis ? _chronoRemaining > 0f : _divineRemaining > 0f;
+            => id == PowerupId.Chronokinesis ? _chronoRemaining > 0f
+             : id == PowerupId.WarHorn ? _view != null && _view.RallyPlaying
+             : id == PowerupId.Berserker ? _furyRemaining > 0f
+             : _divineRemaining > 0f;
 
-        private void ResetPowerups() { _chronoRemaining = 0f; _divineRemaining = 0f; _chronoRewindRate = 0f; _chronoRewindRemaining = 0f; }
+        private void ResetPowerups()
+        {
+            _chronoRemaining = 0f; _divineRemaining = 0f; _chronoRewindRate = 0f; _chronoRewindRemaining = 0f;
+            _furyRemaining = 0f;
+            if (_sim != null) _sim.ComboGainScale = 1;
+            if (_view != null) _view.StopRally();
+        }
+
+        // ── Berserker Draught (Battle): 3x multiplier gain per capture ───────
+        private bool ActivateBerserker()
+        {
+            if (!WarHornUsable || _furyRemaining > 0f || !_sim.Alive) return false;
+            if (!SaveData.TrySpendPowerup(Powerups.Berserker.Key)) return false;
+            _furyRemaining = Powerups.Berserker.Duration;
+            _sim.ComboGainScale = Powerups.BerserkerGainScale;
+            _view.PlayFuryFx(_sim);
+            PowerupPunch("#FF5A2A", .03f, .4f);
+            Haptics.Play(Haptics.Roar, Haptics.RoarAmp, strong: true);
+            OnFuryAudio();
+            return true;
+        }
+
+        // Berserker Draught audio: cork pop, gulp, the flame igniting, and a low brass and
+        // drum hit timed to the "FURY!" card after the hit-stop. Music dips under it.
+        private void OnFuryAudio()
+        {
+            SfxManager.Play(Sfx.PowerupBerserker);
+            SfxManager.DuckMusic(1.2f);
+        }
+
+        // ── War Horn (Battle): restore this run's peak multiplier ────────────
+        // The sim value is restored at once (so a capture during the animation already
+        // scores at the peak); the view plays the rally and the HUD counts up to it.
+        private bool ActivateWarHorn()
+        {
+            if (!WarHornReady) return false;
+            int from = _sim.ComboMultiplier, to = _sim.PeakMultiplier;
+            if (!SaveData.TrySpendPowerup(Powerups.WarHorn.Key)) return false;
+            _sim.RestorePeakMultiplier();
+            _view.PlayWarHornRally(_sim, from, to, OnRallyTick, OnRallySlam);
+            _board.WashColor = UIFactory.Hex("#FFC23A");
+            _washPulse = 1f;
+            RallyShake(.034f, .45f);
+            Haptics.Play(Haptics.HornBlast, Haptics.HornBlastAmp, strong: true);
+            OnRallyHorn();
+            return true;
+        }
+
+        private void OnRallyTick(int value, float progress)
+        {
+            // Small kicks that grow as the count accelerates toward the peak.
+            RallyShake(Mathf.Lerp(.004f, .010f, progress), .09f);
+            if (Haptics.SinceLast > .2f) Haptics.Play(Haptics.Tick, Haptics.TickAmp); // never cut off the blast
+            OnRallyTickAudio(value, progress);
+        }
+
+        private void OnRallySlam()
+        {
+            _board.WashColor = UIFactory.Hex("#FFE7A0");
+            _washPulse = 1f;
+            RallyShake(.040f, .38f);
+            Haptics.Play(Haptics.Slam, Haptics.SlamAmp, strong: true);
+            OnRallySlamAudio();
+        }
+
+        // Shared activation punch for the timed powerups: a board colour pulse and a kick.
+        private void PowerupPunch(string washHex, float shake, float shakeTime)
+        {
+            _board.WashColor = UIFactory.Hex(washHex);
+            _washPulse = 1f;
+            RallyShake(shake, shakeTime);
+        }
+
+        private void RallyShake(float strength, float duration)
+        {
+            if (_shake == null || cam == null || !SaveData.IsScreenShake() || SaveData.IsReducedEffects()) return;
+            _shake.Shake(UnityEngine.Random.insideUnitCircle, cam.orthographicSize * strength, duration);
+        }
+
+        // War Horn audio: the blast at activation (music dips under it through the slam,
+        // about 1.05 s in, and its tail), a tick rising in pitch with the count, the slam.
+        private void OnRallyHorn()
+        {
+            SfxManager.Play(Sfx.PowerupWarHorn);
+            SfxManager.DuckMusic(1.9f);
+        }
+        private void OnRallyTickAudio(int value, float progress) => SfxManager.PlayRallyTick(progress);
+        private void OnRallySlamAudio() => SfxManager.Play(Sfx.RallySlam);
 
         // ── Divine Path (adventure): reveal the level's optimal route ────────
         // Solves from the CURRENT position; refunds (doesn't charge) if there's no route
@@ -586,6 +710,11 @@ namespace KnightsGauntlet.View
             if (!SaveData.TrySpendPowerup(Powerups.DivinePath.Key)) return false;
             _divinePathActive = true; _divinePath = path;
             SfxManager.Play(Sfx.PowerupPath);
+            Vector3? next = null;
+            if (path.Count > 0) next = _board.CellToWorld(path[0].Col, path[0].Row + _sim.ScrollCells);
+            _view.PlayPathFx(_sim, next);
+            PowerupPunch("#F2C46B", .012f, .25f);
+            Haptics.Play(Haptics.Settle, Haptics.SettleAmp, strong: true);
             return true;
         }
 
@@ -955,6 +1084,7 @@ namespace KnightsGauntlet.View
             _ads.HideBanner();
             _state = State.Adventure;
             _ui.ShowHud();
+            if (_curtains != null) _curtains.Part();
             _ui.SetAdventureHud(true, _advMoves, _advLevel.Name, AdvEnemiesLeft());
             _ui.SetBossHud(_advLevel.IsBoss(), _queenHealth, _advLevel.IsBoss() ? _advLevel.Phases.Length : 0, _sim.QueenShielded);
             if (_advTall) _ui.ShowTallScroll(true, (float)GameConfig.Rows / lvl.MapRows);
@@ -1134,10 +1264,13 @@ namespace KnightsGauntlet.View
                 // Chronokinesis halves the simulation's clock (enemy moves, scroll, timers)
                 // while active; achievements and the powerup timers use real time.
                 float simDt = _chronoRemaining > 0f ? Time.deltaTime * 0.5f : Time.deltaTime;
+                simDt *= _view.PowerupTimeScale; // activation hit-stops, and the War Horn's slow-mo
                 _sim.Tick(simDt);
                 _ach.Tick(Time.deltaTime);
                 if (_chronoRemaining > 0f) _chronoRemaining = Mathf.Max(0f, _chronoRemaining - Time.deltaTime);
                 if (_divineRemaining > 0f) _divineRemaining = Mathf.Max(0f, _divineRemaining - Time.deltaTime);
+                if (_furyRemaining > 0f) _furyRemaining = Mathf.Max(0f, _furyRemaining - Time.deltaTime);
+                _sim.ComboGainScale = _furyRemaining > 0f ? Powerups.BerserkerGainScale : 1;
                 // Chronokinesis rewind: smooth backward scroll over the first ~2 seconds.
                 if (_chronoRewindRemaining > 0f)
                 {
@@ -1278,6 +1411,11 @@ namespace KnightsGauntlet.View
             // Only ever reveal the NEXT step of the solved route, never the whole thing:
             // the full route hands the player the answer outright. The path is re-solved
             // each move, so following it one step at a time still walks the optimal line.
+            // Auras hold through pause and the revive countdown; anything else clears them.
+            bool auraState = _state == State.Playing || _state == State.Paused || _state == State.Reviving;
+            _view.ChronoAura = auraState ? _chronoRemaining : 0f;
+            _view.DivineAura = auraState ? _divineRemaining : 0f;
+            _view.FuryAura = auraState ? _furyRemaining : 0f;
             _view.Sync(_sim, showHints, Time.deltaTime, bestMove, advPath, true);
             _ui.SetEnemyBar(_sim.Mode == GameMode.Battle && _state == State.Playing, _sim.EnemyMoveProgress);
         }
@@ -1323,8 +1461,12 @@ namespace KnightsGauntlet.View
                         _view.PlayComicCapture(_sim, cap.NewMultiplier);
                         _view.SpawnCaptureVoxelBurst(impactCol, impactY, BurstColor(cap.Type), cap.NewMultiplier);
                         _view.SpawnPopup(impactCol, impactY - 0.42f, "+" + cap.PointsGained, PopupGain);
+                        // Under the Berserker Draught the gain popup burns red-orange and says so.
+                        bool fury = _sim.ComboGainScale > 1;
                         _view.SpawnPopup(impactCol, impactY + 0.14f,
-                            "X" + cap.NewMultiplier + " (+" + cap.MultiplierDelta + ")", PopupCombo);
+                            "X" + cap.NewMultiplier + " (+" + cap.MultiplierDelta + (fury ? " FURY" : "") + ")",
+                            fury ? PopupFury : PopupCombo);
+                        if (fury) { _view.PlayFuryCapture(impactCol, impactY); SfxManager.Play(Sfx.FuryCrackle); }
                     }
                 }
             }

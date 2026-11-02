@@ -54,7 +54,13 @@ namespace KnightsGauntlet.View
         private RectTransform _shopSkins, _shopVfx, _shopPowerups;
         private GameObject _shillingsShop;
         private TMP_Text _shillingsShopBalance;
-        private readonly TMP_Text[] _powerupOwned = new TMP_Text[3]; // owned-count labels per powerup
+        private readonly TMP_Text[] _powerupOwned = new TMP_Text[5];
+        private readonly Button[] _powerupBuy = new Button[5]; // price buttons, restyled as the balance changes
+        // Shop / Treasury juice (UIManager.ShopJuice).
+        private RectTransform _marketFx, _treasuryFx, _marketBalanceCoin, _marketBuyShillings, _tabIndicator, _treasuryGrid, _treasuryHeroCoin;
+        private BalanceView _treasuryBalance;
+        private int _shopTab;
+        private readonly Dictionary<string, RectTransform> _treasuryCards = new Dictionary<string, RectTransform>(); // owned-count labels per powerup
         private ScrollRect _trappedScroll;
         private RectTransform _trappedPanel;   // the centered column, uniformly scaled to fit the device
         private RectTransform _trappedCanvasRt; // the trapped canvas, for the visible-area size
@@ -142,6 +148,11 @@ namespace KnightsGauntlet.View
         private Image _chronoRadial, _divineRadial; // radial-wipe duration indicator
         // Divine Path activation button (adventure only).
         private Button _pathBtn; private RectTransform _pathBtnRt; private TMP_Text _pathCount; private Image _pathRadial;
+        // War Horn activation button (Battle only; restores the run's peak multiplier).
+        private Button _hornBtn; private RectTransform _hornBtnRt; private TMP_Text _hornCount; private Image _hornRadial;
+        private bool _hornLaidOut; // whether the last HUD layout made room for the Battle-only buttons
+        // Berserker Draught activation button (Battle only, timed).
+        private Button _furyBtn; private RectTransform _furyBtnRt; private TMP_Text _furyCount; private Image _furyRadial;
         // Main-menu corner controls, brought down to clear notches/cameras (see LayoutMenu).
         private Canvas _menuCanvas;
         private RectTransform _menuSettingsRt, _menuShillingsRt, _menuNavRt, _menuContent, _menuColumn, _runOptionsColumn;
@@ -166,6 +177,12 @@ namespace KnightsGauntlet.View
         private void Update()
         {
             UpdateLegacyTransformBadge();
+            UpdateRallyOverlay();
+            UpdateShopJuice();
+            UpdateMenuJuice();
+            UpdateRunOptionsJuice();
+            UpdateCustomJuice();
+            UpdateSettingsJuice();
             if (_hud != null && _hud.activeSelf && _scoreText != null && _gm.Score != _lastScoreShown)
             {
                 _lastScoreShown = _gm.Score;
@@ -220,7 +237,12 @@ namespace KnightsGauntlet.View
             // screens leave it off. (Leaderboard sits on top of the menu, so it inherits.)
             if (_gm != null) _gm.SetBanner(false);
         }
-        public void ShowMenu() { HideAll(); RefreshNameUI(); _menu.SetActive(true); _gm.SetBanner(true); SfxManager.PlayMenuMusic(); }
+        public void ShowMenu()
+        {
+            NoteMenuEntrance();
+            HideAll(); RefreshNameUI(); _menu.SetActive(true); _gm.SetBanner(true); SfxManager.PlayMenuMusic();
+            PlayMenuEntranceIfDue();
+        }
         public void ShowHud(bool showBadge = true)
         {
             HideAll();
@@ -334,7 +356,7 @@ namespace KnightsGauntlet.View
                 var size = hero.GetComponent<LayoutElement>();
                 size.preferredWidth = 158; size.preferredHeight = 158;
             }
-            _ui.Label(col, "KNIGHT'S GAUNTLET", 38, UIFactory.Gold, FontStyles.Normal, 390);
+            BuildMenuTitle(col);
             MenuSpace(col, 20);
             var play = MenuButton(col, "PLAY", OnPlay, 310, 68, 25, primary: true);
             play.name = "Play";
@@ -343,7 +365,8 @@ namespace KnightsGauntlet.View
             change.name = "ChangeRunOptions";
             _runSummaryLabel = change.GetComponentInChildren<TMP_Text>();
             MenuSpace(col, 10);
-            MenuButton(col, "Adventure", OnAdventurePressed, 310, 58, 20).name = "Adventure";
+            var adventure = MenuButton(col, "Adventure", OnAdventurePressed, 310, 58, 20);
+            adventure.name = "Adventure";
             _dailyBtn = MenuButton(col, "Daily Challenge", OnDailyPressed, 310, 48, 16, textOnly: true);
             _dailyBtn.name = "DailyChallenge";
 
@@ -371,9 +394,11 @@ namespace KnightsGauntlet.View
             _menuNavRt = _ui.Row(screen.transform, 8);
             _menuNavRt.name = "HomeNavigation";
             _menuNavRt.anchorMin = _menuNavRt.anchorMax = _menuNavRt.pivot = new Vector2(.5f, 0);
-            MenuButton(_menuNavRt, "Shop", ShowMarketplace, 104, 52, 16, textOnly: true);
-            MenuButton(_menuNavRt, "Customize", ShowCustomization, 136, 52, 16, textOnly: true);
-            MenuButton(_menuNavRt, "Scores", () => _gm.ShowLeaderboard(), 104, 52, 16, textOnly: true);
+            var navShop = MenuButton(_menuNavRt, "Shop", ShowMarketplace, 104, 52, 16, textOnly: true);
+            var navCustom = MenuButton(_menuNavRt, "Customize", ShowCustomization, 136, 52, 16, textOnly: true);
+            var navScores = MenuButton(_menuNavRt, "Scores", () => _gm.ShowLeaderboard(), 104, 52, 16, textOnly: true);
+            SetupMenuJuice(screen.transform, play, new[] { adventure, _dailyBtn, change },
+                new[] { navShop, navCustom, navScores }, wallet, _menuShillings);
 
             BuildRunOptions();
             var savedMode = (GameMode)PlayerPrefs.GetInt("kg_menu_mode", (int)GameMode.Battle);
@@ -415,13 +440,13 @@ namespace KnightsGauntlet.View
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
             var col = _ui.Column(screen.transform, 16);
             _runOptionsColumn = col;
+            AddShopMotes(screen.transform, 14);
             _ui.Label(col, "YOUR NEXT RUN", 30, UIFactory.Gold);
-            _ui.Label(col, "Choose a mode", 16, UIFactory.Muted);
-            var modeRow = _ui.Row(col, 10);
-            _battleBtn = MenuButton(modeRow, "Battle", () => SetMode(GameMode.Battle), 152, 60, 19);
-            _trapBtn = MenuButton(modeRow, "Trap", () => SetMode(GameMode.Trap), 152, 60, 19);
-            _modeDescription = _ui.Label(col, "", 14, UIFactory.Muted, width: 320);
-            MenuSpace(col, 8);
+            _ui.Label(col, "Swipe to choose a mode", 14, UIFactory.Muted);
+            BuildModeCarousel(col);
+            // The cards carry the description now; this line stays for the summary fade.
+            _modeDescription = _ui.Label(col, "", 13, UIFactory.Muted, width: 320);
+            _modeDescription.gameObject.SetActive(false);
             _speedLabel = _ui.Label(col, "SCROLL SPEED", 14, UIFactory.Muted);
             var row = _ui.Row(col, 8);
             _diffBtns[Difficulty.Easy] = MenuButton(row, "Easy", () => SetDiff(Difficulty.Easy), 152, 52, 16);
@@ -429,8 +454,14 @@ namespace KnightsGauntlet.View
             var secondRow = _ui.Row(col, 8);
             _diffBtns[Difficulty.Hard] = MenuButton(secondRow, "Hard", () => SetDiff(Difficulty.Hard), 152, 52, 16);
             _diffBtns[Difficulty.Grandmaster] = MenuButton(secondRow, "Grandmaster", () => SetDiff(Difficulty.Grandmaster), 152, 52, 16);
-            MenuSpace(col, 14);
-            MenuButton(col, "Done", () => _runOptions.SetActive(false), 310, 56, 18, primary: true).name = "Done";
+            foreach (var kv in _diffBtns) AddThreatPips(kv.Value, (int)kv.Key);
+            BuildHeatBar(col);
+            MenuSpace(col, 6);
+            var done = MenuButton(col, "Done", () => _runOptions.SetActive(false), 310, 56, 18, primary: true);
+            done.name = "Done";
+            AddGlint(done, 56f);
+            done.gameObject.AddComponent<PressSquash>();
+            _runFx = ShopFxLayer(screen.transform);
             _runOptions.SetActive(false);
         }
 
@@ -438,6 +469,7 @@ namespace KnightsGauntlet.View
         {
             _runOptions.SetActive(true);
             LayoutMenu();
+            if (_runOptionsColumn != null) PopInChildren(_runOptionsColumn, .05f);
         }
 
         private static void StyleMenuChoice(Button button, bool selected)
@@ -463,6 +495,7 @@ namespace KnightsGauntlet.View
                 UIFactory.StyleToggle(_battleBtn, m == GameMode.Battle);
                 if (_playButtonLabel != null) _playButtonLabel.text = m == GameMode.Trap ? "Play Trap" : "Play Battle";
             }
+            else if (_modeCarousel != null) RunOptionsModeChanged(m, true);
             else
             {
                 StyleMenuChoice(_trapBtn, m == GameMode.Trap);
@@ -489,6 +522,7 @@ namespace KnightsGauntlet.View
                 if (LegacyStyle) UIFactory.StyleToggle(kv.Value, kv.Key == d);
                 else StyleMenuChoice(kv.Value, kv.Key == d);
             if (_gmText != null) _gmText.color = d == Difficulty.Grandmaster ? UIFactory.Gold : UIFactory.Muted;
+            if (!LegacyStyle) RunOptionsDiffChanged(d);
             PlayerPrefs.SetInt("kg_menu_difficulty", (int)d);
             PlayerPrefs.Save();
             RefreshRunSummary();
@@ -505,7 +539,8 @@ namespace KnightsGauntlet.View
             if (locked) _nameSetLabel.text = SaveData.GetName();
             // Keep the profile compact when there is no validation message.
             SetMenuWarn("", UIFactory.Muted);
-            if (_menuShillings != null) _menuShillings.text = LegacyStyle ? _gm.Shillings + " shillings" : _gm.Shillings.ToString("N0");
+            // Modern style: the wallet's BalanceView tweens the number (counting up after a run).
+            if (_menuShillings != null && (LegacyStyle || _menuBalance == null)) _menuShillings.text = LegacyStyle ? _gm.Shillings + " shillings" : _gm.Shillings.ToString("N0");
             if (_dailyBtn != null)
             {
                 var dl = _dailyBtn.GetComponentInChildren<TMP_Text>();
@@ -537,7 +572,7 @@ namespace KnightsGauntlet.View
         {
             if (_menuReveal != null) return;
             if (LegacyStyle) StartWithTutorial(_selMode, _selDiff);
-            else _menuReveal = StartCoroutine(RevealFromMenu());
+            else { PrepareMenuForReveal(); _menuReveal = StartCoroutine(RevealFromMenu()); }
         }
 
         private void SaveProfileName()
@@ -607,7 +642,8 @@ namespace KnightsGauntlet.View
         private static float HudScale()
         {
             if (Screen.height <= 0 || Screen.width <= 0) return 1f;
-            float logW = Mathf.Log(Screen.width / HudRefW, 2f);
+            // Scale to the play column (on tablets a fixed phone shape) so the HUD matches the phone.
+            float logW = Mathf.Log(StageCurtains.ColumnWidthPx / HudRefW, 2f);
             float logH = Mathf.Log(Screen.height / HudRefH, 2f);
             return Mathf.Pow(2f, Mathf.Lerp(logW, logH, 0.5f));
         }
@@ -644,7 +680,17 @@ namespace KnightsGauntlet.View
         // transform badge. Called from Update while the HUD is visible.
         private void LayoutHud()
         {
+            // The HUD canvas scales to the play column (HudScale), not the full screen, so on
+            // a tablet it matches the phone HUD instead of growing with the curtained width.
+            ScaleToColumn(_hud); ScaleToColumn(_tutorial); ScaleToColumn(_rallyCanvas);
             if (LegacyStyle) LayoutLegacyHud(); else LayoutModernHud();
+        }
+        private static void ScaleToColumn(GameObject canvas)
+        {
+            var scaler = canvas != null ? canvas.GetComponent<CanvasScaler>() : null;
+            if (scaler == null) return;
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+            scaler.scaleFactor = HudScale();
         }
 
         // One in-game powerup button: a radial-wipe duration overlay (behind), the shop
@@ -688,7 +734,9 @@ namespace KnightsGauntlet.View
         private void OnActivatePowerup(PowerupId id)
         {
             bool ok = id == PowerupId.DivinePath ? _gm.ActivateDivinePath() : _gm.ActivatePowerup(id);
-            if (ok) UpdatePowerupButtons();
+            if (ok) { UpdatePowerupButtons(); PlayPowerupCard(id); }
+            else if (id == PowerupId.WarHorn && Powerups.WarHorn.Owned > 0 && !_gm.PowerupActive(PowerupId.WarHorn))
+                ShowToast("Your streak is already at its peak (X" + _gm.PeakMultiplier + ").");
         }
 
         // Show/update the queen's health (segments filled = HP left). Filled segments are
@@ -744,11 +792,31 @@ namespace KnightsGauntlet.View
         {
             bool show = _gm != null && _gm.PowerupsUsable;
             if (_chronoBtn != null && _chronoBtn.gameObject.activeSelf != show) _chronoBtn.gameObject.SetActive(show);
-            if (_divineBtn != null && _divineBtn.gameObject.activeSelf != show) _divineBtn.gameObject.SetActive(show);
-            if (show)
+            bool divineShow = _gm != null && _gm.DivineUsable; // Trap only
+            if (_divineBtn != null && _divineBtn.gameObject.activeSelf != divineShow) _divineBtn.gameObject.SetActive(divineShow);
+            if (show) UpdatePowerupButton(_chronoBtn, _chronoCount, _chronoRadial, PowerupId.Chronokinesis, Powerups.Chronokinesis, ref _chronoCountShown);
+            if (divineShow) UpdatePowerupButton(_divineBtn, _divineCount, _divineRadial, PowerupId.DivineIntervention, Powerups.DivineIntervention, ref _divineCountShown);
+
+            // War Horn (Battle only, instant). Usable only while the streak sits below the
+            // run's peak; the button glows gold while the rally plays.
+            bool hornShow = _gm != null && _gm.WarHornUsable;
+            if (_hornBtn != null && _hornBtn.gameObject.activeSelf != hornShow) _hornBtn.gameObject.SetActive(hornShow);
+            if (_furyBtn != null && _furyBtn.gameObject.activeSelf != hornShow) _furyBtn.gameObject.SetActive(hornShow);
+            if (hornShow != _hornLaidOut) { _hornLaidOut = hornShow; LayoutHud(); }
+            if (hornShow) UpdatePowerupButton(_furyBtn, _furyCount, _furyRadial, PowerupId.Berserker, Powerups.Berserker, ref _furyCountShown);
+            if (hornShow && _hornBtn != null)
             {
-                UpdatePowerupButton(_chronoBtn, _chronoCount, _chronoRadial, PowerupId.Chronokinesis, Powerups.Chronokinesis, ref _chronoCountShown);
-                UpdatePowerupButton(_divineBtn, _divineCount, _divineRadial, PowerupId.DivineIntervention, Powerups.DivineIntervention, ref _divineCountShown);
+                int owned = Powerups.WarHorn.Owned;
+                bool active = _gm.PowerupActive(PowerupId.WarHorn);
+                bool ready = owned > 0 && _gm.WarHornReady;
+                if (_hornRadial != null && _hornRadial.gameObject.activeSelf) _hornRadial.gameObject.SetActive(false);
+                SetCountLabel(_hornCount, ref _hornCountShown, owned, active);
+                // Still tappable when not ready, so the player hears why (a toast) rather than
+                // facing a dead button. Dimmed until the streak has fallen below its peak.
+                _hornBtn.interactable = owned > 0 && !active;
+                if (_hornBtn.targetGraphic is Image img)
+                    img.color = active ? UIFactory.Gold
+                              : ready ? UIFactory.Panel : new Color(0.12f, 0.13f, 0.20f, 0.6f);
             }
 
             // Divine Path button (adventure only; no timer, it stays on once activated).
@@ -770,7 +838,7 @@ namespace KnightsGauntlet.View
         // These run every frame the HUD is up. Assigning TMP text allocates a string AND
         // rebuilds the glyph mesh even when the value is identical, so only write on change.
         // -1 = "showing nothing" (the powerup is active), -2 = never written yet.
-        private int _chronoCountShown = -2, _divineCountShown = -2, _pathCountShown = -2;
+        private int _chronoCountShown = -2, _divineCountShown = -2, _pathCountShown = -2, _hornCountShown = -2, _furyCountShown = -2;
         private static void SetCountLabel(TMP_Text label, ref int shown, int owned, bool active)
         {
             if (label == null) return;
@@ -837,7 +905,7 @@ namespace KnightsGauntlet.View
             _pauseLevelSelectBtn.SetActive(false);
             _ui.Button(col, "How to Play", () => ShowHowTo(returnToPause: true), UIFactory.Panel, UIFactory.Gold);
             _pauseShakeToggle = _ui.Button(col, "Screen Shake", () => ToggleScreenShake(), UIFactory.Panel, UIFactory.Gold);
-            _pauseHapticsToggle = _ui.Button(col, "Capture Vibration", () => ToggleCaptureHaptics(), UIFactory.Panel, UIFactory.Gold);
+            _pauseHapticsToggle = _ui.Button(col, "Vibration", () => ToggleCaptureHaptics(), UIFactory.Panel, UIFactory.Gold);
             _pauseEffectsToggle = _ui.Button(col, "Reduce Effects", () => ToggleReducedEffects(), UIFactory.Panel, UIFactory.Gold);
             _ui.Button(col, "Restart", () => _gm.RestartGame(), UIFactory.Panel, UIFactory.Gold);
             _ui.Button(col, "Main Menu", () => _gm.ToMenu(), UIFactory.Panel, UIFactory.Gold);
@@ -1012,7 +1080,7 @@ namespace KnightsGauntlet.View
             _cbToggleLabel = _cbToggle.GetComponentInChildren<TMP_Text>();
             UpdateColorblindLabel();
             _shakeToggle = _ui.Button(col, "Screen Shake", () => ToggleScreenShake(), UIFactory.Panel, UIFactory.Gold);
-            _hapticsToggle = _ui.Button(col, "Capture Vibration", () => ToggleCaptureHaptics(), UIFactory.Panel, UIFactory.Gold);
+            _hapticsToggle = _ui.Button(col, "Vibration", () => ToggleCaptureHaptics(), UIFactory.Panel, UIFactory.Gold);
             _effectsToggle = _ui.Button(col, "Reduce Effects", () => ToggleReducedEffects(), UIFactory.Panel, UIFactory.Gold);
             UpdateScreenShakeToggles();
             _ui.Button(col, "Tutorial", () => ShowTutorialPick(), UIFactory.Panel, UIFactory.Gold);
@@ -1050,6 +1118,7 @@ namespace KnightsGauntlet.View
         {
             SaveData.SetColorblind(!SaveData.IsColorblind());
             UpdateColorblindLabel();
+            SettingToggled(SaveData.IsColorblind());
         }
         private void UpdateColorblindLabel()
         {
@@ -1063,6 +1132,7 @@ namespace KnightsGauntlet.View
         {
             SaveData.SetScreenShake(!SaveData.IsScreenShake());
             UpdateScreenShakeToggles();
+            SettingToggled(SaveData.IsScreenShake());
         }
         private void UpdateScreenShakeToggles()
         {
@@ -1073,20 +1143,22 @@ namespace KnightsGauntlet.View
             PreferenceState(_effectsToggle, "Reduce effects", reduced);
             PreferenceState(_pauseEffectsToggle, "Reduce effects", reduced);
             bool haptics = SaveData.IsCaptureHaptics();
-            PreferenceState(_hapticsToggle, "Capture vibration", haptics);
-            PreferenceState(_pauseHapticsToggle, "Capture vibration", haptics);
+            PreferenceState(_hapticsToggle, "Vibration", haptics);
+            PreferenceState(_pauseHapticsToggle, "Vibration", haptics);
         }
         private void ToggleCaptureHaptics()
         {
             SaveData.SetCaptureHaptics(!SaveData.IsCaptureHaptics());
             UpdateScreenShakeToggles();
+            SettingToggled(SaveData.IsCaptureHaptics());
         }
         private void ToggleReducedEffects()
         {
             SaveData.SetReducedEffects(!SaveData.IsReducedEffects());
             UpdateScreenShakeToggles();
+            SettingToggled(SaveData.IsReducedEffects());
         }
-        private void ShowSettings() { HideAll(); _settings.SetActive(true); _gm.SetBanner(true); UpdateScreenShakeToggles(); }
+        private void ShowSettings() { HideAll(); _settings.SetActive(true); _gm.SetBanner(true); UpdateScreenShakeToggles(); SettingsOpened(); }
 
         // ── Report a Bug ─────────────────────────────────────────────────────
         // A pixel-styled feedback box. Whatever the player types is handed to
@@ -1633,15 +1705,36 @@ namespace KnightsGauntlet.View
             var canvas = _ui.CreateCanvas("Market", 108);
             _market = canvas.gameObject;
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
+            AddShopMotes(screen.transform, 14);
             var col = _ui.Column(screen.transform, 10f);
-            _ui.Label(col, "Shop", 28, UIFactory.Gold, FontStyles.Normal);
-            _marketBalance = _ui.Label(col, "", 20, UIFactory.Gold, FontStyles.Normal);
-            _ui.Button(col, "Buy Shillings", () => ShowShillingsShop(), UIFactory.Panel, UIFactory.Gold, 200, 40, 17);
+            _ui.Label(col, "SHOP", 30, UIFactory.Gold, FontStyles.Normal);
+
+            // Wallet pill: the spinning shilling, the balance (tweens as you spend) and a
+            // gold + that opens the Treasury.
+            var wallet = _ui.Row(col, 8f);
+            MakeCard(wallet);
+            wallet.GetComponent<HorizontalLayoutGroup>().padding = new RectOffset(12, 6, 4, 4);
+            var walletCoin = AddCoin(wallet, 34f);
+            _shopCoinTex = walletCoin.texture;
+            _marketBalanceCoin = walletCoin.rectTransform;
+            _marketBalance = _ui.Label(wallet, "", 24, UIFactory.Gold, FontStyles.Normal, 130);
+            _marketBalance.alignment = TextAlignmentOptions.Left;
+            TrackBalance(_marketBalance, walletCoin.rectTransform);
+            var plus = _ui.Button(wallet, "+", () => ShowShillingsShop(), UIFactory.Gold, UIFactory.Bg, 40, 40, 24);
+            _marketBuyShillings = (RectTransform)plus.transform;
 
             var tabs = _ui.Row(col, 10f);
             _tabShopSkins = _ui.Button(tabs, "Skins", () => SetShopTab(0), UIFactory.Panel, UIFactory.Muted, 96, 42, 16);
             _tabShopVfx = _ui.Button(tabs, "VFX", () => SetShopTab(1), UIFactory.Panel, UIFactory.Muted, 76, 42, 16);
             _tabPowerups = _ui.Button(tabs, "Powerups", () => SetShopTab(2), UIFactory.Panel, UIFactory.Muted, 110, 42, 16);
+            // A gold bar under the active tab that glides between them.
+            var bar = new GameObject("TabIndicator", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            bar.transform.SetParent(tabs, false);
+            bar.GetComponent<LayoutElement>().ignoreLayout = true;
+            _tabIndicator = (RectTransform)bar.transform;
+            _tabIndicator.anchorMin = _tabIndicator.anchorMax = new Vector2(0f, 0f); _tabIndicator.pivot = new Vector2(.5f, .5f);
+            _tabIndicator.sizeDelta = new Vector2(60f, 4f);
+            var barImg = bar.GetComponent<Image>(); barImg.color = UIFactory.Gold; barImg.raycastTarget = false;
 
             _shopSkins = _ui.Column(col, 9f);
             foreach (var skin in Skins.Shop) BuildShopCosmeticRow(_shopSkins, skin.Name, skin.Color, skin.Price,
@@ -1654,13 +1747,17 @@ namespace KnightsGauntlet.View
             // ── Powerups tab ──
             _shopPowerups = _ui.Column(col, 12f);
             BuildPowerupRow(_shopPowerups, Powerups.Chronokinesis, 0);
-            BuildPowerupRow(_shopPowerups, Powerups.DivineIntervention, 1);
-            BuildPowerupRow(_shopPowerups, Powerups.DivinePath, 2);
+            // Indices must match Powerups.All (the owned-count labels are refreshed by index).
+            BuildPowerupRow(_shopPowerups, Powerups.WarHorn, 1);
+            BuildPowerupRow(_shopPowerups, Powerups.Berserker, 2);
+            BuildPowerupRow(_shopPowerups, Powerups.DivineIntervention, 3);
+            BuildPowerupRow(_shopPowerups, Powerups.DivinePath, 4);
 
             // Compact status line for errors ("not enough shillings") / confirmations.
             _marketMsg = _ui.Label(col, "", 17, UIFactory.Gold, FontStyles.Normal, 300);
 
             _ui.Button(col, "Back", () => ShowMenu(), UIFactory.Gold, UIFactory.Bg, 220, 50, 22);
+            _marketFx = ShopFxLayer(screen.transform);
             _market.SetActive(false);
 
             BuildShillingsShop();
@@ -1673,6 +1770,7 @@ namespace KnightsGauntlet.View
             string skinId = null, VfxInfo vfx = null)
         {
             var row = _ui.Row(parent, 8f);
+            MakeCard(row, equipped);
             var swatch = new GameObject("CosmeticSwatch", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             swatch.transform.SetParent(row, false);
             var le = swatch.GetComponent<LayoutElement>(); le.preferredWidth = le.minWidth = 48f; le.preferredHeight = le.minHeight = 48f;
@@ -1687,34 +1785,38 @@ namespace KnightsGauntlet.View
                 UIFactory.Stretch(piece.rectTransform);
                 piece.GetComponent<LayoutElement>().ignoreLayout = true;
             }
-            _ui.Label(row, name, 15, UIFactory.Text, FontStyles.Normal, 180);
-            var status = owned ? (equipped ? "Equipped" : "Owned") : price + " sh";
-            var button = _ui.Button(row, status, owned ? (System.Action)null : buy,
-                owned ? UIFactory.Panel : UIFactory.Gold, owned ? UIFactory.Muted : UIFactory.Bg, 90, 44, 14);
-            if (owned) button.interactable = false;
+            _ui.Label(row, name, 15, UIFactory.Text, FontStyles.Normal, 170);
+            if (owned)
+            {
+                var button = _ui.Button(row, equipped ? "Equipped" : "Owned", null,
+                    UIFactory.Panel, equipped ? UIFactory.Gold : UIFactory.Muted, 100, 44, 14);
+                button.interactable = false;
+            }
+            else PriceButton(row, price, buy, 100, 44, 15);
         }
 
         private void BuySkin(SkinInfo skin)
         {
+            var pressed = PressedButton();
+            if (_gm.Shillings < skin.Price) { ShopDenyFx(pressed, skin.Price); return; }
             if (_gm.BuyShopSkin(skin))
             {
                 _marketMsg.color = UIFactory.Gold; _marketMsg.text = "Purchased " + skin.Name + "!";
+                ShopPurchaseFx(pressed, "UNLOCKED!");
             }
-            else { _marketMsg.color = UIFactory.Error; _marketMsg.text = "Not enough shillings."; }
+            else ShopDenyFx(pressed, skin.Price);
             RebuildMarket();
         }
 
         private void BuyVfx(VfxInfo vfx)
         {
             if (vfx == null || Vfx.IsOwned(vfx.Id)) return;
-            if (!SaveData.TrySpendShillings(vfx.Price))
-            {
-                _marketMsg.color = UIFactory.Error; _marketMsg.text = "Not enough shillings.";
-                return;
-            }
+            var pressed = PressedButton();
+            if (!SaveData.TrySpendShillings(vfx.Price)) { ShopDenyFx(pressed, vfx.Price); return; }
             SaveData.AddOwnedVfx(vfx.Id);
             _gm.EquipVfx(vfx.Id);
             _marketMsg.color = UIFactory.Gold; _marketMsg.text = "Purchased " + vfx.Name + "!";
+            ShopPurchaseFx(pressed, "UNLOCKED!");
             RebuildMarket();
         }
 
@@ -1722,6 +1824,7 @@ namespace KnightsGauntlet.View
         private void BuildPowerupRow(Transform parent, PowerupInfo pu, int idx)
         {
             var row = _ui.Row(parent, 10f);
+            MakeCard(row);
             var iconGo = new GameObject("PuIcon", typeof(RectTransform), typeof(LayoutElement));
             iconGo.transform.SetParent(row, false);
             var le = iconGo.GetComponent<LayoutElement>();
@@ -1733,24 +1836,34 @@ namespace KnightsGauntlet.View
                 else { img.sprite = _ui.Fill(); img.color = UIFactory.Panel; }
             }
 
+            // A soft glow behind the model so each powerup sits in its own pool of light.
+            var halo = new GameObject("Halo", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            halo.transform.SetParent(iconGo.transform, false);
+            halo.transform.SetAsFirstSibling();
+            halo.GetComponent<LayoutElement>().ignoreLayout = true;
+            ((RectTransform)halo.transform).sizeDelta = new Vector2(84f, 84f);
+            var haloImg = halo.GetComponent<Image>(); haloImg.sprite = UISprites.SoftGlow(); haloImg.raycastTarget = false;
+            haloImg.color = new Color(1f, .8f, .4f, .28f);
+
             var info = _ui.Column(row, 2f);
-            _ui.Label(info, pu.Name, 18, UIFactory.Gold, FontStyles.Normal, 210);
-            _ui.Label(info, pu.Blurb, 13, UIFactory.Muted, FontStyles.Normal, 210);
-            _powerupOwned[idx] = _ui.Label(info, "", 14, UIFactory.Text, FontStyles.Normal, 210);
+            var title = _ui.Label(info, pu.Name, 18, UIFactory.Gold, FontStyles.Normal, 200);
+            title.alignment = TextAlignmentOptions.Left;
+            var blurb = _ui.Label(info, pu.Blurb, 13, UIFactory.Muted, FontStyles.Normal, 200);
+            blurb.alignment = TextAlignmentOptions.Left;
+            _powerupOwned[idx] = _ui.Label(info, "", 14, UIFactory.Text, FontStyles.Normal, 200);
+            _powerupOwned[idx].alignment = TextAlignmentOptions.Left;
 
             var pcopy = pu;
-            _ui.Button(row, pu.Cost + " sh", () => OnBuyPowerup(pcopy), UIFactory.Gold, UIFactory.Bg, 96, 50, 16);
+            _powerupBuy[idx] = PriceButton(row, pu.Cost, () => OnBuyPowerup(pcopy), 96, 50, 16);
         }
 
         private void OnBuyPowerup(PowerupInfo pu)
         {
-            if (!SaveData.TrySpendShillings(pu.Cost))
-            {
-                _marketMsg.color = UIFactory.Error; _marketMsg.text = "Not enough shillings.";
-                return;
-            }
+            var pressed = PressedButton();
+            if (!SaveData.TrySpendShillings(pu.Cost)) { ShopDenyFx(pressed, pu.Cost); return; }
             SaveData.AddPowerup(pu.Key, 1);
-            _marketMsg.color = UIFactory.Gold; _marketMsg.text = "Bought " + pu.Name + "!";
+            _marketMsg.color = UIFactory.Gold; _marketMsg.text = "Bought " + pu.Name + "! You own " + pu.Owned + ".";
+            ShopPurchaseFx(pressed, "+1");
             RebuildMarket();
         }
 
@@ -1763,7 +1876,9 @@ namespace KnightsGauntlet.View
             if (_tabShopVfx != null) UIFactory.StyleToggle(_tabShopVfx, tab == 1);
             if (_tabPowerups != null) UIFactory.StyleToggle(_tabPowerups, tab == 2);
             if (_marketMsg != null) _marketMsg.text = "";
+            _shopTab = tab;
             RebuildMarket();
+            PopInChildren(tab == 0 ? _shopSkins : tab == 1 ? _shopVfx : _shopPowerups);
         }
 
         // ── Buy Shillings (real-money bundles) ───────────────────────────────
@@ -1777,13 +1892,44 @@ namespace KnightsGauntlet.View
             var canvas = _ui.CreateCanvas("ShillingsShop", 109);
             _shillingsShop = canvas.gameObject;
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
-            var col = _ui.Column(screen.transform, 12f);
-            _ui.Label(col, "Buy Shillings", 28, UIFactory.Gold, FontStyles.Normal);
-            _shillingsShopBalance = _ui.Label(col, "", 18, UIFactory.Gold, FontStyles.Normal);
+            AddShopMotes(screen.transform, 22);
+            var col = _ui.Column(screen.transform, 8f);
+            _ui.Label(col, "TREASURY", 30, UIFactory.Gold, FontStyles.Normal);
+
+            // Hero: a big shilling over slowly turning rays. Flick it to spin it.
+            var hero = new GameObject("Hero", typeof(RectTransform), typeof(LayoutElement));
+            hero.transform.SetParent(col, false);
+            var hle = hero.GetComponent<LayoutElement>(); hle.preferredWidth = hle.preferredHeight = 150f;
+            var rays = new GameObject("Rays", typeof(RectTransform), typeof(Image));
+            rays.transform.SetParent(hero.transform, false);
+            var raysRt = (RectTransform)rays.transform; raysRt.sizeDelta = new Vector2(250f, 250f);
+            var raysImg = rays.GetComponent<Image>(); raysImg.sprite = GameView.RallyRays(); raysImg.raycastTarget = false;
+            raysImg.color = new Color(1f, .8f, .35f, .45f);
+            _spinners.Add(raysRt);
+            var heroCoin = AddCoin(hero.transform, 116f, swing: true);
+            heroCoin.GetComponent<LayoutElement>().ignoreLayout = true;
+            _treasuryCoinTex = heroCoin.texture;
+            _treasuryHeroCoin = heroCoin.rectTransform;
+
+            _shillingsShopBalance = _ui.Label(col, "", 34, UIFactory.Gold, FontStyles.Normal, 300);
+            _treasuryBalance = TrackBalance(_shillingsShopBalance, _shillingsShopBalance.rectTransform);
+            _ui.Label(col, "SHILLINGS", 12, UIFactory.Muted, FontStyles.Normal, 300).characterSpacing = 4f;
             if (_gm.Iap is StubIapService)
-                _ui.Label(col, "Purchases are simulated (no real charge until full release).", 13, UIFactory.Muted, FontStyles.Normal, 340);
-            foreach (var b in IapCatalog.Shillings) BuildShillingBundle(col, b.ProductId, b.Shillings);
+                _ui.Label(col, "Purchases are simulated (no real charge until full release).", 12, UIFactory.Muted, FontStyles.Normal, 340);
+
+            // The bundles as a 2x2 grid of treasure cards.
+            var grid = _ui.Column(col, 10f);
+            RectTransform gridRow = null;
+            for (int i = 0; i < IapCatalog.Shillings.Length; i++)
+            {
+                if (i % 2 == 0) gridRow = _ui.Row(grid, 10f);
+                var b = IapCatalog.Shillings[i];
+                BuildShillingBundle(gridRow, b.ProductId, b.Shillings, i);
+            }
+            _treasuryGrid = grid;
+            MenuSpace(col, 4);
             _ui.Button(col, "Back", () => ShowMarketplace(), UIFactory.Gold, UIFactory.Bg, 220, 50, 22);
+            _treasuryFx = ShopFxLayer(screen.transform);
             _shillingsShop.SetActive(false);
 
             _gm.Iap.OnReady += RefreshShillingPrices;
@@ -1791,13 +1937,63 @@ namespace KnightsGauntlet.View
             _gm.Iap.OnPurchaseFailed += OnShillingsPurchaseFailed;
         }
 
-        private void BuildShillingBundle(Transform parent, string productId, int amount)
+        private static readonly string[] TreasureTiers = { "Coin Pouch", "Merchant's Purse", "Treasure Chest", "King's Hoard" };
+        private static readonly string[] TreasureBadges = { null, "POPULAR", null, "BEST HAUL" };
+        // Coin pile layouts (x, y) per tier: 1, 3, 6 and 10 coins stacked in a pyramid.
+        private static readonly Vector2[][] TreasurePiles =
         {
-            var row = _ui.Row(parent, 12f);
-            _ui.Label(row, amount.ToString("N0") + " sh", 20, UIFactory.Gold, FontStyles.Normal, 180);
-            var btn = _ui.Button(row, _gm.Iap.PriceString(productId), () => _gm.Iap.Buy(productId),
-                                 UIFactory.Gold, UIFactory.Bg, 130, 48, 18);
+            new[] { new Vector2(0, 0) },
+            new[] { new Vector2(-17, 0), new Vector2(17, 0), new Vector2(0, 15) },
+            new[] { new Vector2(-34, 0), new Vector2(0, 0), new Vector2(34, 0), new Vector2(-17, 15), new Vector2(17, 15), new Vector2(0, 30) },
+            new[] { new Vector2(-51, 0), new Vector2(-17, 0), new Vector2(17, 0), new Vector2(51, 0), new Vector2(-34, 15),
+                    new Vector2(0, 15), new Vector2(34, 15), new Vector2(-17, 30), new Vector2(17, 30), new Vector2(0, 45) },
+        };
+
+        private void BuildShillingBundle(Transform parent, string productId, int amount, int tier)
+        {
+            tier = Mathf.Clamp(tier, 0, TreasureTiers.Length - 1);
+            var card = _ui.Column(parent, 4f);
+            MakeCard(card, highlight: tier == 3);
+            var le = card.gameObject.AddComponent<LayoutElement>(); le.preferredWidth = le.minWidth = 160f;
+
+            var pile = new GameObject("Pile", typeof(RectTransform), typeof(LayoutElement));
+            pile.transform.SetParent(card, false);
+            var ple = pile.GetComponent<LayoutElement>(); ple.preferredWidth = 140f; ple.preferredHeight = 82f;
+            var glow = new GameObject("Glow", typeof(RectTransform), typeof(Image));
+            glow.transform.SetParent(pile.transform, false);
+            ((RectTransform)glow.transform).sizeDelta = new Vector2(90f + 26f * tier, 90f);
+            var glowImg = glow.GetComponent<Image>(); glowImg.sprite = UISprites.SoftGlow(); glowImg.raycastTarget = false;
+            glowImg.color = new Color(1f, .8f, .35f, .22f + .08f * tier);
+            foreach (var at in TreasurePiles[tier])
+            {
+                var c = CoinCopy(pile.transform, _treasuryCoinTex, 34f);
+                c.rectTransform.anchoredPosition = at + new Vector2(0f, -22f);
+            }
+
+            var name = _ui.Label(card, TreasureTiers[tier].ToUpperInvariant(), 12, UIFactory.Muted, FontStyles.Normal, 140);
+            name.characterSpacing = 1.5f;
+            _ui.Label(card, amount.ToString("N0"), 26, UIFactory.Gold, FontStyles.Normal, 140);
+            var btn = _ui.Button(card, _gm.Iap.PriceString(productId), () => _gm.Iap.Buy(productId),
+                                 UIFactory.Gold, UIFactory.Bg, 136, 44, 18);
             _shillingBuyButtons[productId] = btn;
+            _treasuryCards[productId] = card;
+            _breathers.Add((card, tier * 1.3f));
+
+            if (TreasureBadges[tier] != null)
+            {
+                // A ribbon pinned across the top-right corner.
+                var badge = new GameObject("Badge", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                badge.transform.SetParent(card, false);
+                badge.GetComponent<LayoutElement>().ignoreLayout = true;
+                var brt = (RectTransform)badge.transform;
+                brt.anchorMin = brt.anchorMax = new Vector2(1f, 1f); brt.pivot = new Vector2(.5f, .5f);
+                brt.anchoredPosition = new Vector2(-24f, -6f); brt.sizeDelta = new Vector2(96f, 22f);
+                brt.localRotation = Quaternion.Euler(0, 0, -12f);
+                var bimg = badge.GetComponent<Image>(); bimg.color = tier == 3 ? UIFactory.Hex("#E2503A") : UIFactory.Gold; bimg.raycastTarget = false;
+                var btxt = _ui.Label(badge.transform, TreasureBadges[tier], 11, tier == 3 ? Color.white : UIFactory.Bg, FontStyles.Normal, 96);
+                btxt.GetComponent<LayoutElement>().ignoreLayout = true; UIFactory.Stretch(btxt.rectTransform);
+                btxt.characterSpacing = 1.5f;
+            }
         }
 
         // Store prices arrived: update each button's label from the fetched catalog.
@@ -1813,8 +2009,9 @@ namespace KnightsGauntlet.View
         private void OnShillingsPurchased(string productId)
         {
             int amount = IapCatalog.ShillingsFor(productId); // already granted by the service
-            if (_shillingsShopBalance != null) _shillingsShopBalance.text = _gm.Shillings.ToString("N0") + " shillings";
-            ShowToast("Purchased " + amount.ToString("N0") + " shillings");
+            if (_shillingsShop != null && _shillingsShop.activeSelf && _treasuryCards.TryGetValue(productId, out var card) && card != null)
+                TreasuryCelebrate(card, amount);
+            else ShowToast("Purchased " + amount.ToString("N0") + " shillings");
         }
 
         private void OnShillingsPurchaseFailed(string productId, bool cancelled)
@@ -1825,9 +2022,9 @@ namespace KnightsGauntlet.View
         private void ShowShillingsShop()
         {
             HideAll();
-            if (_shillingsShopBalance != null) _shillingsShopBalance.text = _gm.Shillings.ToString("N0") + " shillings";
             _shillingsShop.SetActive(true);
             _gm.SetBanner(true);
+            if (_treasuryGrid != null) foreach (Transform row in _treasuryGrid) PopInChildren(row, .07f);
         }
         private void ShowMarketplace()
         {
@@ -1836,11 +2033,11 @@ namespace KnightsGauntlet.View
             _marketMsg.text = "";
             _market.SetActive(true);
             _gm.SetBanner(true);
+            PopInChildren(_shopTab == 0 ? _shopSkins : _shopTab == 1 ? _shopVfx : _shopPowerups);
         }
 
         private void RebuildMarket()
         {
-            if (_marketBalance != null) _marketBalance.text = _gm.Shillings.ToString("N0") + " shillings";
             if (_shopSkins != null)
             {
                 for (int i = _shopSkins.childCount - 1; i >= 0; i--) Destroy(_shopSkins.GetChild(i).gameObject);
@@ -1862,7 +2059,10 @@ namespace KnightsGauntlet.View
                 }
             }
             for (int i = 0; i < Powerups.All.Length && i < _powerupOwned.Length; i++)
+            {
                 if (_powerupOwned[i] != null) _powerupOwned[i].text = "Owned: " + Powerups.All[i].Owned;
+                StylePrice(_powerupBuy[i], Powerups.All[i].Cost);
+            }
         }
         // ── Customization grid (all skins, owned + locked) ───────────────────
         private void BuildCustomization()
@@ -1884,6 +2084,7 @@ namespace KnightsGauntlet.View
 
             var col = _ui.Column(screen.transform, 12f);
             _ui.Label(col, "Customization", 26, UIFactory.Gold, FontStyles.Normal);
+            BuildCustomShowcase(col);
 
             var tabs = _ui.Row(col, 10f);
             _tabSkins = _ui.Button(tabs, "Skins", () => SetCustomTab(0), UIFactory.Panel, UIFactory.Muted, 130, 42, 15);
@@ -1904,17 +2105,31 @@ namespace KnightsGauntlet.View
             _skinPopupBuy = _ui.Button(pcol, "Buy", () => OnBuyPopup(), UIFactory.Gold, UIFactory.Bg, 120, 34, 13).gameObject;
             _skinPopupEquip = _ui.Button(pcol, "Equip", () => OnEquipFromPopup(), UIFactory.Gold, UIFactory.Bg, 120, 34, 13).gameObject;
             _skinPopup.SetActive(false);
+            FinishCustomJuice(screen.transform, tabs);
             _custom.SetActive(false);
         }
-        private void ShowCustomization() { HideAll(); RebuildCustomization(); _custom.SetActive(true); _gm.SetBanner(true); }
-        private void SetCustomTab(int tab) { _customTab = tab; RebuildCustomization(); }
-        private void RebuildCustomization()
+        private void ShowCustomization() { HideAll(); _custom.SetActive(true); RebuildCustomization(popIn: true); _gm.SetBanner(true); }
+        private void SetCustomTab(int tab)
         {
-            for (int i = _customGrid.childCount - 1; i >= 0; i--) Destroy(_customGrid.GetChild(i).gameObject);
+            bool changed = tab != _customTab;
+            _customTab = tab;
+            RebuildCustomization(popIn: changed);
+        }
+        private void RebuildCustomization(bool popIn = false)
+        {
+            for (int i = _customGrid.childCount - 1; i >= 0; i--)
+            {
+                // Detach first so the new grid lays out without the dying rows in it.
+                var child = _customGrid.GetChild(i);
+                child.SetParent(null, false);
+                Destroy(child.gameObject);
+            }
             DismissSkinPopup();
             UIFactory.StyleToggle(_tabSkins, _customTab == 0);
             UIFactory.StyleToggle(_tabVfx, _customTab == 1);
+            _customSelectorTarget = _customEquippedGlow = null;
             if (_customTab == 0) RebuildSkinGrid(); else RebuildVfxGrid();
+            CustomGridBuilt(popIn);
         }
         private void RebuildSkinGrid()
         {
@@ -1933,6 +2148,7 @@ namespace KnightsGauntlet.View
                 RectTransform brt = null;
                 var btn = _ui.Button(cell, "", () => OnSkinTap(sk, brt), UIFactory.Panel, UIFactory.Gold, 66, 66, 10);
                 brt = btn.GetComponent<RectTransform>();
+                DecorateCustomTile(btn, equipped == s.Id);
                 // The near-black Nightfall knight barely reads on the dark tile, so sit a
                 // soft red glow behind it (added before the glyph so it stays underneath).
                 if (!mystery && s.Id == Skins.Secret.Id) AddSkinGlow(btn.transform, 72f);
@@ -1987,6 +2203,7 @@ namespace KnightsGauntlet.View
                 RectTransform brt = null;
                 var btn = _ui.Button(cell, "", () => OnVfxTap(vf, brt), UIFactory.Panel, UIFactory.Gold, 66, 66, 10);
                 brt = btn.GetComponent<RectTransform>();
+                DecorateCustomTile(btn, equipped == v.Id);
 
                 // Preview: the first frame of the effect (dimmed if not owned). "None"
                 // shows a dash. A missing/failed load falls back to the dash too.
@@ -2029,6 +2246,7 @@ namespace KnightsGauntlet.View
             _skinPopupCatcher.SetActive(true);
             _skinPopup.transform.SetAsLastSibling();
             _skinPopup.SetActive(true);
+            CustomTileTapped(swatch, null, v);
         }
         private void DismissSkinPopup()
         {
@@ -2051,6 +2269,7 @@ namespace KnightsGauntlet.View
             _skinPopupCatcher.SetActive(true);
             _skinPopup.transform.SetAsLastSibling(); // keep the popup above the catcher
             _skinPopup.SetActive(true);
+            CustomTileTapped(swatch, s, null);
         }
         private void OnEquipFromPopup()
         {
@@ -2066,6 +2285,7 @@ namespace KnightsGauntlet.View
             }
             DismissSkinPopup();
             RebuildCustomization();
+            CustomEquippedFx(false);
         }
         private void OnBuyPopup()
         {
@@ -2089,10 +2309,12 @@ namespace KnightsGauntlet.View
             if (!bought)
             {
                 _skinPopupInfo.text = "Not enough shillings.";
+                CustomDenyFx();
                 return;
             }
             ShowToast("Purchased " + name + "!");
             RebuildCustomization();
+            CustomEquippedFx(true);
         }
         private static string SkinRequirement(SkinInfo s)
         {

@@ -446,6 +446,7 @@ namespace KnightsGauntlet.View
             AnimateParticles(dt);
             AnimateVoxelParticles();
             AnimateComicEffects(sim, dt);
+            AnimateRally(sim, dt);
         }
 
         // Divine Path: the next tile of the solved optimal route (nextOnly), drawn with the

@@ -15,7 +15,10 @@ namespace KnightsGauntlet.View
         public static Sprite[] Frames(VfxInfo v)
         {
             if (v == null) return null;
-            if (_cache.TryGetValue(v.Id, out var cached)) return cached;
+            // Domain reload is off (Enter Play Mode Options), so this static cache outlives Play
+            // sessions while the runtime-made sprites in it are destroyed on exit: rebuild those.
+            // (An empty result is cached on purpose: that VFX simply has no frames.)
+            if (_cache.TryGetValue(v.Id, out var cached) && (cached == null || cached.Length == 0 || cached[0] != null)) return cached;
             var frames = Load(v);
             _cache[v.Id] = frames; // cache even null/empty so we don't re-hit Resources
             return frames;

@@ -48,7 +48,7 @@ namespace KnightsGauntlet.View
             MenuSpace(col, 8);
             SettingCaption(col, "PREFERENCES");
             _pauseShakeToggle = SettingAction(col, "Screen shake", ToggleScreenShake);
-            _pauseHapticsToggle = SettingAction(col, "Capture vibration", ToggleCaptureHaptics);
+            _pauseHapticsToggle = SettingAction(col, "Vibration", ToggleCaptureHaptics);
             _pauseEffectsToggle = SettingAction(col, "Reduce effects", ToggleReducedEffects);
             MenuSpace(col, 8);
             var actions = _ui.Row(col, 12);
@@ -78,7 +78,7 @@ namespace KnightsGauntlet.View
             _cbToggle = SettingAction(display, "Colorblind Mode", ToggleColorblind);
             _cbToggleLabel = _cbToggle.GetComponentInChildren<TMP_Text>();
             _shakeToggle = SettingAction(display, "Screen Shake", ToggleScreenShake);
-            _hapticsToggle = SettingAction(display, "Capture Vibration", ToggleCaptureHaptics);
+            _hapticsToggle = SettingAction(display, "Vibration", ToggleCaptureHaptics);
             _effectsToggle = SettingAction(display, "Reduce Effects", ToggleReducedEffects);
             UpdateColorblindLabel(); UpdateScreenShakeToggles();
             var help = SettingsSection(content, "Help & progress");
@@ -87,6 +87,7 @@ namespace KnightsGauntlet.View
             SettingAction(help, "Achievements", ShowAchievements);
             SettingAction(help, "Report a Bug", ShowBugReport);
             if (Debug.isDebugBuild) SettingAction(help, "Ad Test Suite", () => _gm.LaunchAdTestSuite());
+            SetupSettingsJuice(content);
         }
 
         // A fixed title and return action frame a scrollable settings body.

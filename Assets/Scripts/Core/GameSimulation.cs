@@ -38,6 +38,11 @@ namespace KnightsGauntlet.Core
         public PieceType PlayerForm { get; private set; } = PieceType.Knight;
         public int Score { get; private set; }
         public int ComboMultiplier { get; private set; } = 1;
+        // The highest multiplier reached this run (Battle). The War Horn powerup restores it.
+        public int PeakMultiplier { get; private set; } = 1;
+        // Scales how much each capture adds to the multiplier (the Berserker Draught sets 3
+        // while active). Driven by the view layer, which owns the powerup's real-time timer.
+        public int ComboGainScale = 1;
         public bool Alive { get; private set; }
         public float ScrollCells { get; private set; }
         public float ElapsedTime => _time; // presentation timing for scrolling biome changes
@@ -180,6 +185,8 @@ namespace KnightsGauntlet.Core
             MapRows = 0;
 
             ComboMultiplier = 1;
+            PeakMultiplier = 1;
+            ComboGainScale = 1;
             _comboMissStreak = 0;
             _captureChain = 0;
             _advPips = 0;
@@ -569,7 +576,7 @@ namespace KnightsGauntlet.Core
             Cracked.Clear();
             ScrollCells = 0; _time = 0;
             Score = 0; _trapScore = 0; RunShillings = 0;
-            ComboMultiplier = 1; _comboMissStreak = 0; _captureChain = 0; _advPips = 0;
+            ComboMultiplier = 1; PeakMultiplier = 1; _comboMissStreak = 0; _captureChain = 0; _advPips = 0;
             _lastCaptured = null; _transformEndsAt = 0; _transformIsMimic = false;
             _battleInvulnUntil = 0; _lastBattleMove = 0;
             _hasBest = false; _moveEpoch = 0; _bestEpoch = -1; // reset the best-move hint cache
@@ -810,7 +817,9 @@ namespace KnightsGauntlet.Core
                 int inc = GameConfig.ComboInc(o.Type);
                 if (PlayerForm == PieceType.Bishop || PlayerForm == PieceType.Nightrider)
                     inc *= GameConfig.ComboFormBonus;
+                inc *= Math.Max(1, ComboGainScale);
                 ComboMultiplier += inc;
+                if (ComboMultiplier > PeakMultiplier) PeakMultiplier = ComboMultiplier;
 
                 result.Captures.Add(new CaptureInfo
                 {
@@ -856,6 +865,17 @@ namespace KnightsGauntlet.Core
             CollectPickups();
             CheckCollision();
             return result;
+        }
+
+        // War Horn: bring the multiplier back up to this run's peak and clear the miss
+        // count, so the next miss gets the full grace again. Battle only; returns false
+        // (changing nothing) when the streak is already at its best.
+        public bool RestorePeakMultiplier()
+        {
+            if (Mode != GameMode.Battle || !Alive || ComboMultiplier >= PeakMultiplier) return false;
+            ComboMultiplier = PeakMultiplier;
+            _comboMissStreak = 0;
+            return true;
         }
 
         private void SetForm(PieceType form)
