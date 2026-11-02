@@ -36,23 +36,35 @@ namespace KnightsGauntlet.View
     // One purchasable shilling bundle.
     public struct IapBundle
     {
-        public string ProductId;     // must match the store dashboards (App Store / Play)
+        public string ProductId;     // the game's own id; also the App Store Connect product id
+        public string GooglePlayId;  // the Google Play Console product id
         public int Shillings;        // granted on a successful purchase
         public string FallbackPrice; // shown until the store's localized price loads
     }
 
-    // The catalog of consumable bundles. Product ids are identical across Apple and
-    // Google, so no per-store id mapping is needed. Keep these in sync with the products
-    // created in App Store Connect and the Google Play Console.
+    // The catalog of consumable bundles. Keep these in sync with the products created in
+    // App Store Connect and the Google Play Console. The two stores' ids differ (Apple
+    // "shilling5000", Google "shillings5000") and store ids can't be renamed once created,
+    // so the game keys everything on ProductId and only the store fetch uses StoreId().
     public static class IapCatalog
     {
         public static readonly IapBundle[] Shillings =
         {
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling5000",   Shillings = 5000,   FallbackPrice = "$0.99"  },
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling25000",  Shillings = 25000,  FallbackPrice = "$4.99"  },
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling50000",  Shillings = 50000,  FallbackPrice = "$9.99"  },
-            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling100000", Shillings = 100000, FallbackPrice = "$19.99" },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling5000",   GooglePlayId = "com.apy.knightsgauntlet.shillings5000",   Shillings = 5000,   FallbackPrice = "$0.99"  },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling25000",  GooglePlayId = "com.apy.knightsgauntlet.shillings25000",  Shillings = 25000,  FallbackPrice = "$4.99"  },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling50000",  GooglePlayId = "com.apy.knightsgauntlet.shillings50000",  Shillings = 50000,  FallbackPrice = "$9.99"  },
+            new IapBundle { ProductId = "com.apy.knightsgauntlet.shilling100000", GooglePlayId = "com.apy.knightsgauntlet.shillings100000", Shillings = 100000, FallbackPrice = "$19.99" },
         };
+
+        // The id this platform's store knows the bundle by.
+        public static string StoreId(IapBundle b)
+        {
+#if UNITY_ANDROID
+            return string.IsNullOrEmpty(b.GooglePlayId) ? b.ProductId : b.GooglePlayId;
+#else
+            return b.ProductId;
+#endif
+        }
 
         // Shillings granted by a product id, or 0 if it isn't one of ours.
         public static int ShillingsFor(string productId)

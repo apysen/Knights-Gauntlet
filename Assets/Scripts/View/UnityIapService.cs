@@ -56,7 +56,9 @@ namespace KnightsGauntlet.View
         private void OnStoreConnected()
         {
             var defs = IapCatalog.Shillings
-                .Select(b => new ProductDefinition(b.ProductId, ProductType.Consumable))
+                // Internal id + this store's id: Products, orders and GetProductById all keep
+                // using the internal ProductId, only the store request uses the store's id.
+                .Select(b => new ProductDefinition(b.ProductId, IapCatalog.StoreId(b), ProductType.Consumable))
                 .ToList();
             _store.FetchProducts(defs);
         }
