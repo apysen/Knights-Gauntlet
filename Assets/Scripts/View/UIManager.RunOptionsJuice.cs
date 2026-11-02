@@ -114,7 +114,7 @@ namespace KnightsGauntlet.View
                 fallback.font = UIFactory.ChessFont();
             }
 
-            var name = TextIn(rt, title, 30, UIFactory.Gold, LegacyStyle ? UIFactory.PixelFont() : UIFactory.ComicFont(), -186f, 40f);
+            var name = TextIn(rt, title, 30, UIFactory.Gold, UIFactory.ComicFont(), -186f, 40f);
             name.characterSpacing = 4f;
             TextIn(rt, tagline, 14, UIFactory.Text, UIFactory.BodyFont(), -224f, 38f).textWrappingMode = TextWrappingModes.Normal;
             var chip = TextIn(rt, chips, 11, accent, UIFactory.BodyFont(), -268f, 20f);
@@ -192,7 +192,7 @@ namespace KnightsGauntlet.View
 
         private void UpdateRunOptionsJuice()
         {
-            if (_runOptions == null || !_runOptions.activeSelf || LegacyStyle) return;
+            if (_runOptions == null || !_runOptions.activeSelf) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _runTime += dt;
             bool reduced = SaveData.IsReducedEffects();

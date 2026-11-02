@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace KnightsGauntlet.View
 {
-    // Scores screen life (modern style only; legacy keeps the plain list).
+    // Scores screen life.
     //   1. The title carries the 3D trophy from the menu nav; it hops when the screen opens.
     //   2. Gold motes drift behind; a gold bar glides under the active source tab.
     //   3. Rows slide in from the right one after another, and the top scores count up.
@@ -29,7 +29,7 @@ namespace KnightsGauntlet.View
         private float _time, _rowsTime, _titleHop;
         private bool _youFound;
 
-        private bool Juicy => _theme != null && _theme.comicStyle;
+        private bool Juicy => _theme != null;
 
         // ── Build hooks ──────────────────────────────────────────────────────
         private void BuildTitle(Transform col)

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace KnightsGauntlet.View
 {
-    // Customization screen life (modern style only; legacy keeps the plain grid).
+    // Customization screen life.
     //   1. A showcase stage at the top: the previewed skin's 3D knight (or the VFX's
     //      loop) over turning rays and a glow in the item's colour. It breathes, and a
     //      tap makes it rear up with sparks, like the menu knight.
@@ -27,7 +27,7 @@ namespace KnightsGauntlet.View
         private float _customTime, _customPunch, _customRayAngle, _customRayBoost, _customPopupT = 1f;
         private string _customShownId;
 
-        private bool CustomJuiceOn => !LegacyStyle && _customShowcase != null;
+        private bool CustomJuiceOn => _customShowcase != null;
 
         // Called from BuildCustomization after the title (modern style only).
         private void BuildCustomShowcase(Transform col)
@@ -35,7 +35,6 @@ namespace KnightsGauntlet.View
             _customShowcase = _customShowSlot = _customShowRays = _customShowGlowRt = _customTabBar = null;
             _customFx = _customSelector = _customSelectorTarget = _customEquippedGlow = null;
             _customShownId = null;
-            if (LegacyStyle) return;
 
             var go = new GameObject("Showcase", typeof(RectTransform), typeof(LayoutElement));
             go.transform.SetParent(col, false);

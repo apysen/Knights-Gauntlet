@@ -19,12 +19,12 @@ namespace KnightsGauntlet.View
         private const float PopupFlash = 0.14f;  // white flash fading into the color
         private static readonly Color PopupOutline = new Color32(0x14, 0x0E, 0x10, 0xFF);
 
-        // Board-plane popup (coins, legacy 2D captures).
+        // Board-plane popup (coins).
         public void SpawnPopup(int col, float y, string text, Color color)
         {
             if (_board == null) return;
             Vector3 pos = _board.CellToWorld(col, y);
-            if (!_legacy2D) pos = TowardCamera(pos, _board.cellSize * 0.35f);
+            pos = TowardCamera(pos, _board.cellSize * 0.35f);
             Launch(pos, text, color, 1f, 0f);
         }
 
@@ -34,12 +34,6 @@ namespace KnightsGauntlet.View
                                      float scale = 1f, float delay = 0f)
         {
             if (_board == null || sim == null) return;
-            if (_legacy2D)
-            {
-                // Flat board: the old offsets already clear the sprite.
-                Launch(_board.CellToWorld(sim.PlayerCol, sim.PlayerY - 0.42f - line * 0.5f), text, color, scale, delay);
-                return;
-            }
             float cell = _board.cellSize;
             var cam = Camera.main;
             Vector3 up = cam != null ? cam.transform.up : Vector3.up;
@@ -128,8 +122,8 @@ namespace KnightsGauntlet.View
             float cell = _board != null ? _board.cellSize : 1f;
             Vector3 scrollShift = new Vector3(0f, -scroll * cell, 0f); // CellToWorld: y falls as simY grows
             var cam = Camera.main;
-            Vector3 up = cam != null && !_legacy2D ? cam.transform.up : Vector3.up;
-            Vector3 right = cam != null && !_legacy2D ? cam.transform.right : Vector3.right;
+            Vector3 up = cam != null ? cam.transform.up : Vector3.up;
+            Vector3 right = cam != null ? cam.transform.right : Vector3.right;
             for (int i = 0; i < _popups.Count; i++)
             {
                 var it = _popups[i];
@@ -167,7 +161,7 @@ namespace KnightsGauntlet.View
         {
             float wobble = it.lean * Mathf.Cos(t * 18f) * (1f - t);
             var cam = Camera.main;
-            Quaternion face = !_legacy2D && cam != null ? cam.transform.rotation : Quaternion.identity;
+            Quaternion face = cam != null ? cam.transform.rotation : Quaternion.identity;
             it.tmp.transform.rotation = face * Quaternion.Euler(0f, 0f, wobble);
         }
 
@@ -192,13 +186,9 @@ namespace KnightsGauntlet.View
             tmp.rectTransform.sizeDelta = new Vector2(8f, 1f);
             if (_theme != null && _theme.popupFont != null) tmp.font = _theme.popupFont;
             else if (_theme != null && _theme.uiFont != null) tmp.font = _theme.uiFont;
-            // Dark outline so the text reads over gold pieces and bright tiles. SDF fonts
-            // only; the legacy pixel font is a bitmap and has no outline support.
-            if (!_legacy2D)
-            {
-                tmp.outlineWidth = 0.22f;
-                tmp.outlineColor = PopupOutline;
-            }
+            // Dark outline so the text reads over gold pieces and bright tiles.
+            tmp.outlineWidth = 0.22f;
+            tmp.outlineColor = PopupOutline;
             var mr = go.GetComponent<MeshRenderer>();
             if (mr != null) mr.sortingOrder = 20;
             var item = new PopupItem { tmp = tmp };

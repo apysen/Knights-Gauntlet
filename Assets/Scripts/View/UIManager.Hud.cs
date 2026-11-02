@@ -285,7 +285,6 @@ namespace KnightsGauntlet.View
 
         private void UpdateModernHud()
         {
-            _biomeShown = (int)_gm.CurrentBiome;
             bool tutorial = _gm.BoardHudTutorial;
             bool adventure = _advMovesLabel.gameObject.activeSelf;
             bool battle = !adventure && _gm.CurrentMode == GameMode.Battle;

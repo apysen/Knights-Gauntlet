@@ -20,16 +20,11 @@ namespace KnightsGauntlet.View
         public Color cameraBackground = new Color32(0x17, 0x22, 0x28, 255);
         private Color _tileColorA = new Color32(0xF3, 0xE9, 0xD8, 255);
         private Color _tileColorB = new Color32(0xDE, 0xD2, 0xBB, 255);
-        private static readonly Color LegacyTileColorA = new Color32(0x2D, 0x2D, 0x4E, 255);
-        private static readonly Color LegacyTileColorB = new Color32(0x1E, 0x1E, 0x35, 255);
-        private bool _legacy2D, _lastCameraLegacy2D;
-        private GameTheme _theme;
-        private GameObject _modeledTilesRoot, _modeledEnvironmentRoot, _legacyTilesRoot;
+        private GameObject _modeledTilesRoot, _modeledEnvironmentRoot;
 
         private sealed class Tile
         {
             public Transform root;
-            public SpriteRenderer legacyRenderer;
             public readonly GameObject[] variants = new GameObject[3];
             public readonly Renderer[][] renderers = new Renderer[3][];
             public GameObject rail;
@@ -54,7 +49,6 @@ namespace KnightsGauntlet.View
 
         public void Init(GameTheme theme)
         {
-            _theme = theme;
             if (theme != null)
             {
                 _tileColorA = theme.cellColorA;
@@ -62,7 +56,6 @@ namespace KnightsGauntlet.View
             }
             _properties = new MaterialPropertyBlock();
             _sceneryProperties = new MaterialPropertyBlock();
-            _legacy2D = theme != null && !theme.comicStyle;
             _modeledEnvironmentRoot = new GameObject("ModeledEnvironment");
             _modeledEnvironmentRoot.transform.SetParent(transform, false);
             _assets[0] = Resources.Load<GameObject>("Horizon/RollingGrassTile");
@@ -72,31 +65,14 @@ namespace KnightsGauntlet.View
             BuildTiles();
             BuildFrame();
             BuildHorizon();
-            _modeledTilesRoot.SetActive(!_legacy2D);
-            _modeledEnvironmentRoot.SetActive(!_legacy2D);
-            _legacyTilesRoot.SetActive(_legacy2D);
             SyncBackground(0f);
-        }
-
-        public void SetLegacy2D(bool enabled)
-        {
-            if (_legacy2D == enabled) return;
-            _legacy2D = enabled;
-            if (_theme != null)
-            {
-                _tileColorA = _theme.cellColorA;
-                _tileColorB = _theme.cellColorB;
-            }
-            if (_modeledTilesRoot != null) _modeledTilesRoot.SetActive(!enabled);
-            if (_modeledEnvironmentRoot != null) _modeledEnvironmentRoot.SetActive(!enabled);
-            if (_legacyTilesRoot != null) _legacyTilesRoot.SetActive(enabled);
         }
 
         public Vector3 CellToWorld(int col, float simY)
         {
             float x = (col + 0.5f) * cellW - GameConfig.Cols * cellW * 0.5f;
             float y = GameConfig.Rows * 0.5f * cellSize - (simY + 0.5f) * cellSize;
-            return new Vector3(x, y, _legacy2D ? 0f : SurfaceOverlayZ);
+            return new Vector3(x, y, SurfaceOverlayZ);
         }
 
         public (int col, float simY) WorldToCell(Vector3 world)
@@ -112,7 +88,7 @@ namespace KnightsGauntlet.View
             Ray ray = cam.ScreenPointToRay(screenPosition);
             var plane = new Plane(Vector3.forward, new Vector3(0f, 0f, SurfaceOverlayZ));
             Vector3 flat = plane.Raycast(ray, out float distance) ? ray.GetPoint(distance) : Vector3.zero;
-            return _legacy2D ? flat : UnrollPointer(ray, flat);
+            return UnrollPointer(ray, flat);
         }
 
         public Vector3 CellScale(float mult = 1f) => new Vector3(cellW * mult, cellSize * mult, 1f);
@@ -121,32 +97,15 @@ namespace KnightsGauntlet.View
         {
             if (cam == null) return;
             if (Screen.width == _lastCamW && Screen.height == _lastCamH &&
-                Mathf.Approximately(topInsetFrac, _lastInset) && Mathf.Approximately(bottomInsetFrac, _lastBottomInset) &&
-                _lastCameraLegacy2D == _legacy2D) return;
+                Mathf.Approximately(topInsetFrac, _lastInset) && Mathf.Approximately(bottomInsetFrac, _lastBottomInset)) return;
             _lastCamW = Screen.width; _lastCamH = Screen.height;
             _lastInset = topInsetFrac; _lastBottomInset = bottomInsetFrac;
-            _lastCameraLegacy2D = _legacy2D;
             cellW = cellSize;
             // Fit to the play column: on tablets that is a fixed phone shape, so the board
             // keeps its phone proportions and the extra width becomes curtained side bars.
             float aspect = StageCurtains.ColumnAspect((float)Screen.width / Mathf.Max(1, Screen.height));
             float top = Mathf.Clamp(topInsetFrac, 0f, 0.45f);
             float bottom = Mathf.Clamp(bottomInsetFrac, 0f, 0.45f);
-            if (_legacy2D)
-            {
-                float safeHeight = Mathf.Max(0.1f, 1f - top - bottom);
-                float size = GameConfig.Rows * cellSize * .5f / safeHeight;
-                cam.orthographic = true;
-                cam.orthographicSize = size;
-                cellW = 2f * size * aspect / GameConfig.Cols;
-                cam.transform.rotation = Quaternion.identity;
-                cam.transform.position = new Vector3(0f, (top - bottom) * cam.orthographicSize, -10f);
-                cam.clearFlags = CameraClearFlags.SolidColor;
-                cam.backgroundColor = new Color32(0x1A, 0x1A, 0x2E, 255);
-                Shader.SetGlobalVector("_KGBoardClip", Vector4.zero);
-                Shader.SetGlobalVector("_KGBoardRoll", Vector4.zero);
-                return;
-            }
             Shader.SetGlobalVector("_KGBoardClip", new Vector4(GameConfig.Cols * cellW * .5f,
                 GameConfig.Rows * cellSize * .5f, Mathf.Tan(CameraTilt * Mathf.Deg2Rad), 1));
             Shader.SetGlobalVector("_KGBoardRoll", new Vector4(RollStart, RollRadius, RollEnd, 1));
@@ -180,20 +139,12 @@ namespace KnightsGauntlet.View
             _tiles = new Tile[(GameConfig.Rows + 6) * GameConfig.Cols];
             _modeledTilesRoot = new GameObject("ModeledTiles");
             _modeledTilesRoot.transform.SetParent(transform, false);
-            _legacyTilesRoot = new GameObject("Legacy2DTiles");
-            _legacyTilesRoot.transform.SetParent(transform, false);
             for (int row = 0, i = 0; row < GameConfig.Rows + 6; row++)
             for (int col = 0; col < GameConfig.Cols; col++, i++)
             {
                 var tile = new Tile { root = new GameObject("Tile_" + row + "_" + col).transform };
                 tile.root.SetParent(_modeledTilesRoot.transform, false);
                 tile.root.localRotation = HorizonOrientation;
-                var flat = new GameObject("Cell_" + row + "_" + col);
-                flat.transform.SetParent(_legacyTilesRoot.transform, false);
-                tile.legacyRenderer = flat.AddComponent<SpriteRenderer>();
-                tile.legacyRenderer.sprite = UnitSquare();
-                tile.legacyRenderer.sortingOrder = -20;
-                flat.transform.localScale = CellScale();
                 for (int biome = 0; biome < 3; biome++)
                 {
                     GameObject model;
@@ -375,15 +326,7 @@ namespace KnightsGauntlet.View
                 position.z = 0f; // Imported top surface is exactly zero; overlays sit above it.
                 tile.root.position = position;
                 tile.root.localScale = new Vector3(cellW, cellSize, cellSize);
-                var flatPosition = CellToWorld(col, row + fraction);
-                tile.legacyRenderer.gameObject.SetActive(row >= -1);
-                flatPosition.z = 0f;
-                tile.legacyRenderer.transform.position = flatPosition;
-                tile.legacyRenderer.transform.localScale = CellScale();
                 bool alternate = ((baseRow + row + col) & 1) != 0;
-                Color legacyTint = alternate ? LegacyTileColorB : LegacyTileColorA;
-                if (WashStrength > 0.001f) legacyTint = Color.Lerp(legacyTint, WashColor, WashStrength);
-                tile.legacyRenderer.color = legacyTint;
                 if (tile.biome != biome)
                 {
                     if (tile.biome >= 0) tile.variants[tile.biome].SetActive(false);

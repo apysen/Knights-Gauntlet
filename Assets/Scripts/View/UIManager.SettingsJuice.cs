@@ -23,7 +23,7 @@ namespace KnightsGauntlet.View
         private void SetupSettingsJuice(RectTransform content)
         {
             _settingsFx = null; _settingsContent = content; _settingsSliders.Clear();
-            if (LegacyStyle || content == null) return;
+            if (content == null) return;
             var frame = content.parent.parent as RectTransform;   // SettingsSections → Viewport → Frame
             var screen = frame != null ? frame.parent : null;
             if (frame == null || screen == null) return;
@@ -94,7 +94,7 @@ namespace KnightsGauntlet.View
         // From ShowSettings.
         private void SettingsOpened()
         {
-            if (_settingsContent == null || LegacyStyle) return;
+            if (_settingsContent == null) return;
             PopInChildren(_settingsContent, .06f);
             var scroll = _settingsContent.GetComponentInParent<ScrollRect>();
             if (scroll != null) { scroll.velocity = Vector2.zero; scroll.verticalNormalizedPosition = 1f; }
@@ -114,7 +114,7 @@ namespace KnightsGauntlet.View
 
         private void UpdateSettingsJuice()
         {
-            if (_settings == null || !_settings.activeSelf || LegacyStyle || _settingsSliders.Count == 0) return;
+            if (_settings == null || !_settings.activeSelf || _settingsSliders.Count == 0) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             bool reduced = SaveData.IsReducedEffects();
             foreach (var j in _settingsSliders)

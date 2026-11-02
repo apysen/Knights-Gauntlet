@@ -25,7 +25,6 @@ namespace KnightsGauntlet.View
         // Called at the end of BuildHowTo.
         private void SetupHowToJuice(GameObject screen, RectTransform col, Button gotIt)
         {
-            if (LegacyStyle) return;
             AddShopMotes(screen.transform, 16);
 
             var glowGo = new GameObject("ArtGlow", typeof(RectTransform), typeof(Image));
@@ -86,7 +85,7 @@ namespace KnightsGauntlet.View
         // From ShowHowTo / ShowHowToSubset after the first render.
         private void HowToOpened()
         {
-            if (LegacyStyle || _howtoKicker == null) return;
+            if (_howtoKicker == null) return;
             _howtoFlipT = -1f;
             var col = _howtoTitle.transform.parent;
             PopInChildren(col, .06f);
@@ -96,7 +95,7 @@ namespace KnightsGauntlet.View
         // From RenderHowTo: per-page dressing that the plain screen doesn't have.
         private void DressHowToPage(int page)
         {
-            if (LegacyStyle || _howtoKicker == null) return;
+            if (_howtoKicker == null) return;
             _howtoKicker.text = "LESSON " + (_howtoIdx + 1) + " OF " + _howtoPages.Length;
             _howtoBody.text = HighlightKeywords(GameContent.HowTo[page].body);
             EnsureHowToDots(_howtoPages.Length);
@@ -114,7 +113,7 @@ namespace KnightsGauntlet.View
         // Card-flip page turn. Returns true when it took over the turn.
         private bool BeginHowToFlip(int d)
         {
-            if (LegacyStyle || _howtoKicker == null || SaveData.IsReducedEffects()) return false;
+            if (_howtoKicker == null || SaveData.IsReducedEffects()) return false;
             int next = Mathf.Clamp(_howtoIdx + d, 0, _howtoPages.Length - 1);
             if (next == _howtoIdx) { WobbleRow(_howtoArt); return true; }
             _howtoFlipDir = d; _howtoFlipT = 0f; _howtoFlipSwapped = false;
@@ -123,7 +122,7 @@ namespace KnightsGauntlet.View
 
         private void UpdateHowToJuice()
         {
-            if (_howto == null || !_howto.activeSelf || LegacyStyle || _howtoKicker == null) return;
+            if (_howto == null || !_howto.activeSelf || _howtoKicker == null) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _howtoTime += dt;
             bool reduced = SaveData.IsReducedEffects();

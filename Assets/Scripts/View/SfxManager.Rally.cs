@@ -51,7 +51,7 @@ namespace KnightsGauntlet.View
         // One count-up tick. progress is the count's progress 0..1 toward the peak.
         public static void PlayRallyTick(float progress)
         {
-            if (_instance == null || Muted || UIFactory.LegacyStyle) return;
+            if (_instance == null || Muted) return;
             if (_instance._rallyTickSources == null || !_instance._banks.TryGetValue(Sfx.RallyTick, out var bank)) return;
             float p = Mathf.Clamp01(progress);
             int step = Mathf.Min(RallyTickScale.Length - 1, Mathf.FloorToInt(p * RallyTickScale.Length));

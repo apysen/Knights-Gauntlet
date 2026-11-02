@@ -70,7 +70,7 @@ namespace KnightsGauntlet.View
             _ring.type=Image.Type.Filled; _ring.fillMethod=Image.FillMethod.Radial360; _ring.fillOrigin=2; _ring.fillClockwise=true;
             Picture(_icon,"Enamel",UISprites.Circle(),Vector2.zero,new Vector2(42,42),UIFactory.Panel);
             _pieceGlyph=Label(_icon,32,0,40,UIFactory.Gold);
-            _pieceGlyph.gameObject.name="LegacyChessIcon";
+            _pieceGlyph.gameObject.name="ChessIcon";
             _pieceGlyph.font=UIFactory.ChessFont();
             for(int i=0;i<_pips.Length;i++)
                 _pips[i]=Picture(_battle.transform,"CapturePip",UISprites.Circle(),new Vector2(53+i*16,-15),new Vector2(7,7),Dim);

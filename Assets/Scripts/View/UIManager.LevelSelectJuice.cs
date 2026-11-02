@@ -26,7 +26,7 @@ namespace KnightsGauntlet.View
         // Called at the end of BuildLevelSelect.
         private void SetupLevelSelectJuice(Transform screen, TMP_Text title)
         {
-            if (LegacyStyle || screen == null) return;
+            if (screen == null) return;
             AddShopMotes(screen, 16);
 
             if (title != null)
@@ -51,7 +51,7 @@ namespace KnightsGauntlet.View
         // forward, 0 opened the screen.
         private void LevelSelectRendered(int dir, LevelData nextToPlay)
         {
-            if (LegacyStyle || _levelRow == null) return;
+            if (_levelRow == null) return;
             _breathers.RemoveAll(b => b.rt == null);
             _lsStarPops.Clear();
             _lsStarClock = 0f;
@@ -135,14 +135,13 @@ namespace KnightsGauntlet.View
         // Locked tile or locked world: shake it and buzz.
         private void LevelSelectDenied(RectTransform rt)
         {
-            if (LegacyStyle) return;
             WobbleRow(rt);
             Haptics.Play(Haptics.Deny, Haptics.DenyAmp);
         }
 
         private void UpdateLevelSelectJuice()
         {
-            if (_levelSelect == null || !_levelSelect.activeSelf || LegacyStyle) return;
+            if (_levelSelect == null || !_levelSelect.activeSelf) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _lsTime += dt;
             bool reduced = SaveData.IsReducedEffects();

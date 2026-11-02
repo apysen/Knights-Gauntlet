@@ -95,10 +95,10 @@ namespace KnightsGauntlet.View
 
         // Called from GameManager on the frame a shilling is collected. With a handoff,
         // the rising coin is passed on (and hidden here) once its pop has played.
-        // False when no burst plays (2D style or reduced effects).
+        // False when no burst plays (reduced effects).
         public bool PlayCoinCollect(int col, float y, System.Action<Vector3, float, float> handoff = null)
         {
-            if (_legacy2D || SaveData.IsReducedEffects() || _board == null) return false;
+            if (SaveData.IsReducedEffects() || _board == null) return false;
             var burst = GetCoinBurst();
             burst.active = true;
             burst.age = 0f;

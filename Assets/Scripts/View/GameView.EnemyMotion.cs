@@ -53,9 +53,9 @@ namespace KnightsGauntlet.View
             float remaining = 1f - progress;
             motion.current = motion.target + (motion.from - motion.target) * (remaining * remaining);
             // Match the player's quick eased hop and soft landing. Reduced effects
-            // and legacy sprites retain the travel with a flat trajectory.
+            // retain the travel with a flat trajectory.
             motion.lift = motion.fromLift * remaining +
-                (!reduced && !_legacy2D && type != PieceType.Trap
+                (!reduced && type != PieceType.Trap
                     ? Mathf.Sin(progress * Mathf.PI) * 0.24f * _pieceScale * _board.cellSize : 0f);
             Vector3 position = _board.CellToWorld(0, motion.current.y + scroll);
             position.x += motion.current.x * _board.cellW;

@@ -347,7 +347,7 @@ namespace KnightsGauntlet.View
             if (_pixelKnight != null) _pixelKnight.SetActive(false);
             _skinFx = SkinFx.None;
             HideSkinTrail();
-            if (isPlayer && theme.comicStyle && PlayerPrefs.GetInt("kg_pixel_knight_preview", 0) != 0 &&
+            if (isPlayer && PlayerPrefs.GetInt("kg_pixel_knight_preview", 0) != 0 &&
                 (type == PieceType.Knight || type == PieceType.Nightrider))
             {
                 if (_pixelKnight == null)
@@ -371,7 +371,7 @@ namespace KnightsGauntlet.View
             }
 
             // Prefer modeled pieces and compact modeled hazard plaques.
-            if (theme.comicStyle && !forceSprite && ConfigureModel(type, boss, theme.ceramicPiecePrototype, theme.inkPorcelainPieces))
+            if (!forceSprite && ConfigureModel(type, boss, theme.ceramicPiecePrototype, theme.inkPorcelainPieces))
             {
                 var properties = _accentProperties ?? (_accentProperties = new MaterialPropertyBlock());
                 // Shop finishes (Stained Glass, Phantom, ...) retexture the whole piece
@@ -397,25 +397,8 @@ namespace KnightsGauntlet.View
             _modelIsCeramic = false;
             _modelIsPorcelain = false;
 
-            // Translucent backing square behind the piece. Enemies get a uniform faint
-            // cell (NOT their own colour, so the board stays readable); traps are red.
-            // The PLAYER gets NO square. Its "shine" is the radial glow alone.
-            if (backing != null)
-            {
-                if (isPlayer || theme.comicStyle)
-                {
-                    backing.enabled = false;
-                }
-                else
-                {
-                    backing.enabled = true;
-                    if (theme.pieceBackingSprite != null) backing.sprite = theme.pieceBackingSprite;
-                    Color bc = type == PieceType.Trap
-                        ? new Color(0.784f, 0.196f, 0.196f, 0.2f)   // muted red cell (web is .35, but our X reads heavier)
-                        : new Color(0.314f, 0.314f, 0.706f, 0.35f);  // web rgba(80,80,180,.35)
-                    backing.color = bc;
-                }
-            }
+            // No backing square behind pieces in the 3D style.
+            if (backing != null) backing.enabled = false;
 
             if (sprite != null)
             {
@@ -448,9 +431,7 @@ namespace KnightsGauntlet.View
                         // opacity so a field of traps stays translucent like the web.
                         glyphLabel.color = new Color(tint.r, tint.g, tint.b, 1f);
                         glyphLabel.text = "X";
-                        glyphLabel.font = theme.comicStyle ?
-                            (theme.uiFont != null ? theme.uiFont : theme.glyphFont) :
-                            (UIFactory.PixelFont() ?? theme.glyphFont);
+                        glyphLabel.font = theme.uiFont != null ? theme.uiFont : theme.glyphFont;
                         float s = 0.6f;
                         rt.localScale = new Vector3(s, s, 1f);
                         // Center the glyph's ink in the cell regardless of the font's

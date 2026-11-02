@@ -139,7 +139,7 @@ namespace KnightsGauntlet.View
 
         public void ShowTutorial(string caption, bool continueBtn, int step = 0, int total = 1)
         {
-            if (LegacyStyle || _tutorialCard == null)
+            if (_tutorialCard == null)
             {
                 if (_tutCaption != null) _tutCaption.text = caption;
                 if (_tutContinueBtn != null) _tutContinueBtn.SetActive(continueBtn);
@@ -179,7 +179,7 @@ namespace KnightsGauntlet.View
         // From GameManager the moment the player lands on the lesson's target square.
         public void TutorialStepCleared(int step)
         {
-            if (LegacyStyle || _tutFx == null || _tutorialCard == null) return;
+            if (_tutFx == null || _tutorialCard == null) return;
             if (step >= 0 && step < _tutPips.Count)
             {
                 _tutPipPunch[step] = 1f;
@@ -195,7 +195,7 @@ namespace KnightsGauntlet.View
 
         private void UpdateTutorialJuice()
         {
-            if (_tutorial == null || !_tutorial.activeSelf || LegacyStyle || _tutorialCard == null) return;
+            if (_tutorial == null || !_tutorial.activeSelf || _tutorialCard == null) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _tutT += dt; _tutTime += dt;
             UpdateTutorialFocus(dt);
@@ -269,7 +269,7 @@ namespace KnightsGauntlet.View
         public void TutorialFocusHud(HudFocus kind, Vector2 pieceScreen)
         {
             EndTutorialFocus();
-            if (kind == HudFocus.None || LegacyStyle || _tutorial == null || _tutFx == null
+            if (kind == HudFocus.None || _tutorial == null || _tutFx == null
                 || _battleForm == null || !_battleForm.gameObject.activeInHierarchy) return;
             _focusKind = kind; _focusOn = true; _focusRefilled = false;
             _focusT = SaveData.IsReducedEffects() ? FocusDelay + FocusIn : 0f;

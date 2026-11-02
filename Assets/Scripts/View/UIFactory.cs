@@ -17,18 +17,13 @@ namespace KnightsGauntlet.View
         // Shared size adjustment for the display and body typefaces.
         public const float FontScale = 1.12f;
 
-        // "Pixel Font by Thaleah": a TMP font asset built once at runtime from the
-        // bundled TTF (there is no pre-baked .asset for it). Shared by every screen.
-        private static TMP_FontAsset _pixelFont;
-        private static bool _pixelFontTried;
-
-        public static Color Gold => LegacyStyle ? new Color32(0xF0,0xC0,0x40,255) : new Color32(0xDD,0xBA,0x68,255);
-        public static Color Bg => LegacyStyle ? new Color32(0x1A,0x1A,0x2E,255) : new Color32(0x08,0x0E,0x1D,255);
-        public static Color Panel => LegacyStyle ? new Color32(0x16,0x21,0x3E,255) : new Color32(0x14,0x27,0x46,255);
-        public static Color Muted => LegacyStyle ? new Color32(0x90,0x98,0xAD,255) : new Color32(0xA9,0xB5,0xCC,255);
-        public static Color Text => LegacyStyle ? new Color32(0xEE,0xEE,0xEE,255) : new Color32(0xF6,0xED,0xD6,255);
+        public static readonly Color Gold = new Color32(0xDD,0xBA,0x68,255);
+        public static readonly Color Bg = new Color32(0x08,0x0E,0x1D,255);
+        public static readonly Color Panel = new Color32(0x14,0x27,0x46,255);
+        public static readonly Color Muted = new Color32(0xA9,0xB5,0xCC,255);
+        public static readonly Color Text = new Color32(0xF6,0xED,0xD6,255);
         public static readonly Color Amber = Hex("#FFB454");
-        public static Color Error => LegacyStyle ? new Color32(0xE0,0x50,0x50,255) : new Color32(0xB5,0x53,0x49,255);
+        public static readonly Color Error = new Color32(0xB5,0x53,0x49,255);
         private static TMP_FontAsset _comicFont, _bodyFont;
         public static TMP_FontAsset ComicFont() => _comicFont != null ? _comicFont :
             (_comicFont = Resources.Load<TMP_FontAsset>("Fonts & Materials/Bangers SDF") ?? TMP_Settings.defaultFontAsset);
@@ -46,33 +41,15 @@ namespace KnightsGauntlet.View
 
         // Sprite resolvers: use the theme's custom art if provided, else the
         // procedurally generated default. Everything visual is overridable.
-        public Sprite Fill() => PanelSprite != null ? PanelSprite : LegacyStyle ? UISprites.RoundedFill() : UISprites.RoyalPanel();
-        public Sprite Border() => BorderSprite != null ? BorderSprite : LegacyStyle ? UISprites.PixelBorder() : UISprites.RoyalPanel(true);
+        public Sprite Fill() => PanelSprite != null ? PanelSprite : UISprites.RoyalPanel();
+        public Sprite Border() => BorderSprite != null ? BorderSprite : UISprites.RoyalPanel(true);
         public Sprite Circle() => CircleSprite != null ? CircleSprite : UISprites.Circle();
 
         // Theme override or an antialiased outlined panel.
-        public Sprite ButtonBg()
-        {
-            if (LegacyStyle) return LegacyButtonBg();
-            return ButtonSprite != null ? ButtonSprite : Fill();
-        }
-
-        // The Thaleah pixel TMP font, generated on first use from the bundled TTF in
-        // Resources. Returns null if the TTF is missing, so callers keep the TMP
-        // default. Chess-glyph text keeps its own (DejaVu) font and isn't in here.
-        public static TMP_FontAsset PixelFont()
-        {
-            if (!_pixelFontTried)
-            {
-                _pixelFontTried = true;
-                var ttf = Resources.Load<Font>("Fonts/ThaleahFat_TTF");
-                if (ttf != null) _pixelFont = TMP_FontAsset.CreateFontAsset(ttf);
-            }
-            return _pixelFont;
-        }
+        public Sprite ButtonBg() => ButtonSprite != null ? ButtonSprite : Fill();
 
         // Explicit theme font or the bundled display face.
-        public TMP_FontAsset ResolveFont() => Font != null ? Font : LegacyStyle ? PixelFont() : ComicFont();
+        public TMP_FontAsset ResolveFont() => Font != null ? Font : ComicFont();
 
         // Smooth chess glyphs for small UI symbols and missing custom sprites.
         private static TMP_FontAsset _chessFont;
@@ -138,7 +115,7 @@ namespace KnightsGauntlet.View
             v.childControlWidth = true; v.childControlHeight = true;
             v.childForceExpandWidth = false; v.childForceExpandHeight = false;
             AddFitter(go);
-            if (!LegacyStyle && parent.name == "Screen" && parent.parent != null &&
+            if (parent.name == "Screen" && parent.parent != null &&
                 parent.parent.GetComponent<Canvas>() != null && parent.parent.name != "Trapped")
                 go.AddComponent<UIScreenFit>();
             return rt;
@@ -160,7 +137,7 @@ namespace KnightsGauntlet.View
         {
             var go = NewUI("Label", parent);
             var t = go.AddComponent<TextMeshProUGUI>();
-            var font = LegacyStyle ? ResolveFont() : size < 28f ? BodyFont() : ResolveFont();
+            var font = size < 28f ? BodyFont() : ResolveFont();
             if (font) t.font = font;
             t.text = text; t.fontSize = size * FontScale; t.color = color; t.fontStyle = style;
             t.alignment = TextAlignmentOptions.Center;
@@ -170,7 +147,7 @@ namespace KnightsGauntlet.View
             return t;
         }
 
-        // The legacy pixel argument selects the themed button sprite; false uses
+        // The pixel argument selects the themed button sprite; false uses
         // the plain panel for compact icon and customization cells.
         // clickSfx: the sound played when the button is pressed. Defaults to the UI
         // "click" (Cursor 1) so every button is audible; pass a different Sfx for
@@ -181,7 +158,6 @@ namespace KnightsGauntlet.View
                              bool outline = false, bool pixel = true,
                              Sfx? clickSfx = Sfx.TabSelect)
         {
-            if (LegacyStyle) return LegacyButton(parent, text, onClick, fill, textColor, width, height, fontSize, outline, pixel, clickSfx);
             var go = NewUI("Button", parent);
             var img = go.AddComponent<Image>();
             img.sprite = pixel ? ButtonBg() : Fill(); img.type = Image.Type.Sliced;
@@ -240,7 +216,6 @@ namespace KnightsGauntlet.View
         public UnityEngine.UI.Slider Slider(Transform parent, float value, Action<float> onChange,
                              float width = 300f, float height = 36f)
         {
-            if (LegacyStyle) return LegacySlider(parent, value, onChange, width, height);
             float hw = height * 0.75f;
             float trackH = 6f;
 

@@ -28,7 +28,6 @@ namespace KnightsGauntlet.Editor
             try
             {
                 theme = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameTheme>("Assets/GameTheme.asset"));
-                theme.comicStyle = true;
                 theme.inkPorcelainPieces = true;
                 var camera = new GameObject("PorcelainReviewCamera").AddComponent<Camera>();
                 camera.clearFlags = CameraClearFlags.SolidColor;

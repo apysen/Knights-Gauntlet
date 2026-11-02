@@ -11,7 +11,6 @@ namespace KnightsGauntlet.View
         {
             if (button == null) return;
             UIFactory.StyleToggle(button, on);
-            if (LegacyStyle) return;
             var label = button.GetComponentInChildren<TMP_Text>();
             label.text = title;
             label.alignment = TextAlignmentOptions.Left;
@@ -72,9 +71,6 @@ namespace KnightsGauntlet.View
             _ui.Slider(audio, SfxManager.SfxVolume / SfxManager.MaxSfxVolume,
                 value => SfxManager.SfxVolume = value * SfxManager.MaxSfxVolume, 300, 28);
             var display = SettingsSection(content, "Display & comfort");
-            _legacySettingsToggle = SettingAction(display, "", () => _gm.ToggleLegacy2D());
-            _legacySettingsToggle.name = "LegacyModeToggle";
-            RefreshLegacyViewToggle();
             _cbToggle = SettingAction(display, "Colorblind Mode", ToggleColorblind);
             _cbToggleLabel = _cbToggle.GetComponentInChildren<TMP_Text>();
             _shakeToggle = SettingAction(display, "Screen Shake", ToggleScreenShake);

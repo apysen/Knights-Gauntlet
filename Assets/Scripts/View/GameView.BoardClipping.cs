@@ -6,19 +6,17 @@ namespace KnightsGauntlet.View
     public partial class GameView
     {
         private Material _boardSpriteMaterial;
-        private readonly Dictionary<SpriteRenderer, Material> _boardSpriteDefaults = new Dictionary<SpriteRenderer, Material>();
 
         private void ClipBoardSprite(SpriteRenderer sprite)
         {
             sprite.localBounds = new Bounds(Vector3.zero, Vector3.one * 40f);
-            if (!_boardSpriteDefaults.ContainsKey(sprite)) _boardSpriteDefaults.Add(sprite, sprite.sharedMaterial);
             if (_boardSpriteMaterial == null)
             {
                 var shader = Resources.Load<Shader>("BoardClipSprite");
                 if (shader == null) return;
                 _boardSpriteMaterial = new Material(shader) { name = "Board edge mask" };
             }
-            sprite.sharedMaterial = _legacy2D ? _boardSpriteDefaults[sprite] : _boardSpriteMaterial;
+            sprite.sharedMaterial = _boardSpriteMaterial;
         }
 
         // Tile overlays (threats, hints, best-move and path markers) ride the rolling
@@ -67,12 +65,6 @@ namespace KnightsGauntlet.View
             }
             BendableSprites[source] = bent;
             return bent;
-        }
-
-        private void RefreshBoardSpriteClipping()
-        {
-            foreach (var pair in _boardSpriteDefaults)
-                if (pair.Key != null) pair.Key.sharedMaterial = _legacy2D ? pair.Value : _boardSpriteMaterial;
         }
 
         private void DisposeBoardSpriteMaterial()

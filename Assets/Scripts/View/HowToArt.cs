@@ -13,8 +13,6 @@ namespace KnightsGauntlet.View
         private readonly UIFactory _ui;
         private readonly GameTheme _theme;
 
-        private static readonly Color CellA = UIFactory.Hex("#1C2A4C");
-        private static readonly Color CellB = UIFactory.Hex("#15203A");
         private static readonly Color Gold = UIFactory.Hex("#F0C040");
         private static readonly Color Blue = UIFactory.Hex("#4080E0");
         private static readonly Color Violet = UIFactory.Hex("#9060E0");
@@ -25,9 +23,8 @@ namespace KnightsGauntlet.View
         private static readonly Color GreenTxt = UIFactory.Hex("#3CDC78");
         private static readonly Color Frost = UIFactory.Hex("#8FE0FF");
 
-        // Modern look: the in-game board. Green grass tiles on dark grout inside a slate
+        // The in-game board look. Green grass tiles on dark grout inside a slate
         // rim with a gold edge, gold target squares, and the real 3D pieces and trap token.
-        private static bool Modern => !UIFactory.LegacyStyle;
         private static readonly Color TileLight = UIFactory.Hex("#5B8661");
         private static readonly Color TileDark = UIFactory.Hex("#497350");
         private static readonly Color Grout = UIFactory.Hex("#1D2E40");
@@ -137,25 +134,7 @@ namespace KnightsGauntlet.View
 
         private RectTransform Grid(Transform parent, int cols, int rows, float c, out RectTransform[,] cells)
         {
-            if (Modern) return BoardGrid(parent, cols, rows, c * 1.15f, out cells);
-            var go = New("grid", parent);
-            var rt = go.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(cols * c, rows * c);
-            var le = go.AddComponent<LayoutElement>();
-            le.preferredWidth = cols * c; le.preferredHeight = rows * c;
-            cells = new RectTransform[cols, rows];
-            for (int y = 0; y < rows; y++)
-                for (int x = 0; x < cols; x++)
-                {
-                    var cell = New("cell", go.transform);
-                    var crt = cell.GetComponent<RectTransform>();
-                    crt.anchorMin = crt.anchorMax = new Vector2(0, 1); crt.pivot = new Vector2(0, 1);
-                    crt.sizeDelta = new Vector2(c, c);
-                    crt.anchoredPosition = new Vector2(x * c, -y * c);
-                    cell.AddComponent<Image>().color = ((x + y) % 2 == 0) ? CellA : CellB;
-                    cells[x, y] = crt;
-                }
-            return rt;
+            return BoardGrid(parent, cols, rows, c * 1.15f, out cells);
         }
 
         private RectTransform HRow(Transform parent, float spacing)
@@ -180,30 +159,24 @@ namespace KnightsGauntlet.View
             var le = go.AddComponent<LayoutElement>();
             le.preferredWidth = size; le.preferredHeight = size;
             var img = go.AddComponent<Image>();
-            if (Modern)
-            {
-                // A single board tile on its grout, like a square lifted off the board.
-                img.color = Grout;
-                var tile = New("tile", go.transform);
-                var trt = tile.GetComponent<RectTransform>(); UIFactory.Stretch(trt);
-                trt.offsetMin = new Vector2(2f, 2f); trt.offsetMax = new Vector2(-2f, -2f);
-                tile.AddComponent<Image>().color = TileLight;
-                Shine(trt);
-                return rt;
-            }
-            img.sprite = _ui.Fill(); img.type = Image.Type.Sliced; img.color = CellA;
+            // A single board tile on its grout, like a square lifted off the board.
+            img.color = Grout;
+            var tile = New("tile", go.transform);
+            var trt = tile.GetComponent<RectTransform>(); UIFactory.Stretch(trt);
+            trt.offsetMin = new Vector2(2f, 2f); trt.offsetMax = new Vector2(-2f, -2f);
+            tile.AddComponent<Image>().color = TileLight;
+            Shine(trt);
             return rt;
         }
 
         private void Put(RectTransform cell, string glyph, Color color, float size, bool player = false)
         {
-            if (Modern && PutModel(cell, glyph, color, player)) return;
+            if (PutModel(cell, glyph, color, player)) return;
             var go = New("g", cell);
             UIFactory.Stretch(go.GetComponent<RectTransform>());
             var t = go.AddComponent<TextMeshProUGUI>();
             if (Glyphs) t.font = Glyphs; else if (_ui.Font) t.font = _ui.Font;
-            // Chess-piece glyphs (U+2654–265F) read a touch small at the pixel font's
-            // proportions, so nudge them up slightly on the how-to diagrams.
+            // Chess-piece glyphs (U+2654–265F) read a touch small, so nudge them up slightly.
             bool isPiece = glyph.Length > 0 && glyph[0] >= '♔' && glyph[0] <= '♟';
             t.text = glyph; t.color = color; t.fontSize = isPiece ? size * 1.2f : size;
             t.alignment = TextAlignmentOptions.Center; t.raycastTarget = false;
@@ -211,25 +184,12 @@ namespace KnightsGauntlet.View
 
         private void Hi(RectTransform cell)
         {
-            if (Modern) { Target(cell); return; }
-            var go = New("hi", cell);
-            UIFactory.Stretch(go.GetComponent<RectTransform>());
-            go.AddComponent<Image>().color = new Color(0.94f, 0.75f, 0.25f, 0.22f);
-            var dot = New("dot", cell);
-            var drt = dot.GetComponent<RectTransform>();
-            drt.anchorMin = drt.anchorMax = new Vector2(0.5f, 0.5f); drt.pivot = new Vector2(0.5f, 0.5f);
-            drt.sizeDelta = new Vector2(7, 7); drt.anchoredPosition = Vector2.zero;
-            var di = dot.AddComponent<Image>();
-            di.sprite = _ui.Circle(); di.color = new Color(0.94f, 0.75f, 0.25f, 0.9f);
+            Target(cell);
         }
 
         private void HiBorder(RectTransform cell)
         {
-            if (Modern) { Frame(cell, TargetRing, 3f, 2f); return; }
-            var go = New("border", cell);
-            UIFactory.Stretch(go.GetComponent<RectTransform>());
-            var img = go.AddComponent<Image>();
-            img.sprite = _ui.Border(); img.type = Image.Type.Sliced; img.color = Gold;
+            Frame(cell, TargetRing, 3f, 2f);
         }
 
         private void Bar(Transform parent, float w, float h, float fill, Color color)
@@ -273,11 +233,11 @@ namespace KnightsGauntlet.View
         {
             var t = New("cap", parent).AddComponent<TextMeshProUGUI>();
             if (_ui.Font) t.font = _ui.Font;
-            t.text = text; t.color = Modern && color == Cap ? CapLight : color; t.fontSize = Modern ? size * 1.15f : size;
+            t.text = text; t.color = color == Cap ? CapLight : color; t.fontSize = size * 1.15f;
             t.alignment = TextAlignmentOptions.Center; t.textWrappingMode = TextWrappingModes.NoWrap; t.raycastTarget = false;
         }
 
-        // ── Modern (in-game board) pieces ───────────────────────────────────────
+        // ── In-game board pieces ───────────────────────────────────────
         private RectTransform BoardGrid(Transform parent, int cols, int rows, float c, out RectTransform[,] cells)
         {
             const float pad = 5f, gap = 2f;

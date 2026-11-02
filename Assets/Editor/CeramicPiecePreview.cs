@@ -48,7 +48,6 @@ namespace KnightsGauntlet.Editor
             try
             {
                 current = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameTheme>("Assets/GameTheme.asset"));
-                current.comicStyle = true;
                 current.inkPorcelainPieces = false;
                 current.ceramicPiecePrototype = false;
                 ceramic = UnityEngine.Object.Instantiate(current);

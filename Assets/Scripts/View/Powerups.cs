@@ -77,16 +77,12 @@ namespace KnightsGauntlet.View
             new System.Collections.Generic.Dictionary<string, Sprite>();
         public static Sprite IconOf(string key)
         {
-            string cacheKey = (UIFactory.LegacyStyle ? "legacy:" : "modern:") + key;
             // Domain reload is off (Enter Play Mode Options), so this static cache outlives Play
             // sessions while the runtime-made sprites in it are destroyed on exit: rebuild those.
-            if (_icons.TryGetValue(cacheKey, out var s) && s != null) return s;
+            if (_icons.TryGetValue(key, out var s) && s != null) return s;
             string royal = key == "chronokinesis" ? "time" : key == "divine_path" ? "path" : key == "war_horn" ? "horn" : key == "berserker" ? "potion" : "shield";
-            s = UIFactory.LegacyStyle ? Resources.Load<Sprite>("LegacyUI/" +
-                (key == "chronokinesis" ? "Chronokinesis" : key == "divine_path" ? "Pathfinder" : key == "war_horn" ? "War Horn" : key == "berserker" ? "Berserker" : "Holy Cross")) : null;
-            // No legacy pixel icon yet (the War Horn): fall back to the line icon.
-            if (s == null) s = RoyalIcons.Get(royal);
-            _icons[cacheKey] = s;
+            s = RoyalIcons.Get(royal);
+            _icons[key] = s;
             return s;
         }
     }

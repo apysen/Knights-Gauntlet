@@ -61,12 +61,12 @@ namespace KnightsGauntlet.View
         {
             bool marketOn = _market != null && _market.activeSelf;
             bool treasuryOn = _shillingsShop != null && _shillingsShop.activeSelf;
-            bool menuOn = _menu != null && _menu.activeSelf && !LegacyStyle;
-            bool runOn = _runOptions != null && _runOptions.activeSelf && !LegacyStyle;
-            bool customOn = _custom != null && _custom.activeSelf && !LegacyStyle;
-            bool settingsOn = _settings != null && _settings.activeSelf && !LegacyStyle;
-            bool levelsOn = _levelSelect != null && _levelSelect.activeSelf && !LegacyStyle;
-            bool lessonOn = !LegacyStyle && ((_tutorial != null && _tutorial.activeSelf) || (_howto != null && _howto.activeSelf)
+            bool menuOn = _menu != null && _menu.activeSelf;
+            bool runOn = _runOptions != null && _runOptions.activeSelf;
+            bool customOn = _custom != null && _custom.activeSelf;
+            bool settingsOn = _settings != null && _settings.activeSelf;
+            bool levelsOn = _levelSelect != null && _levelSelect.activeSelf;
+            bool lessonOn = ((_tutorial != null && _tutorial.activeSelf) || (_howto != null && _howto.activeSelf)
                 || (_trapped != null && _trapped.activeSelf));
             if (!marketOn && !treasuryOn && !menuOn && !runOn && !customOn && !settingsOn && !levelsOn && !lessonOn) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
@@ -200,7 +200,6 @@ namespace KnightsGauntlet.View
             le.preferredWidth = le.minWidth = le.preferredHeight = le.minHeight = size;
             ((RectTransform)go.transform).sizeDelta = new Vector2(size, size);
             var img = go.GetComponent<RawImage>(); img.raycastTarget = false;
-            if (LegacyStyle) { img.texture = UISprites.Circle().texture; img.color = UIFactory.Gold; return img; }
             var coin = go.AddComponent<SpinningCoinIcon>();
             if (swing) coin.EnableSwing();
             return img;
@@ -214,7 +213,7 @@ namespace KnightsGauntlet.View
             ((RectTransform)go.transform).sizeDelta = new Vector2(size, size);
             var img = go.GetComponent<RawImage>(); img.raycastTarget = false;
             img.texture = tex != null ? tex : UISprites.Circle().texture;
-            if (tex == null || LegacyStyle) img.color = UIFactory.Gold;
+            if (tex == null) img.color = UIFactory.Gold;
             return img;
         }
 
@@ -501,7 +500,7 @@ namespace KnightsGauntlet.View
                 var go = new GameObject("Stamp", typeof(RectTransform), typeof(TextMeshProUGUI));
                 go.transform.SetParent(layer, false);
                 var t = go.GetComponent<TextMeshProUGUI>();
-                t.font = LegacyStyle ? UIFactory.PixelFont() : UIFactory.ComicFont();
+                t.font = UIFactory.ComicFont();
                 t.alignment = TextAlignmentOptions.Center; t.textWrappingMode = TextWrappingModes.NoWrap;
                 t.raycastTarget = false; t.outlineWidth = .2f; t.outlineColor = new Color32(0x1A, 0x0E, 0x04, 0xFF);
                 t.rectTransform.sizeDelta = new Vector2(420f, 80f);

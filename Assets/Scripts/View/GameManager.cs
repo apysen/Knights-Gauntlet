@@ -29,8 +29,6 @@ namespace KnightsGauntlet.View
         public int RallyShown => _view != null ? _view.RallyShown : 1;
         public int TransformationCaptures => _sim != null ? _sim.CaptureChain : 0;
         public float TransformationSeconds => _sim != null ? _sim.TransformRemaining : 0f;
-        public bool Legacy2DActive => _legacy2D;
-        private bool _legacy2D;
         private float _trapBestSeconds;
         public float TrapBestSeconds => _trapBestSeconds;
         public string BoardObjective => _state == State.Tutorial ? "MASTER THE KNIGHT'S LEAP" :
@@ -164,8 +162,7 @@ namespace KnightsGauntlet.View
 
             // The assigned theme is a runtime copy: presentation setup never alters the asset.
             theme = Instantiate(theme);
-            _modernTheme = Instantiate(theme);
-            _legacy2D = PlayerPrefs.GetInt("kg_legacy_2d", 0) != 0;
+            PlayerPrefs.DeleteKey("kg_legacy_2d"); // retired setting
             ApplyPresentationTheme();
 
             if (cam == null) cam = Camera.main;
@@ -191,7 +188,7 @@ namespace KnightsGauntlet.View
             var sfxGo = new GameObject("Sfx"); sfxGo.transform.SetParent(transform, false);
             sfxGo.AddComponent<SfxManager>();
 
-            _sim = new GameSimulation { IncomingRowLead = _legacy2D ? 0f : 3f };
+            _sim = new GameSimulation { IncomingRowLead = 3f };
             _sim.OnFormChanged += form =>
             {
                 // Visual only. The transform sting loop is driven by the transformed-state
@@ -274,25 +271,6 @@ namespace KnightsGauntlet.View
         private Color BurstColor(PieceType type) => theme != null ? theme.GetPiece(type).tint : Color.white;
 
         // ── Public API (called by UIManager) ─────────────────────────────────
-        public void ToggleLegacy2D()
-        {
-            _legacy2D = !_legacy2D;
-            PlayerPrefs.SetInt("kg_legacy_2d", _legacy2D ? 1 : 0);
-            PlayerPrefs.Save();
-            ApplyPresentationTheme();
-            if (_sim != null) _sim.IncomingRowLead = _legacy2D ? 0f : 3f;
-            _board?.SetLegacy2D(_legacy2D);
-            if (_view != null)
-            {
-                _view.SetLegacy2D(_legacy2D);
-                if (_sim != null) _view.SetPlayerForm(_sim.PlayerForm, CurrentSkin());
-            }
-            _ui?.RebuildPresentation();
-            _lbScreen?.RebuildPresentation(theme);
-            if (_board != null && _ui != null)
-                _board.FitCamera(cam, _ui.HudTopInsetFrac(), _ui.HudBottomInsetFrac());
-        }
-
         public void StartGame(GameMode mode, Difficulty difficulty)
         {
             BoardHudRun++;
@@ -1258,13 +1236,9 @@ namespace KnightsGauntlet.View
             _sim.TutorialEnd(); _sim.Adventure = false;
             _view.ClearCoachMark();
             _ui.SetAdventureHud(false, 0, "", -1); _ui.SetBossHud(false, 0, 0, false);
-            if (theme.comicStyle)
-            {
-                _state = State.AdventureDeathBeat;
-                _view.PlayComicDefeat(_sim);
-                _deathRevealRemaining = SaveData.IsReducedEffects() ? 0.08f : 0.18f;
-            }
-            else { _state = State.Menu; _ui.ShowAdventureFail(_advLevel); }
+            _state = State.AdventureDeathBeat;
+            _view.PlayComicDefeat(_sim);
+            _deathRevealRemaining = SaveData.IsReducedEffects() ? 0.08f : 0.18f;
         }
 
         public void RetryAdventure() { if (_advLevel != null) StartAdventureLevel(_advLevel); }
@@ -1393,8 +1367,8 @@ namespace KnightsGauntlet.View
             if (_state == State.Playing || _state == State.Adventure || _state == State.Tutorial)
                 SfxManager.SetMusicBiome((int)CurrentBiome);
 
-            // The transformation sound starts when the player transforms (3D style: a whoosh,
-            // then the hum loop; legacy: the old sting, once) and is cut short (the hum fades)
+            // The transformation sound starts when the player transforms (a whoosh, then
+            // the hum loop) and is cut short (the hum fades)
             // once they stop being transformed and actively playing. In battle the form is
             // timed (TransformActive); in adventure it's a permanent puzzle form held until the
             // level ends (PlayerForm != Knight). Gating on the play state stops it on the timer
@@ -1406,8 +1380,7 @@ namespace KnightsGauntlet.View
                 (_state == State.Adventure && _sim.PlayerForm != PieceType.Knight);
             if (transformedNow != _transformLooping)
             {
-                if (transformedNow && UIFactory.LegacyStyle) SfxManager.PlayLoop(Sfx.Transformation, loop: false);
-                else if (transformedNow)
+                if (transformedNow)
                 {
                     SfxManager.Play(Sfx.Transformation);
                     SfxManager.PlayLoop(Sfx.TransformHum);
@@ -1491,8 +1464,8 @@ namespace KnightsGauntlet.View
                     int popupLine = 0; // multi-captures stack their popups instead of overlapping
                     foreach (var cap in result.Captures)
                     {
-                        int impactCol = _legacy2D ? cap.Col : _sim.PlayerCol;
-                        float impactY = _legacy2D ? cap.Y : _sim.PlayerY;
+                        int impactCol = _sim.PlayerCol;
+                        float impactY = _sim.PlayerY;
                         _view.PlayComicCapture(_sim, cap.NewMultiplier);
                         _view.SpawnCaptureVoxelBurst(impactCol, impactY, BurstColor(cap.Type), cap.NewMultiplier);
                         // Both lines float above the piece's head: the combo just over it,
@@ -1539,12 +1512,8 @@ namespace KnightsGauntlet.View
             _state = State.Dead;
             SfxManager.StopMusic(0.8f); // the loop fades under the falling phrase
             SfxManager.PlayGameOverSting();
-            if (theme.comicStyle)
-            {
-                _view.PlayComicDefeat(_sim);
-                _deathRevealRemaining = SaveData.IsReducedEffects() ? 0.08f : 0.18f;
-            }
-            else ShowRunResult();
+            _view.PlayComicDefeat(_sim);
+            _deathRevealRemaining = SaveData.IsReducedEffects() ? 0.08f : 0.18f;
         }
 
         private void ShowRunResult()

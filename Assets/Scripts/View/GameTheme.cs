@@ -41,7 +41,6 @@ namespace KnightsGauntlet.View
         }
 
         [Header("Art direction")]
-        public bool comicStyle = true;
         [Tooltip("Art exploration: use the separate matte ceramic knight, rook and bishop models in 3D mode.")]
         public bool ceramicPiecePrototype;
         [Tooltip("Use the complete ink-painted porcelain chess set in 3D mode.")]
@@ -113,7 +112,6 @@ namespace KnightsGauntlet.View
 
             if (found && v.sprite != null) return v;
             v.type = type;
-            if (comicStyle)
             {
                 v.sprite = ComicArt.Piece(type, boss: boss);
                 v.attackSprite = ComicArt.Piece(type, ComicPose.Attack, boss: boss);
@@ -125,7 +123,6 @@ namespace KnightsGauntlet.View
                 v.comicPalette = !v.paintedColors && v.sprite != null;
                 v.tint = boss && type == PieceType.Queen ? UIFactory.Hex("#CF1819") : ComicArt.ColorOf(type);
             }
-            else if (!found) ColorUtility.TryParseHtmlString(GameConfig.PieceColorHex(type), out v.tint);
             return v;
         }
 

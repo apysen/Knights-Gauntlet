@@ -28,12 +28,11 @@ namespace KnightsGauntlet.View
         private float _trapT = 999f;
         private bool _trapSlammed;
 
-        private static Color TrapPathBright => UIFactory.LegacyStyle ? new Color(.45f, 1f, .62f, .9f) : new Color(1f, .86f, .42f, 1f);
+        private static Color TrapPathBright => new Color(1f, .86f, .42f, 1f);
 
         // Called at the end of BuildTrapped.
         private void SetupTrappedJuice(GameObject screen, RectTransform col, TMP_Text legend, Button back)
         {
-            if (LegacyStyle) return;
             AddShopMotes(screen.transform, 14);
             back.gameObject.AddComponent<PressSquash>();
 
@@ -101,7 +100,6 @@ namespace KnightsGauntlet.View
         // From ShowTrapped, after Populate and FitTrapped.
         private void TrappedOpened()
         {
-            if (LegacyStyle) return;
             bool reduced = SaveData.IsReducedEffects();
             _trapT = reduced ? 999f : 0f;
             _trapSlammed = reduced;
@@ -110,7 +108,7 @@ namespace KnightsGauntlet.View
 
         private void UpdateTrappedJuice()
         {
-            if (_trapped == null || !_trapped.activeSelf || LegacyStyle) return;
+            if (_trapped == null || !_trapped.activeSelf) return;
             ApplyTrappedReveal(Mathf.Min(Time.unscaledDeltaTime, .05f));
         }
 
@@ -172,7 +170,7 @@ namespace KnightsGauntlet.View
                 if (p.cell == null) continue;
                 float k = Mathf.Clamp01((t - p0 - i * .12f) / .24f);
                 var c = PathCell; c.a *= k; p.cell.color = c;
-                if (!LegacyStyle) p.cell.rectTransform.localScale = Vector3.one * Mathf.Max(0f, Mathf.LerpUnclamped(.2f, 1f, EaseOutBackUI(k))) * (k > 0f ? 1f : 0f);
+                p.cell.rectTransform.localScale = Vector3.one * Mathf.Max(0f, Mathf.LerpUnclamped(.2f, 1f, EaseOutBackUI(k))) * (k > 0f ? 1f : 0f);
                 p.glyph.rectTransform.localScale = Vector3.one * Mathf.Max(0f, Mathf.LerpUnclamped(0f, 1f, EaseOutBackUI(k)));
                 if (!p.popped && k > 0f)
                 {

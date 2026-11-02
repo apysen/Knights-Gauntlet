@@ -13,22 +13,16 @@ namespace KnightsGauntlet.View
         private GameTheme _theme;
         private float _pieceScale = 0.9f, _enemyRotation = 180f, _playerRotation;
         private BoardView _board;
-        private bool _legacy2D;
         private Transform _piecesRoot, _hintsRoot;
 
         private readonly List<PieceView> _piecePool = new List<PieceView>();
         private readonly List<HintCell> _hintPool = new List<HintCell>();
         private readonly List<ThreatCell> _threatPool = new List<ThreatCell>();
-        private readonly List<SpriteRenderer> _pickupPool = new List<SpriteRenderer>();
         private readonly List<Transform> _crackedPool = new List<Transform>();
         private GameObject _crackedAsset;
 
-        // Animated silver-coin pickup (Trap mode). Frames load once from Resources;
-        // all coins share one clock so they spin in sync.
-        private Sprite[] _coinFrames;
-        private float _coinUnitH = 0.32f; // world height of a coin frame, for scaling
+        // Shared clock for the 3D shilling pickups, so they spin in sync.
         private float _coinAnimT;
-        private const float CoinFps = 10f;
         private readonly List<PopupItem> _popups = new List<PopupItem>();
         private readonly List<Particle> _particles = new List<Particle>();
         private Transform _particlesRoot;
@@ -54,28 +48,14 @@ namespace KnightsGauntlet.View
         private bool _colorblind;
         private SpriteRenderer _coachFill, _coachRing;
         private SpriteRenderer _bestMoveFill, _bestMoveBorder; // Divine Intervention green marker
-        private SpriteRenderer _queenShield;   // bubble over the shielded boss queen
-        private Sprite[] _bubbleFrames;        // bubble_sheet frames (0..19)
         private bool _shieldWasUp;             // for detecting the shield-drop (pop) trigger
         private bool _popping;                 // shield-drop pop animation in progress
         private float _popTimer;               // seconds into the pop animation
 
-        // ── Boss queen bubble tuning ─────────────────────────────────────────
-        // Change these to tweak the bubble. BubbleSize is the on-board size (multiple of a
-        // board cell); raise it for a bigger bubble, lower it for a smaller one.
-        private const float BubbleSize = 1f;          // bubble size, in board cells
-        private const int BubbleShieldFrame = 13;     // steady (shielded) bubble frame
-        private const int BubblePopStart = 14;        // pop animation: frames 14..19
-        private const int BubblePopEnd = 19;
-        private const float BubblePopDuration = 0.35f; // seconds for the whole pop
-        private const float BubbleOpacity = 0.5f;      // 1.0 = full; 0.8 = 20% more transparent
-        private const float BubbleDownPixels = 4f;     // nudge the bubble down this many art pixels
-        private const float BubbleFramePixels = 28f;   // bubble frame height (px), for the nudge
+        private const float BubblePopDuration = 0.35f; // seconds for the boss bubble's pop
         private bool _coachOn; private int _coachCol; private float _coachRow;
         // Low-poly 3D goal flag (adventure goal tiles). Replaces the coach ring there.
         private GoalFlag3D _goalFlag;
-        private SpriteRenderer _legacyGoalFlag;
-        private Sprite[] _legacyGoalFlagFrames;
         private bool _flagOn; private int _flagCol; private float _flagRow;
         private static readonly Color CoachGold = new Color(0.941f, 0.753f, 0.251f, 1f);
 
@@ -91,7 +71,6 @@ namespace KnightsGauntlet.View
         {
             _theme = theme;
             _board = board;
-            _legacy2D = theme != null && !theme.comicStyle;
             _crackedAsset = Resources.Load<GameObject>("BoardModels/CrackedTile");
             _piecesRoot = new GameObject("EnemyPieces").transform; _piecesRoot.SetParent(transform, false);
             _hintsRoot = new GameObject("MoveHints").transform; _hintsRoot.SetParent(transform, false);
@@ -108,7 +87,7 @@ namespace KnightsGauntlet.View
             var glowGo = new GameObject("PlayerGlow");
             glowGo.transform.SetParent(_piecesRoot, false);
             _playerGlow = glowGo.AddComponent<SpriteRenderer>();
-            _playerGlow.sprite = _legacy2D ? UISprites.Glow() : UISprites.MoveRing();
+            _playerGlow.sprite = UISprites.MoveRing();
             _playerGlow.sortingOrder = 8; // behind the knight AND behind a behind-knight VFX (order 9)
             _playerGlow.color = new Color(0.941f, 0.753f, 0.251f, 0.15f); // gold until a skin sets it
             ClipBoardSprite(_playerGlow);
@@ -130,23 +109,11 @@ namespace KnightsGauntlet.View
             _bestMoveFill.gameObject.SetActive(false);
             _bestMoveBorder.gameObject.SetActive(false);
 
-            // Bubble drawn over the boss queen while her minions shield her (frame 14),
-            // then a pop animation (frames 15-19) when the shield drops. Art already blue.
-            _queenShield = MakeBar("QueenShield", 12, Color.white);
-            _bubbleFrames = LoadBubbleFrames();
-            _queenShield.gameObject.SetActive(false);
-
             var flagGo = new GameObject("GoalFlag");
             flagGo.transform.SetParent(transform, false);
             _goalFlag = flagGo.AddComponent<GoalFlag3D>();
             _goalFlag.Initialize(sortingOrder: 3); // above the board, below the pieces/knight
             flagGo.SetActive(false);
-            _legacyGoalFlagFrames = Resources.LoadAll<Sprite>("Flag/flag animation");
-            var legacyFlagGo = new GameObject("Legacy2DGoalFlag");
-            legacyFlagGo.transform.SetParent(transform, false);
-            _legacyGoalFlag = legacyFlagGo.AddComponent<SpriteRenderer>();
-            _legacyGoalFlag.sortingOrder = 3;
-            legacyFlagGo.SetActive(false);
         }
 
         public void SetPlayerForm(PieceType form, string skinId)
@@ -161,22 +128,6 @@ namespace KnightsGauntlet.View
             }
         }
 
-        public void SetLegacy2D(bool enabled)
-        {
-            if (_legacy2D == enabled) return;
-            _legacy2D = enabled;
-            _enemyMotions.Clear();
-            CancelTransientAnimations();
-            RefreshBoardSpriteClipping();
-            _playerGlow.sprite = enabled ? UISprites.Glow() : UISprites.MoveRing();
-            foreach (var hint in _hintPool) ConfigureHintVisual(hint);
-            foreach (var popup in _popups)
-                if (popup.tmp != null && _theme.popupFont != null) popup.tmp.font = _theme.popupFont;
-            foreach (var cracked in _crackedPool) ConfigureCrackedVisual(cracked);
-            if (_player != null) _player.InvalidateAppearance();
-            foreach (var piece in _piecePool) piece.InvalidateAppearance();
-        }
-
         // Keep pieces and their translucent backings aligned to the square cell
         // footprint; the surrounding side margins belong to the environment.
         public void SetPiecePresentation(float size, float enemyRotation, float playerRotation)
@@ -188,7 +139,7 @@ namespace KnightsGauntlet.View
 
         private void ScalePiece(PieceView pv, PieceType type, bool isPlayer = false)
         {
-            pv.transform.localScale = Vector3.one * (_board.cellSize * (_legacy2D || type == PieceType.Trap ? 1f : _pieceScale));
+            pv.transform.localScale = Vector3.one * (_board.cellSize * (type == PieceType.Trap ? 1f : _pieceScale));
             pv.SetModelRotation(type == PieceType.Trap ? 0f : isPlayer ? _playerRotation : _enemyRotation);
             if (pv.backing != null)
                 pv.backing.transform.localScale =
@@ -224,9 +175,7 @@ namespace KnightsGauntlet.View
                 var piece = pieces[i];
                 // Submit hidden rows behind the crest. The same rolling surface
                 // deforms tiles and pieces; the opaque drum hides their return.
-                float low = _legacy2D ? VisibleLo : -4.5f;
-                float high = _legacy2D ? VisibleHi : GameConfig.Rows + 1.5f;
-                if (!piece.Alive || piece.Y < low || piece.Y > high) continue;
+                if (!piece.Alive || piece.Y < -4.5f || piece.Y > GameConfig.Rows + 1.5f) continue;
                 var pv = GetPiece(p++);
                 pv.gameObject.SetActive(true);
                 pv.Apply(_theme, piece.Type);
@@ -318,43 +267,21 @@ namespace KnightsGauntlet.View
                 Vector3 crackedPosition = _board.CellToWorld(crackedCells[i].Col, sy);
                 crackedPosition.z = 0f;
                 cc.position = crackedPosition;
-                cc.localScale = _legacy2D ? _board.CellScale() : Vector3.one * _board.cellSize;
+                cc.localScale = Vector3.one * _board.cellSize;
             }
             for (int k = ck; k < _crackedPool.Count; k++) _crackedPool[k].gameObject.SetActive(false);
 
             // Pickups (shillings). Trap mode only; Battle pays out on capture.
-            // Rendered as an animated silver coin, held centred on its tile.
-            int pk = 0;
+            // A real spinning 3D shilling that rolls under the conveyor.
             var pickups = sim.Pickups;
-            var coin = _theme.comicStyle ? System.Array.Empty<Sprite>() : CoinFrames();
             _coinAnimT += dt;
-            int coinIdx = coin.Length > 0 ? (int)(_coinAnimT * CoinFps) % coin.Length : 0;
             int pk3 = 0;
             for (int i = 0; i < pickups.Count; i++)
             {
                 var pu = pickups[i];
-                if (!pu.Alive || pu.Y < (_legacy2D ? VisibleLo : -4.5f) || pu.Y > VisibleHi) continue;
-                // 3D art: a real spinning shilling that rolls under the conveyor.
-                if (_theme.comicStyle) { PlaceCoin3D(pk3++, pu.Col, pu.Y); continue; }
-                var sr = GetPickup(pk++);
-                sr.gameObject.SetActive(true);
-                if (coin.Length > 0)
-                {
-                    // Full-colour coin frame (no tint), scaled so its constant-height
-                    // frames read at ~0.54 of a cell. Centre pivots keep the spinning
-                    // coin from wandering across its trimmed frames.
-                    sr.sprite = coin[coinIdx];
-                    sr.color = Color.white;
-                    sr.transform.localScale = Vector3.one * (_board.cellSize * 0.54f / _coinUnitH);
-                }
-                else
-                {
-                    sr.transform.localScale = Vector3.one * (_board.cellSize * 0.5f);
-                }
-                // Re-anchored to the tile each frame, so it never drifts with scroll.
-                sr.transform.position = _board.CellToWorld(pu.Col, pu.Y);
+                if (!pu.Alive || pu.Y < -4.5f || pu.Y > VisibleHi) continue;
+                PlaceCoin3D(pk3++, pu.Col, pu.Y);
             }
-            for (int k = pk; k < _pickupPool.Count; k++) _pickupPool[k].gameObject.SetActive(false);
             HideCoins3D(pk3);
 
             // Player.
@@ -366,7 +293,7 @@ namespace KnightsGauntlet.View
             if (_playerGlow != null)
             {
                 _playerGlow.transform.position = _board.CellToWorld(sim.PlayerCol, sim.PlayerY);
-                _playerGlow.transform.localScale = _board.CellScale(_legacy2D ? 1f : _player.BaseDiameter * 1.1f * _pieceScale);
+                _playerGlow.transform.localScale = _board.CellScale(_player.BaseDiameter * 1.1f * _pieceScale);
             }
 
 
@@ -408,15 +335,9 @@ namespace KnightsGauntlet.View
                     // Web "danger" gradient: gold (#f0c040) up top, blending toward white
                     // the lower the tile, i.e. a cream in between, never pure white.
                     var c = UIFactory.Gold;
-                    if (_legacy2D)
-                    {
-                        float danger = Mathf.Clamp01(m.Y / GameConfig.Rows);
-                        c = new Color(Mathf.Lerp(240,255,danger)/255f,
-                            Mathf.Lerp(192,255,danger)/255f, Mathf.Lerp(64,255,danger)/255f);
-                    }
-                    c.a = _legacy2D ? .125f : .045f;
+                    c.a = .045f;
                     hint.fill.color = c;
-                    c.a = _legacy2D ? .72f : .8f;
+                    c.a = .8f;
                     hint.dot.color = c;
                     hint.go.transform.position = _board.CellToWorld(m.Col, m.Y);
                     hint.go.transform.localScale = _board.CellScale();
@@ -496,7 +417,6 @@ namespace KnightsGauntlet.View
         // last minion is captured, play the pop animation (frames 15-19) once, then hide.
         private void UpdateQueenShield(GameSimulation sim, float dt)
         {
-            if (_queenShield == null) return;
             AdvEnemy queen = null;
             var adv = sim.AdvEnemies;
             for (int i = 0; i < adv.Count; i++) if (adv[i].Alive && adv[i].Hunter) { queen = adv[i]; break; }
@@ -505,7 +425,7 @@ namespace KnightsGauntlet.View
             if (sim.QueenShielded)
             {
                 _shieldWasUp = true; _popping = false;
-                DrawShield(queen, sim, BubbleShieldFrame);
+                DrawShield(queen, sim);
                 return;
             }
 
@@ -514,69 +434,24 @@ namespace KnightsGauntlet.View
             if (_popping)
             {
                 _popTimer += dt;
-                float t = Mathf.Clamp01(_popTimer / BubblePopDuration);
-                int span = BubblePopEnd - BubblePopStart; // 5 (frames 14..19)
-                int frame = BubblePopStart + Mathf.Min(span, Mathf.FloorToInt(t * (span + 1)));
-                DrawShield(queen, sim, frame);
+                DrawShield(queen, sim);
                 if (_popTimer >= BubblePopDuration) { _popping = false; HideQueenShield(); }
             }
             else HideQueenShield();
         }
 
-        private void HideQueenShield()
-        {
-            _queenShield.gameObject.SetActive(false);
-            HideBubble3D();
-        }
+        private void HideQueenShield() => HideBubble3D();
 
-        private void DrawShield(AdvEnemy queen, GameSimulation sim, int frame)
+        private void DrawShield(AdvEnemy queen, GameSimulation sim)
         {
-            // 3D art: a real bubble that rolls under the conveyor with her. The pixel
-            // sprite strip is kept only for the legacy 2D art style.
-            if (!_legacy2D)
-            {
-                _queenShield.gameObject.SetActive(false);
-                DrawBubble3D(queen, sim, _popping ? Mathf.Clamp01(_popTimer / BubblePopDuration) : 0f);
-                return;
-            }
-            HideBubble3D();
-            if (_bubbleFrames == null || _bubbleFrames.Length == 0) return;
-            _queenShield.gameObject.SetActive(true);
-            _queenShield.sprite = _bubbleFrames[Mathf.Clamp(frame, 0, _bubbleFrames.Length - 1)];
-            // Nudge down by BubbleDownPixels art pixels (a cell = one row; the bubble is
-            // BubbleFramePixels tall, drawn at BubbleSize cells). Larger row = lower on screen.
-            float ey = queen.Row + sim.ScrollCells + BubbleDownPixels / BubbleFramePixels * BubbleSize;
-            Vector3 shieldPosition = _board.CellToWorld(queen.Col, ey);
-            if (_enemyMotions.TryGetValue(queen, out var motion))
-            {
-                shieldPosition = _board.CellToWorld(0, motion.current.y + sim.ScrollCells +
-                    BubbleDownPixels / BubbleFramePixels * BubbleSize);
-                shieldPosition.x += motion.current.x * _board.cellW;
-                shieldPosition.z -= motion.lift;
-            }
-            _queenShield.transform.position = shieldPosition;
-            _queenShield.transform.localScale = _board.CellScale(BubbleSize); // see BubbleSize to resize
-            var c = _queenShield.color; c.a = BubbleOpacity; _queenShield.color = c;
-        }
-
-        // Slice Resources/VFX/bubble_sheet.png (a single horizontal strip) into 20 frames.
-        private Sprite[] LoadBubbleFrames()
-        {
-            var tex = Resources.Load<Texture2D>("VFX/bubble_sheet");
-            if (tex == null) { Debug.LogWarning("[VFX] Missing Resources/VFX/bubble_sheet.png"); return new Sprite[0]; }
-            const int frames = 20;
-            int fw = tex.width / frames, fh = tex.height;
-            var arr = new Sprite[frames];
-            for (int i = 0; i < frames; i++)
-                arr[i] = Sprite.Create(tex, new Rect(i * fw, 0, fw, fh), new Vector2(0.5f, 0.5f), fh);
-            return arr;
+            // A real bubble that rolls under the conveyor with her.
+            DrawBubble3D(queen, sim, _popping ? Mathf.Clamp01(_popTimer / BubblePopDuration) : 0f);
         }
 
         // Captured pieces break into tiny 3D cubes. The old 2D burst remains for
         // non-capture events such as Trap mode level-ups.
         public void SpawnCaptureVoxelBurst(int col, float y, Color color, int comboMultiplier = 1)
         {
-            if (_legacy2D) { SpawnCaptureBurst(col, y, color); return; }
             if (_board == null) return;
             if (!EnsureVoxelAssets()) return;
 
@@ -706,7 +581,6 @@ namespace KnightsGauntlet.View
         // On a capture we scatter a handful of tiny square shards, tinted to the
         // captured piece, from its tile. They explode outward, arc under gravity,
         // shrink, and fade. All pooled sprites, animated in AnimateParticles.
-        private const int CaptureBits = 28;          // shards per captured piece
         private const float CaptureSpeedMin = 1.6f;  // outward speed, in cells/sec
         private const float CaptureSpeedMax = 4.2f;
         private const float CaptureUpBias = 0.4f;    // slight lift so they arc up before falling
@@ -721,7 +595,7 @@ namespace KnightsGauntlet.View
             if (_board == null || SaveData.IsReducedEffects()) return;
             float cell = _board.cellSize;
             Vector3 center = _board.CellToWorld(col, y);
-            int bits = _theme.comicStyle ? 8 : CaptureBits;
+            const int bits = 8;
             for (int j = 0; j < bits; j++)
             {
                 var p = GetParticle();
@@ -821,7 +695,6 @@ namespace KnightsGauntlet.View
 
         private int DrawThreat(int i, ThreatAgg agg)
         {
-            if (_legacy2D) return DrawLegacyThreat(i, agg);
             var tc = GetThreat(i);
             tc.go.SetActive(true);
             bool onPlayer = (agg.Col == _pCol && agg.Row == _pRow);
@@ -919,26 +792,8 @@ namespace KnightsGauntlet.View
             if (!_flagOn)
             {
                 if (_goalFlag != null && _goalFlag.gameObject.activeSelf) _goalFlag.gameObject.SetActive(false);
-                if (_legacyGoalFlag != null && _legacyGoalFlag.gameObject.activeSelf) _legacyGoalFlag.gameObject.SetActive(false);
                 return;
             }
-            if (_legacy2D)
-            {
-                if (_goalFlag != null && _goalFlag.gameObject.activeSelf) _goalFlag.gameObject.SetActive(false);
-                if (_legacyGoalFlag != null)
-                {
-                    _legacyGoalFlag.gameObject.SetActive(true);
-                    _legacyGoalFlag.transform.position = _board.CellToWorld(_flagCol, _flagRow);
-                    _legacyGoalFlag.transform.localScale = Vector3.one * (_board.cellSize * 0.72f);
-                    if (_legacyGoalFlagFrames != null && _legacyGoalFlagFrames.Length > 0)
-                    {
-                        int frame = Mathf.FloorToInt(Time.time * 7f) % _legacyGoalFlagFrames.Length;
-                        _legacyGoalFlag.sprite = _legacyGoalFlagFrames[frame];
-                    }
-                }
-                return;
-            }
-            if (_legacyGoalFlag != null && _legacyGoalFlag.gameObject.activeSelf) _legacyGoalFlag.gameObject.SetActive(false);
             _goalFlag.gameObject.SetActive(true);
             Vector3 center = _board.CellToWorld(_flagCol, _flagRow);
             _goalFlag.transform.position = center;
@@ -978,52 +833,9 @@ namespace KnightsGauntlet.View
                     var model = Instantiate(_crackedAsset, modeled.transform, false);
                     _board.ConfigureModelRenderers(model.GetComponentsInChildren<Renderer>(true), -10);
                 }
-                var flat = new GameObject("LegacyCracked");
-                flat.transform.SetParent(go.transform, false);
-                var sprite = flat.AddComponent<SpriteRenderer>();
-                sprite.sprite = Resources.Load<Sprite>("LegacyUI/Cracked Tile");
-                sprite.sortingOrder = 2;
-                ConfigureCrackedVisual(go.transform);
                 _crackedPool.Add(go.transform);
             }
             return _crackedPool[i];
-        }
-
-        private void ConfigureCrackedVisual(Transform cracked)
-        {
-            cracked.Find("ModeledCracked").gameObject.SetActive(!_legacy2D);
-            cracked.Find("LegacyCracked").gameObject.SetActive(_legacy2D);
-        }
-        // Silver-coin frames for the pickup, loaded once from Resources and sorted
-        // naturally (0,1,…,10). Caches an empty array on miss so we don't re-hit disk.
-        private Sprite[] CoinFrames()
-        {
-            if (_coinFrames != null) return _coinFrames;
-            var sprites = Resources.LoadAll<Sprite>("Coin/Coin_Silver-Sheet");
-            if (sprites != null && sprites.Length > 0)
-            {
-                var list = new List<Sprite>(sprites);
-                list.Sort((a, b) => VfxPlayer.NaturalCompare(a.name, b.name));
-                _coinFrames = list.ToArray();
-                _coinUnitH = Mathf.Max(0.0001f, _coinFrames[0].bounds.size.y);
-            }
-            else _coinFrames = new Sprite[0];
-            return _coinFrames;
-        }
-        private SpriteRenderer GetPickup(int i)
-        {
-            while (i >= _pickupPool.Count)
-            {
-                var go = new GameObject("Pickup");
-                go.transform.SetParent(_pickupsRoot, false);
-                go.transform.localScale = Vector3.one * (_board.cellSize * 0.5f);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = _theme != null && _theme.pickupSprite != null ? _theme.pickupSprite : UISprites.Circle();
-                sr.color = _theme != null ? _theme.pickupColor : new Color(0.95f, 0.78f, 0.25f, 1f);
-                sr.sortingOrder = 7;
-                _pickupPool.Add(sr);
-            }
-            return _pickupPool[i];
         }
 
         // ── Pooling ──────────────────────────────────────────────────────────
@@ -1064,8 +876,8 @@ namespace KnightsGauntlet.View
 
         private void ConfigureHintVisual(HintCell hint)
         {
-            hint.dot.sprite = Bendable(_legacy2D ? UISprites.Circle() : UISprites.MoveRing());
-            hint.dot.transform.localScale = Vector3.one * (_legacy2D ? .22f : .55f);
+            hint.dot.sprite = Bendable(UISprites.MoveRing());
+            hint.dot.transform.localScale = Vector3.one * .55f;
         }
 
         // Builds a piece GameObject: SpriteRenderer + a translucent backing + a

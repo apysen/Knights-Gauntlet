@@ -28,18 +28,15 @@ namespace KnightsGauntlet.View
         private bool _menuEntrancePending = true;
         private static Texture2D _checkerTex;
 
-        // The 3D title, or the old text title when the model is missing or legacy style is on.
+        // The 3D title, or the old text title when the model is missing.
         private void BuildMenuTitle(Transform col)
         {
-            if (!LegacyStyle)
-            {
-                var go = new GameObject("Title3D", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement));
-                go.transform.SetParent(col, false);
-                var le = go.GetComponent<LayoutElement>(); le.preferredWidth = 390f; le.preferredHeight = 171f;
-                var title = go.AddComponent<MenuTitle3D>();
-                if (title.Initialize()) { _menuTitle3D = title; return; }
-                Destroy(go);
-            }
+            var go = new GameObject("Title3D", typeof(RectTransform), typeof(RawImage), typeof(LayoutElement));
+            go.transform.SetParent(col, false);
+            var le = go.GetComponent<LayoutElement>(); le.preferredWidth = 390f; le.preferredHeight = 171f;
+            var title = go.AddComponent<MenuTitle3D>();
+            if (title.Initialize()) { _menuTitle3D = title; return; }
+            Destroy(go);
             _ui.Label(col, "KNIGHT'S GAUNTLET", 38, UIFactory.Gold, FontStyles.Normal, 390);
         }
 
@@ -162,7 +159,7 @@ namespace KnightsGauntlet.View
         // After the menu is shown: play the entrance if one is due.
         private void PlayMenuEntranceIfDue()
         {
-            if (LegacyStyle || _menuColumn == null) return;
+            if (_menuColumn == null) return;
             if (_menuRays != null) _menuRays.gameObject.SetActive(true);
             if (_menuKnightArt != null) { _menuKnightArt.localScale = Vector3.one; _menuKnightArt.localRotation = Quaternion.identity; }
             if (!_menuEntrancePending) return;
@@ -183,7 +180,7 @@ namespace KnightsGauntlet.View
 
         private void UpdateMenuJuice()
         {
-            if (_menu == null || !_menu.activeSelf || LegacyStyle) return;
+            if (_menu == null || !_menu.activeSelf) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _menuTime += dt;
             if (_menuReveal != null) return; // the Play reveal is animating the knight

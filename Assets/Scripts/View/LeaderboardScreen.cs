@@ -58,16 +58,6 @@ namespace KnightsGauntlet.View
             _root.SetActive(false);
         }
 
-        public void RebuildPresentation(GameTheme theme)
-        {
-            if (_root != null)
-            {
-                _root.SetActive(false);
-                Destroy(_root);
-            }
-            _catBtns.Clear();
-            Init(theme, _client);
-        }
 
         public void Open(GameMode mode, Difficulty diff)
         {
@@ -354,8 +344,8 @@ namespace KnightsGauntlet.View
             }
             // The real 3D knight in the player's skin, so finishes like Stained Glass and
             // Phantom show as themselves rather than as a flat colour. One shared render
-            // per skin (SkinIconCache). The tinted glyph remains for the legacy 2D style.
-            var icon = _theme != null && _theme.comicStyle ? SkinIconCache.Get(_theme, skin) : null;
+            // per skin (SkinIconCache), with the tinted glyph as a fallback.
+            var icon = _theme != null ? SkinIconCache.Get(_theme, skin) : null;
             if (icon != null)
             {
                 var iconGo = new GameObject("skinKnight", typeof(RectTransform), typeof(RawImage));

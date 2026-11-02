@@ -24,12 +24,12 @@ namespace KnightsGauntlet.View
             float flatten = _levelFirstRow.HasValue ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(RollEnd, GameConfig.Rows * cellSize * .5f, edge)) : 0f;
             _surfaceStart = Mathf.Lerp(RollStart, GameConfig.Rows * cellSize * .5f, flatten);
             _surfaceEnd = Mathf.Min(RollEnd, edge);
-            Shader.SetGlobalVector("_KGBoardRoll", _legacy2D ? Vector4.zero : new Vector4(_surfaceStart, RollRadius, _surfaceEnd, 1f));
-            Shader.SetGlobalVector("_KGBoardEnd", new Vector4(edge, _levelFirstRow.HasValue && !_legacy2D ? 1f : 0f, 0f, 0f));
+            Shader.SetGlobalVector("_KGBoardRoll", new Vector4(_surfaceStart, RollRadius, _surfaceEnd, 1f));
+            Shader.SetGlobalVector("_KGBoardEnd", new Vector4(edge, _levelFirstRow.HasValue ? 1f : 0f, 0f, 0f));
             if (_drumRoot != null) _drumRoot.gameObject.SetActive(flatten < .001f);
             if (_levelTopBorder != null)
             {
-                _levelTopBorder.gameObject.SetActive(_levelFirstRow.HasValue && !_legacy2D && edge <= RollEnd);
+                _levelTopBorder.gameObject.SetActive(_levelFirstRow.HasValue && edge <= RollEnd);
                 _levelTopBorder.localPosition = new Vector3(0f, edge + .09f, 0f);
                 _levelTopBorder.localScale = new Vector3(cellW, 1f, 1f);
             }
@@ -180,7 +180,7 @@ namespace KnightsGauntlet.View
             }
             _gateBlend = Mathf.InverseLerp(220f, 52f, depth);
             _hallBlend = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(22f, -6f, depth));
-            _castleRoot.gameObject.SetActive(hasBridge && !_legacy2D);
+            _castleRoot.gameObject.SetActive(hasBridge);
             // Model depth follows the camera's forward axis. The camera actually
             // crosses the open portal; its roof and pillars move past the view.
             // Match the architecture's vanishing point to the rolling crest.
@@ -234,7 +234,6 @@ namespace KnightsGauntlet.View
 
         private void UpdateSkyProjection()
         {
-            if (_legacy2D) return;
             var camera = Camera.main;
             if (camera == null) return;
             float crest = RollingCrest(camera);

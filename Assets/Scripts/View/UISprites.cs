@@ -30,7 +30,7 @@ namespace KnightsGauntlet.View
             if (border) _royalBorder = sprite; else _royalFill = sprite;
             return sprite;
         }
-        private static Sprite _fill, _border, _pixelBorder, _squareBorder, _circle, _glow, _softGlow, _star, _refresh, _cracked, _lock, _moveRing;
+        private static Sprite _fill, _border, _squareBorder, _circle, _softGlow, _star, _refresh, _cracked, _lock, _moveRing;
 
         public static Sprite MoveRing()
         {
@@ -269,27 +269,6 @@ namespace KnightsGauntlet.View
             return _squareBorder;
         }
 
-        // Radial shine that FILLS the square and is hard-clipped by the cell edge (the
-        // web look): brightest at the centre, still lit at the edges, cut off outside.
-        // The falloff stays positive at the edge-centres (u=1) so scaling to exactly one
-        // cell yields a square-cropped gradient rather than a soft inset circle.
-        public static Sprite Glow()
-        {
-            if (_glow != null) return _glow;
-            const int n = 64;
-            float c = (n - 1) * 0.5f, half = n * 0.5f;
-            var tex = NewTex(n);
-            for (int y = 0; y < n; y++)
-                for (int x = 0; x < n; x++)
-                {
-                    float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c));
-                    float u = d / half; // 0 centre, 1 edge-centre, ~1.41 corner
-                    tex.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(1f - 0.55f * u)));
-                }
-            tex.Apply();
-            _glow = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), n); // 1 world unit
-            return _glow;
-        }
 
         // A soft radial halo whose alpha falls off aggressively (cubic) to exactly zero by
         // the sprite edge, so no rectangular boundary is ever visible. Brightest at the
@@ -313,40 +292,7 @@ namespace KnightsGauntlet.View
             return _softGlow;
         }
 
-        // Gold selection outline that matches the DEVNIK pixel buttons' baked black
-        // border EXACTLY. Measured from BAR1: an 8px-thick border with a 2-step (4px)
-        // chamfered corner (NOT a smooth radius), 9-sliced at 16px. Built at the same
-        // pixel dimensions and drawn POINT-filtered at the same 2x pixels-per-unit as
-        // the button background, so it lines up with, and reads as pixel art like, that
-        // black border.
-        public static Sprite PixelBorder()
-        {
-            if (_pixelBorder != null) return _pixelBorder;
-            const int n = 34, border = 16, thickness = 8;
-            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false)
-            { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-            for (int y = 0; y < n; y++)
-                for (int x = 0; x < n; x++)
-                {
-                    bool outer = InChamferRect(x, y, 0, 0, n, n);
-                    bool inner = InChamferRect(x, y, thickness, thickness, n - thickness, n - thickness);
-                    tex.SetPixel(x, y, (outer && !inner) ? Color.white : new Color(0, 0, 0, 0));
-                }
-            tex.Apply();
-            _pixelBorder = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 100f,
-                0, SpriteMeshType.FullRect, new Vector4(border, border, border, border));
-            return _pixelBorder;
-        }
 
-        // Membership in a rectangle [x0,x1) x [y0,y1) whose corners are cut by a 2-step
-        // pixel chamfer (4px then 8px), matching the DEVNIK button corner.
-        private static bool InChamferRect(int x, int y, int x0, int y0, int x1, int y1)
-        {
-            if (x < x0 || x >= x1 || y < y0 || y >= y1) return false;
-            int dx = Mathf.Min(x - x0, x1 - 1 - x);
-            int dy = Mathf.Min(y - y0, y1 - 1 - y);
-            return !(dx < 8 && dy < 8 && (dx < 4 || dy < 4));
-        }
 
         public static Sprite Circle()
         {

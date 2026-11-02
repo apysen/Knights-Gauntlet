@@ -199,7 +199,7 @@ namespace KnightsGauntlet.View
             _rallyGlint = glintGo.GetComponent<Image>();
             _rallyGlint.sprite = UISprites.SoftGlow(); _rallyGlint.color = new Color(1f, .95f, .8f, .55f); _rallyGlint.raycastTarget = false;
 
-            TMP_FontAsset display = LegacyStyle ? UIFactory.PixelFont() : UIFactory.ComicFont();
+            TMP_FontAsset display = UIFactory.ComicFont();
             _rallyTitle = RallyText(_rallyRibbon, "Title", "RALLY!", 78, UIFactory.Gold, display, new Vector2(0, 14), new Vector2(520, 96));
             _rallySubtitle = RallyText(_rallyRibbon, "Subtitle", "YOUR STREAK RIDES AGAIN", 20, UIFactory.Text,
                 UIFactory.BodyFont(), new Vector2(0, -44), new Vector2(520, 28));

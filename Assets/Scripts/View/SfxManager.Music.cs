@@ -15,8 +15,7 @@ namespace KnightsGauntlet.View
     // Two loop voices take turns: the new one is started with PlayScheduled at an exact
     // dspTime and a matching timeSamples, then the two crossfade. Going from the menu into
     // play, a one-bar launch phrase plays first and the gameplay loop is scheduled to
-    // start exactly where the phrase lands. The legacy pixel style keeps its old music:
-    // the retro MenuTheme on the menu and silence in play.
+    // start exactly where the phrase lands.
     public partial class SfxManager
     {
         private class MusicVoice
@@ -37,12 +36,10 @@ namespace KnightsGauntlet.View
         private double _cueStartDsp;
         private float _duckUntil = -1f, _duck = 1f; // music dips under stings and on pause
         private bool _pauseDuck;
-        private AudioClip _legacyMenuTheme;
         private readonly Dictionary<Music, AudioClip[]> _score = new Dictionary<Music, AudioClip[]>();
         private readonly Dictionary<Music, AudioClip> _launches = new Dictionary<Music, AudioClip>();
         private AudioClip _gameOverTheme;
 
-        private const string LegacyMenuThemePath = "SFX/MenuTheme";
         private const string ScorePath = "SFX/Music/";
         private static readonly string[] BiomeNames = { "Meadow", "Bridge", "Castle" }; // BoardBiome order
 
@@ -76,7 +73,6 @@ namespace KnightsGauntlet.View
             _stingSrc.outputAudioMixerGroup = musicGroup;
             _stingSrc.priority = 0;
 
-            _legacyMenuTheme = Resources.Load<AudioClip>(LegacyMenuThemePath);
             LoadScore(Music.Menu, "Score Menu");
             LoadScore(Music.Boss, "Score Boss");
             foreach (var cue in new[] { Music.Trap, Music.Battle, Music.Adventure })
@@ -133,14 +129,6 @@ namespace KnightsGauntlet.View
 
         private void StartCue(Music cue)
         {
-            if (UIFactory.LegacyStyle)
-            {
-                // The pixel style keeps what it always had: the retro theme on the menu, no music in play.
-                if (cue != Music.Menu || _legacyMenuTheme == null) { FadeOutMusic(0.6f); _cue = null; return; }
-                if (_cue == cue && Active.Src.isPlaying && Active.Src.clip == _legacyMenuTheme) return;
-                Begin(new[] { _legacyMenuTheme }, 0, cue, null, 0f, 1.5f);
-                return;
-            }
             if (!_score.TryGetValue(cue, out var clips)) { FadeOutMusic(0.6f); _cue = null; return; }
             int b = clips.Length == 1 ? 0 : Mathf.Clamp(_biome, 0, clips.Length - 1);
             if (_cue == cue && Active.Src.isPlaying && System.Array.IndexOf(clips, Active.Src.clip) >= 0) return;
@@ -256,7 +244,7 @@ namespace KnightsGauntlet.View
         // channel (music slider), over whatever the loops are doing.
         public static void PlayGameOverSting()
         {
-            if (_instance == null || Muted || UIFactory.LegacyStyle || _instance._gameOverTheme == null) return;
+            if (_instance == null || Muted || _instance._gameOverTheme == null) return;
             var s = _instance._stingSrc;
             s.Stop();
             s.clip = _instance._gameOverTheme;
@@ -297,7 +285,7 @@ namespace KnightsGauntlet.View
             float duckTarget = _pauseDuck || Time.unscaledTime < _duckUntil ? Db(MusicDuckDb) : 1f;
             _duck = Mathf.MoveTowards(_duck, duckTarget, 2f * Time.unscaledDeltaTime);
             double now = AudioSettings.dspTime;
-            float trim = UIFactory.LegacyStyle && Active.Src.clip == _legacyMenuTheme ? 1f : Db(ScoreTrimDb);
+            float trim = Db(ScoreTrimDb);
             float baseVol = MusicVolume * trim * _duck;
             foreach (var v in _voices)
             {

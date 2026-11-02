@@ -16,11 +16,10 @@ namespace KnightsGauntlet.View
         PieceCapture,    // battle/adventure: captured a piece
         TabSelect,       // difficulty / leaderboard tab / customization tab
         PageTurn,        // How to Play next / previous page
-        Transform,          // battle/adventure: took on a captured piece's form (legacy pop)
+        Transform,          // battle/adventure: took on a captured piece's form
         Untransform,        // form ran out when the timer expired
         Transformation,     // battle/adventure: a NEW transform begins (fires once per nightrider)
         AdventureNextLevel, // adventure: reached the level goal
-        // 3D style only (no legacy pixel sound, so legacy stays as it was):
         CoinLand,        // a flying shilling lands in the HUD counter
         BossPhase,       // the queen drops a phase (layered on the capture)
         QueenShieldUp,   // a boss phase starts with the queen's bubble shield up
@@ -65,8 +64,6 @@ namespace KnightsGauntlet.View
         private int _captureSourceIndex;
         private readonly List<AudioClip> _captureClips = new List<AudioClip>();
         private int _lastCaptureClip = -1;
-        private AudioClip _legacyCaptureClip;
-        private const string LegacyCapturePath = "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 5 (Square)";
 
         // Shilling chain, the classic platformer coin run: each pickup soon after the
         // last climbs one step up a major scale, capped at an octave so it never
@@ -86,9 +83,9 @@ namespace KnightsGauntlet.View
         // (in dB). If the asset is missing, sources just play unrouted.
         private const string MixerPath = "Audio/KGMixer";
 
-        // 3D-style sounds (CC0, see ArtSource/Audio/LICENSES.md). Each entry is a bank:
+        // Game sounds (CC0, see ArtSource/Audio/LICENSES.md). Each entry is a bank:
         // "Name" loads "Name 1", "Name 2", ... if numbered files exist, else "Name" alone.
-        // The legacy pixel style keeps the JDSherbert clips in Files below.
+        // The few sounds without a bank use the single clips in Files below.
         private static readonly Dictionary<Sfx, string> ModernFiles = new Dictionary<Sfx, string>
         {
             { Sfx.PieceMove,       "SFX/Move Wood" },
@@ -113,7 +110,7 @@ namespace KnightsGauntlet.View
             { Sfx.PowerupBerserker, "SFX/Powerup Berserker" },
             { Sfx.FuryCrackle,     "SFX/Fury Crackle" },
             // Adventure goal reached: horn call over Bb, C, landing on D major (MusicBuild/
-            // build_level_complete.py). The pixel style keeps the old "Adventure Mode Next Level".
+            // build_level_complete.py).
             { Sfx.AdventureNextLevel, "SFX/Adventure Level Complete" },
             // Main menu (synthesized, MusicBuild/build_warhorn.py). Played on the UI voice.
             { Sfx.MenuEntrance,    "SFX/Menu Entrance Whoosh" },
@@ -177,17 +174,10 @@ namespace KnightsGauntlet.View
         // the same base pack family but different variants, so each has its own file.
         private static readonly Dictionary<Sfx, string> Files = new Dictionary<Sfx, string>
         {
-            { Sfx.ShillingCollect, "SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 4 (Square)" },
-            { Sfx.TrapLevelUp,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 1 (Square)" },
-            { Sfx.ShieldBreak,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Open 5 (Square)" },
             { Sfx.PlaySelect,      "SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square)" },
-            { Sfx.PieceMove,       "SFX/JDSherbert - Pixel UI SFX Pack - Cancel 3 (Square)" },
             { Sfx.PieceCapture,    "SFX/Capture Slash" },
             { Sfx.TabSelect,       "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square)" },
             { Sfx.PageTurn,        "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square)" },
-            { Sfx.Untransform,     "SFX/JDSherbert - Pixel UI SFX Pack - Popup Close 5 (Square)" },
-            { Sfx.Transformation,     "SFX/Transformation" },
-            { Sfx.AdventureNextLevel, "SFX/Adventure Mode Next Level" },
         };
 
         // Global mute, backed by a pref so a future Settings toggle can flip it.
@@ -296,7 +286,6 @@ namespace KnightsGauntlet.View
                 else Debug.LogWarning("[SFX] Missing clip, add it at Assets/Resources/" + kv.Value + ".<ext>");
             }
 
-            _legacyCaptureClip = Resources.Load<AudioClip>(LegacyCapturePath);
             if (_clips.TryGetValue(Sfx.PieceCapture, out var captureClip)) _captureClips.Add(captureClip);
             for (int i = 2; i <= 3; i++)
             {
@@ -321,15 +310,15 @@ namespace KnightsGauntlet.View
             if (id == Sfx.PieceCapture) { PlayCapture(1); return; }
             if (_instance == null || Muted) return;
             if (id == Sfx.RallyTick) { PlayRallyTick(0f); return; }
-            if (!UIFactory.LegacyStyle && IsRallySting(id)) { _instance.PlayRallySting(id); return; }
-            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(id, out var bank))
+            if (IsRallySting(id)) { _instance.PlayRallySting(id); return; }
+            if (_instance._banks.TryGetValue(id, out var bank))
             {
                 if (IsUi(id)) _instance.PlayUiBank(id, bank); else _instance.PlayBank(id, bank);
                 return;
             }
             if (_instance._clips.TryGetValue(id, out var clip) && clip != null)
                 (IsUi(id) ? _instance._uiSrc : _instance._src).PlayOneShot(clip,
-                    SfxVolume * (id == Sfx.PieceMove && !UIFactory.LegacyStyle ? 0.68f : 1f));
+                    SfxVolume * (id == Sfx.PieceMove ? 0.68f : 1f));
         }
 
         // Picks the next round-robin clip (never the same one twice running), or -1 if the
@@ -370,7 +359,7 @@ namespace KnightsGauntlet.View
         {
             if (_instance == null || Muted) return;
             AudioClip clip = null;
-            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(Sfx.ShillingCollect, out var bank)) clip = bank.Clips[0];
+            if (_instance._banks.TryGetValue(Sfx.ShillingCollect, out var bank)) clip = bank.Clips[0];
             else _instance._clips.TryGetValue(Sfx.ShillingCollect, out clip);
             if (clip == null) return;
             float now = Time.unscaledTime;
@@ -389,13 +378,7 @@ namespace KnightsGauntlet.View
         {
             if (_instance == null) return;
             float combo = Mathf.InverseLerp(1f, 6f, Mathf.Max(1, comboMultiplier));
-            if (!Muted && UIFactory.LegacyStyle)
-            {
-                // Legacy keeps the original pixel capture sound at its original pitch and level.
-                if (_instance._legacyCaptureClip != null)
-                    _instance._src.PlayOneShot(_instance._legacyCaptureClip, SfxVolume);
-            }
-            else if (!Muted && _instance._captureClips.Count > 0)
+            if (!Muted && _instance._captureClips.Count > 0)
             {
                 int count = _instance._captureClips.Count;
                 int clipIndex = Random.Range(0, count - (count > 1 && _instance._lastCaptureClip >= 0 ? 1 : 0));
@@ -421,7 +404,7 @@ namespace KnightsGauntlet.View
             var l = _instance._loopSrc;
             if (l == null) return;
             AudioClip clip = null;
-            if (!UIFactory.LegacyStyle && _instance._banks.TryGetValue(id, out var bank)) clip = bank.Clips[0];
+            if (_instance._banks.TryGetValue(id, out var bank)) clip = bank.Clips[0];
             else _instance._clips.TryGetValue(id, out clip);
             if (clip != null)
             {

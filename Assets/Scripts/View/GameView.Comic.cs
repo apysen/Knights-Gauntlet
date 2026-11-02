@@ -94,7 +94,6 @@ namespace KnightsGauntlet.View
             {
                 _playerAttackDirection = new Vector2(delta.x, delta.y).normalized;
             }
-            if (!_theme.comicStyle) return;
             _playerFacing = PieceFacing.Front;
             _player.SetFacing(_playerFacing);
             if (SaveData.IsReducedEffects()) return;
@@ -183,7 +182,6 @@ namespace KnightsGauntlet.View
 
         public void PlayComicDefeat(GameSimulation sim)
         {
-            if (!_theme.comicStyle) return;
             _comicDeathUntil = Time.unscaledTime + 0.18f;
             _player.PlayHitMotion(0.18f);
             SpawnComicEffect("comic-impact", sim.PlayerCol, sim.PlayerY, sim.ScrollCells, 0.18f, 0.95f, false, UIFactory.Error);
@@ -192,7 +190,7 @@ namespace KnightsGauntlet.View
         private void UpdateComicEnemy(PieceView piece, int col, float y, PieceType type, GameSimulation sim)
         {
             piece.RefreshPose();
-            if (!_theme.comicStyle || type == PieceType.Trap) return;
+            if (type == PieceType.Trap) return;
             piece.SetFacing(PieceFacing.Front);
             if (_comicDeathUntil > Time.unscaledTime && col == sim.PlayerCol && Mathf.Abs(y - sim.PlayerY) < 0.6f)
                 piece.ShowPose(ComicPose.Attack, _comicDeathUntil - Time.unscaledTime);
