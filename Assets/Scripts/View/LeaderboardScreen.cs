@@ -38,11 +38,11 @@ namespace KnightsGauntlet.View
         private const float RowH = 50f;
         private const float LeftPad = 14f;
         private const float NameLeft = 56f;   // space reserved on the left for the crown
-        private const float NameRight = 138f;  // space reserved on the right for score+skin
-        private const float ScoreFromRight = 40f;
+        private const float NameRight = 146f;  // space reserved on the right for score+skin
+        private const float ScoreFromRight = 48f;
         private const float ScoreW = 96f;
         private const float SkinFromRight = 8f;
-        private const float SkinW = 26f;
+        private const float SkinW = 34f;
         private const float RewardW = 80f;
 
         public void Init(GameTheme theme, LeaderboardClient client)
@@ -346,15 +346,32 @@ namespace KnightsGauntlet.View
                 var gc = Skins.GlowOf(skin);
                 gImg.color = new Color(gc.r, gc.g, gc.b, 0.8f); // soft-glow fades to 0, so peak can be stronger
                 // A square halo centred on the glyph (which sits SkinW/2 in from its right edge).
-                const float g = 44f;
+                const float g = 52f;
                 var grt = glowGo.GetComponent<RectTransform>();
                 grt.anchorMin = grt.anchorMax = new Vector2(1, 0.5f); grt.pivot = new Vector2(0.5f, 0.5f);
                 grt.sizeDelta = new Vector2(g, g);
                 grt.anchoredPosition = new Vector2(-(SkinFromRight + shift) - SkinW * 0.5f, 0);
             }
-            var sk = Glyph(go.transform, "\u265E", 17, skinColor, _theme != null ? _theme.glyphFont : null,
-                           TextAlignmentOptions.Center);
-            AnchorRight(sk.rectTransform, SkinFromRight + shift, SkinW);
+            // The real 3D knight in the player's skin, so finishes like Stained Glass and
+            // Phantom show as themselves rather than as a flat colour. One shared render
+            // per skin (SkinIconCache). The tinted glyph remains for the legacy 2D style.
+            var icon = _theme != null && _theme.comicStyle ? SkinIconCache.Get(_theme, skin) : null;
+            if (icon != null)
+            {
+                var iconGo = new GameObject("skinKnight", typeof(RectTransform), typeof(RawImage));
+                iconGo.transform.SetParent(go.transform, false);
+                var raw = iconGo.GetComponent<RawImage>();
+                raw.texture = icon; raw.raycastTarget = false;
+                var irt = (RectTransform)iconGo.transform;
+                AnchorRight(irt, SkinFromRight + shift, SkinW);
+                irt.sizeDelta = new Vector2(SkinW, SkinW);
+            }
+            else
+            {
+                var sk = Glyph(go.transform, "\u265E", 17, skinColor, _theme != null ? _theme.glyphFont : null,
+                               TextAlignmentOptions.Center);
+                AnchorRight(sk.rectTransform, SkinFromRight + shift, SkinW);
+            }
 
             // daily reward badge, far right
             if (!string.IsNullOrEmpty(reward))

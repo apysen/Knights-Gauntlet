@@ -16,6 +16,9 @@ Shader "Knight's Gauntlet/Chess Piece"
         _RegionClip ("Clip scenery region", Float) = 0
         _RegionY ("Scenery region bounds", Vector) = (-10000,10000,0,0)
         _BoardHalfSize ("Board half size", Vector) = (2.5,5,0,0)
+        _SkinFX ("Shop skin finish", Float) = 0
+        _SkinFade ("Skin opacity", Float) = 1
+        _SkinScale ("Skin pattern scale", Float) = 1
     }
     SubShader
     {
@@ -45,13 +48,15 @@ Shader "Knight's Gauntlet/Chess Piece"
                 float _RegionClip;
                 float4 _RegionY;
                 float4 _BoardHalfSize;
+                float _SkinFX, _SkinFade, _SkinScale;
             CBUFFER_END
             int _RoyalShadowCount;
             float4 _KGBoardClip;
             float4 _KGBoardEnd;
             float4 _RoyalShadows[24];
+            #include "Assets/Resources/Pieces/PieceSkinFX.hlsl"
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
-            struct Varyings { float4 positionCS : SV_POSITION; float3 normalWS : TEXCOORD0; float2 uv : TEXCOORD1; float3 positionWS : TEXCOORD2; };
+            struct Varyings { float4 positionCS : SV_POSITION; float3 normalWS : TEXCOORD0; float2 uv : TEXCOORD1; float3 positionWS : TEXCOORD2; float3 skinPos : TEXCOORD3; };
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -65,6 +70,7 @@ Shader "Knight's Gauntlet/Chess Piece"
                 }
                 output.positionCS = TransformWorldToHClip(world);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                output.skinPos = KGSkinPosition(input.positionOS.xyz);
                 return output;
             }
             half4 Frag(Varyings input) : SV_Target
@@ -121,6 +127,15 @@ Shader "Knight's Gauntlet/Chess Piece"
                 color.rgb += half3(1,.80,.43) * highlight * lerp(.045h,.24h,_Smoothness);
                 half rim = pow(1 - saturate(dot(normal,view)), 4);
                 color.rgb += half3(.06,.10,.20) * rim * _Smoothness;
+                if (_SkinFX > .5)
+                {
+                    KGSkinInput s;
+                    s.skinPos = input.skinPos; s.positionWS = input.positionWS; s.positionCS = input.positionCS;
+                    s.normal = normal; s.view = view; s.light = light;
+                    s.trim = gold; // painted gold details
+                    s.eye = 0;     // this set has no separate eye material
+                    color.rgb = KGSkinShade(s);
+                }
                 if (_ClipBoard > .5)
                 {
                     half shade = 0;

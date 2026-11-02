@@ -248,6 +248,72 @@ namespace KnightsGauntlet.View
         }
 
         // Turn a layout Row into a card: panel backing, padding.
+        // Cosmetic rows are 64 tall (48 swatch + card padding) and 354 wide.
+        private const float ShopRowHeight = 64f, ShopRowWidth = 354f;
+        private const float ShopVisibleRows = 5.5f; // the half row peeking out says "scroll me"
+
+        // A fixed-height scrolling list for a long shop catalog, so rows stay full size
+        // instead of UIScreenFit shrinking the whole shop to fit every item. Returns the
+        // content column; `view` is the frame to show or hide with its tab.
+        private RectTransform ShopScrollList(Transform parent, float spacing, out GameObject view)
+        {
+            const float barGap = 10f, barWidth = 8f;
+            var holder = new GameObject("ShopList", typeof(RectTransform), typeof(LayoutElement));
+            holder.transform.SetParent(parent, false);
+            var le = holder.GetComponent<LayoutElement>();
+            le.preferredWidth = le.minWidth = ShopRowWidth + barGap + barWidth;
+            le.preferredHeight = le.minHeight = ShopVisibleRows * (ShopRowHeight + spacing) - spacing;
+            view = holder;
+
+            var viewport = new GameObject("ShopListViewport", typeof(RectTransform), typeof(RectMask2D), typeof(Image), typeof(ScrollRect));
+            viewport.transform.SetParent(holder.transform, false);
+            var viewRt = (RectTransform)viewport.transform;
+            UIFactory.Stretch(viewRt);
+            viewRt.offsetMax = new Vector2(-(barGap + barWidth), 0f);
+            // A transparent graphic receives drags between the rows.
+            viewport.GetComponent<Image>().color = Color.clear;
+
+            var content = _ui.Column(viewRt, spacing);
+            content.name = "ShopListContent";
+            content.anchorMin = content.anchorMax = content.pivot = new Vector2(.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+
+            var scroll = viewport.GetComponent<ScrollRect>();
+            scroll.viewport = viewRt; scroll.content = content;
+            scroll.horizontal = false; scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic; scroll.elasticity = .12f;
+            scroll.scrollSensitivity = 28f;
+
+            var sbGo = new GameObject("ShopListScrollbar", typeof(RectTransform), typeof(Image), typeof(Scrollbar));
+            sbGo.transform.SetParent(holder.transform, false);
+            var rt = (RectTransform)sbGo.transform;
+            rt.anchorMin = new Vector2(1f, 0f); rt.anchorMax = new Vector2(1f, 1f); rt.pivot = new Vector2(1f, .5f);
+            rt.sizeDelta = new Vector2(barWidth, 0f); rt.anchoredPosition = Vector2.zero;
+            sbGo.GetComponent<Image>().color = new Color(1f, 1f, 1f, .06f);
+            var area = new GameObject("SlidingArea", typeof(RectTransform));
+            area.transform.SetParent(rt, false); UIFactory.Stretch((RectTransform)area.transform);
+            var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handle.transform.SetParent(area.transform, false);
+            var hrt = (RectTransform)handle.transform; UIFactory.Stretch(hrt);
+            var sb = sbGo.GetComponent<Scrollbar>();
+            sb.direction = Scrollbar.Direction.BottomToTop;
+            sb.handleRect = hrt; sb.targetGraphic = handle.GetComponent<Image>();
+            scroll.verticalScrollbar = sb;
+            // Always shown (when the list overflows) so players know there is more below.
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+            sbGo.AddComponent<JuicyScrollbar>().Setup(UIFactory.Gold, new Color(1f, 1f, 1f, .07f), 4f, 8f);
+            return content;
+        }
+
+        private static void ResetShopScroll(RectTransform content)
+        {
+            if (content == null) return;
+            var scroll = content.GetComponentInParent<ScrollRect>(true);
+            if (scroll == null) return;
+            scroll.velocity = Vector2.zero;
+            scroll.verticalNormalizedPosition = 1f;
+        }
+
         private void MakeCard(RectTransform row, bool highlight = false)
         {
             var img = row.gameObject.AddComponent<Image>();

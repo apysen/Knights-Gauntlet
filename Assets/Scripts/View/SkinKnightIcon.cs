@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using KnightsGauntlet.Core;
@@ -88,6 +89,10 @@ namespace KnightsGauntlet.View
         // Render textures can lose their contents (app backgrounded, device reset), so
         // redraw whenever the icon comes back on screen.
         private void OnEnable() => _dirty = true;
+        private void OnApplicationPause(bool paused) { if (!paused) _dirty = true; }
+
+        // The rendered icon, for sharing one render between many images (SkinIconCache).
+        public Texture Texture => _texture;
 
         private void LateUpdate()
         {
@@ -112,6 +117,45 @@ namespace KnightsGauntlet.View
         private static void Discard(Object o)
         {
             if (Application.isPlaying) Destroy(o); else DestroyImmediate(o);
+        }
+    }
+
+    // One shared icon per skin, for lists where the same skins repeat many times (the
+    // leaderboard). Each skin is rendered once, then every row's RawImage shows that same
+    // texture, so a long leaderboard costs at most one small render per skin.
+    public static class SkinIconCache
+    {
+        private static GameObject _root;
+        private static GameTheme _theme;
+        private static readonly Dictionary<string, SkinKnightIcon> Icons = new Dictionary<string, SkinKnightIcon>();
+
+        // Null if the icon can't be built (no theme, model failed to load).
+        public static Texture Get(GameTheme theme, string skinId)
+        {
+            if (theme == null || string.IsNullOrEmpty(skinId)) return null;
+            // Domain reload is off, so entries from an earlier Play session are destroyed
+            // objects; a missing root (or a new theme) means start over.
+            if (_root == null || _theme != theme) Clear();
+            _theme = theme;
+            if (Icons.TryGetValue(skinId, out var cached) && cached != null) return cached.Texture;
+            if (_root == null) _root = new GameObject("SkinIconCache");
+            var go = new GameObject("Icon " + skinId, typeof(RectTransform), typeof(RawImage), typeof(SkinKnightIcon));
+            go.transform.SetParent(_root.transform, false);
+            var icon = go.GetComponent<SkinKnightIcon>();
+            if (!icon.Initialize(theme, skinId, Camera.main))
+            {
+                Object.Destroy(go);
+                return null;
+            }
+            Icons[skinId] = icon;
+            return icon.Texture;
+        }
+
+        private static void Clear()
+        {
+            if (_root != null) Object.Destroy(_root);
+            _root = null;
+            Icons.Clear();
         }
     }
 }

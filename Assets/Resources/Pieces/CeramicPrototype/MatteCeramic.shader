@@ -7,6 +7,10 @@ Shader "Knight's Gauntlet/Matte Ceramic Prototype"
         _AccentStrength ("Use equipped skin", Float) = 0
         _SkinRegion ("Recolor body", Float) = 1
         _PieceClip ("Clip pieces at the board edge", Float) = 0
+        _SkinEye ("Eye material", Float) = 0
+        _SkinFX ("Shop skin finish", Float) = 0
+        _SkinFade ("Skin opacity", Float) = 1
+        _SkinScale ("Skin pattern scale", Float) = 1
     }
     SubShader
     {
@@ -25,10 +29,13 @@ Shader "Knight's Gauntlet/Matte Ceramic Prototype"
                 float _AccentStrength;
                 float _SkinRegion;
                 float _PieceClip;
+                float _SkinEye;
+                float _SkinFX, _SkinFade, _SkinScale;
             CBUFFER_END
+            #include "Assets/Resources/Pieces/PieceSkinFX.hlsl"
             float4 _KGBoardClip;
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
-            struct Varyings { float4 positionCS : SV_POSITION; half3 normalWS : TEXCOORD0; float3 positionWS : TEXCOORD1; };
+            struct Varyings { float4 positionCS : SV_POSITION; half3 normalWS : TEXCOORD0; float3 positionWS : TEXCOORD1; float3 skinPos : TEXCOORD2; };
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -36,6 +43,7 @@ Shader "Knight's Gauntlet/Matte Ceramic Prototype"
                 output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 output.positionCS = TransformWorldToHClip(KGRollPosition(output.positionWS));
                 output.normalWS = KGRollNormal(output.normalWS, output.positionWS.y);
+                output.skinPos = KGSkinPosition(input.positionOS.xyz);
                 return output;
             }
             half4 Frag(Varyings input) : SV_Target
@@ -54,6 +62,15 @@ Shader "Knight's Gauntlet/Matte Ceramic Prototype"
                     saturate(_AccentStrength * _SkinRegion));
                 half3 color = body * (half3(.42,.48,.56) + half3(.50,.46,.39)*wrap);
                 half3 view = normalize(GetWorldSpaceViewDir(input.positionWS));
+                if (_SkinFX > .5)
+                {
+                    KGSkinInput s;
+                    s.skinPos = input.skinPos; s.positionWS = input.positionWS; s.positionCS = input.positionCS;
+                    s.normal = normal; s.view = view; s.light = light;
+                    s.trim = 1 - _SkinRegion; // unglazed foot and eyes
+                    s.eye = _SkinEye;
+                    return half4(KGSkinShade(s), 1);
+                }
                 half broadHighlight = pow(saturate(dot(normal,normalize(light+view))),12);
                 color += half3(1,.94,.82) * broadHighlight * .025h;
                 color += half3(.035,.045,.055) * pow(1-saturate(dot(normal,view)),3);

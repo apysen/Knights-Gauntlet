@@ -8,6 +8,9 @@ Shader "Knight's Gauntlet/Ink Porcelain"
         _SkinRegion ("Painted accent region", Float) = 0
         _Surface ("Ink, porcelain, gold", Float) = 0.5
         _PieceClip ("Clip at board edge", Float) = 0
+        _SkinFX ("Shop skin finish", Float) = 0
+        _SkinFade ("Skin opacity", Float) = 1
+        _SkinScale ("Skin pattern scale", Float) = 1
     }
     SubShader
     {
@@ -23,7 +26,9 @@ Shader "Knight's Gauntlet/Ink Porcelain"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor, _AccentColor;
                 float _AccentStrength, _SkinRegion, _Surface, _PieceClip;
+                float _SkinFX, _SkinFade, _SkinScale;
             CBUFFER_END
+            #include "Assets/Resources/Pieces/PieceSkinFX.hlsl"
             float4 _KGBoardClip;
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
             struct Varyings
@@ -32,6 +37,7 @@ Shader "Knight's Gauntlet/Ink Porcelain"
                 half3 normalWS : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
                 float3 positionOS : TEXCOORD2;
+                float3 skinPos : TEXCOORD3;
             };
             Varyings Vert(Attributes input)
             {
@@ -40,6 +46,7 @@ Shader "Knight's Gauntlet/Ink Porcelain"
                 output.positionCS = TransformWorldToHClip(KGRollPosition(output.positionWS));
                 output.normalWS = KGRollNormal(TransformObjectToWorldNormal(input.normalOS), output.positionWS.y);
                 output.positionOS = input.positionOS.xyz;
+                output.skinPos = KGSkinPosition(input.positionOS.xyz);
                 return output;
             }
             float PorcelainNoise(float3 p)
@@ -87,6 +94,19 @@ Shader "Knight's Gauntlet/Ink Porcelain"
                 half shade = smoothstep(-.25,.75,dot(normal,light));
                 half3 color = body * lerp(half3(.38,.43,.52),half3(1.02,.98,.90),shade);
                 half3 view = normalize(GetWorldSpaceViewDir(input.positionWS));
+                if (_SkinFX > .5)
+                {
+                    KGSkinInput s;
+                    s.skinPos = input.skinPos; s.positionWS = input.positionWS; s.positionCS = input.positionCS;
+                    s.normal = normal; s.view = view; s.light = light;
+                    // Gold trim and ink (foot ring, eyes) are trim. Ink above the foot
+                    // ring is the eyes on the knights, and the matching head detail
+                    // on the other pieces (object Z is up, in meters).
+                    half ink = 1 - step(.2, _Surface);
+                    s.trim = saturate(step(.8, _Surface) + ink);
+                    s.eye = ink * step(.002, input.positionOS.z);
+                    return half4(KGSkinShade(s), 1);
+                }
                 half highlight = pow(saturate(dot(normal,normalize(light+view))),lerp(16,58,_Surface));
                 color += lerp(half3(1,.97,.88),_BaseColor.rgb,step(.8,_Surface)) * highlight * _Surface * .65;
                 half edge = pow(1-saturate(dot(normal,view)),4);

@@ -52,6 +52,7 @@ namespace KnightsGauntlet.View
         private Button _tabSkins, _tabVfx;
         private Button _tabShopSkins, _tabShopVfx, _tabPowerups;
         private RectTransform _shopSkins, _shopVfx, _shopPowerups;
+        private GameObject _shopSkinsView, _shopVfxView; // scrolling frames around the lists
         private GameObject _shillingsShop;
         private TMP_Text _shillingsShopBalance;
         private readonly TMP_Text[] _powerupOwned = new TMP_Text[5];
@@ -1736,11 +1737,11 @@ namespace KnightsGauntlet.View
             _tabIndicator.sizeDelta = new Vector2(60f, 4f);
             var barImg = bar.GetComponent<Image>(); barImg.color = UIFactory.Gold; barImg.raycastTarget = false;
 
-            _shopSkins = _ui.Column(col, 9f);
+            _shopSkins = ShopScrollList(col, 9f, out _shopSkinsView);
             foreach (var skin in Skins.Shop) BuildShopCosmeticRow(_shopSkins, skin.Name, skin.Color, skin.Price,
                 Skins.IsOwned(skin.Id), SaveData.GetSkin() == skin.Id, () => BuySkin(skin), skin.Id);
 
-            _shopVfx = _ui.Column(col, 9f);
+            _shopVfx = ShopScrollList(col, 9f, out _shopVfxView);
             foreach (var vfx in Vfx.All) BuildShopCosmeticRow(_shopVfx, vfx.Name, UIFactory.Hex("#B88CFF"), vfx.Price,
                 Vfx.IsOwned(vfx.Id), SaveData.GetVfx() == vfx.Id, () => BuyVfx(vfx), vfx: vfx);
 
@@ -1869,8 +1870,9 @@ namespace KnightsGauntlet.View
 
         private void SetShopTab(int tab)
         {
-            if (_shopSkins != null) _shopSkins.gameObject.SetActive(tab == 0);
-            if (_shopVfx != null) _shopVfx.gameObject.SetActive(tab == 1);
+            if (_shopSkinsView != null) _shopSkinsView.SetActive(tab == 0);
+            if (_shopVfxView != null) _shopVfxView.SetActive(tab == 1);
+            if (tab != _shopTab) ResetShopScroll(tab == 0 ? _shopSkins : tab == 1 ? _shopVfx : null);
             if (_shopPowerups != null) _shopPowerups.gameObject.SetActive(tab == 2);
             if (_tabShopSkins != null) UIFactory.StyleToggle(_tabShopSkins, tab == 0);
             if (_tabShopVfx != null) UIFactory.StyleToggle(_tabShopVfx, tab == 1);
@@ -2156,8 +2158,8 @@ namespace KnightsGauntlet.View
                 // what they're working toward. Falls back to the tinted glyph below.
                 if (!mystery && AddSkinKnight(btn.transform, s.Id, 60f, owned ? 1f : .28f))
                 {
-                    _ui.Label(cell, equipped == s.Id ? "Equipped" : s.Name, 12,
-                        equipped == s.Id ? UIFactory.Gold : (owned ? UIFactory.Text : UIFactory.Muted), FontStyles.Normal, 70);
+                    CustomTileLabel(cell, equipped == s.Id ? "Equipped" : s.Name,
+                        equipped == s.Id ? UIFactory.Gold : (owned ? UIFactory.Text : UIFactory.Muted));
                     continue;
                 }
                 // the knight glyph, tinted with the skin colour (dimmed if not owned);
@@ -2169,9 +2171,24 @@ namespace KnightsGauntlet.View
                 var grt = glyph.rectTransform;
                 grt.anchorMin = Vector2.zero; grt.anchorMax = Vector2.one; grt.offsetMin = Vector2.zero; grt.offsetMax = Vector2.zero;
                 glyph.alignment = TextAlignmentOptions.Center; glyph.raycastTarget = false;
-                _ui.Label(cell, equipped == s.Id ? "Equipped" : (mystery ? "???" : s.Name), 12,
-                    equipped == s.Id ? UIFactory.Gold : (owned ? UIFactory.Text : UIFactory.Muted), FontStyles.Normal, 70);
+                CustomTileLabel(cell, equipped == s.Id ? "Equipped" : (mystery ? "???" : s.Name),
+                    equipped == s.Id ? UIFactory.Gold : (owned ? UIFactory.Text : UIFactory.Muted));
             }
+        }
+
+        // A tile caption that is always one line at a fixed height, so a long name
+        // ("Stained Glass", "Golden Gilded") shrinks to fit instead of wrapping onto a
+        // second line and pushing its tile out of line with the rest of the row.
+        private void CustomTileLabel(Transform cell, string text, Color color)
+        {
+            var label = _ui.Label(cell, text, 12, color, FontStyles.Normal, 70);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 8f; label.fontSizeMax = 12f;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            var le = label.GetComponent<LayoutElement>();
+            if (le == null) le = label.gameObject.AddComponent<LayoutElement>();
+            le.minHeight = le.preferredHeight = 16f;
         }
         // A soft red radial glow, centered in the parent, sized `size`. Used behind the
         // near-black Nightfall knight so it reads on dark backgrounds.
@@ -2228,8 +2245,8 @@ namespace KnightsGauntlet.View
                     UIFactory.Stretch(lab.rectTransform);
                     lab.alignment = TextAlignmentOptions.Center; lab.raycastTarget = false;
                 }
-                _ui.Label(cell, equipped == v.Id ? "Equipped" : v.Name, 12,
-                    equipped == v.Id ? UIFactory.Gold : (owned ? UIFactory.Text : UIFactory.Muted), FontStyles.Normal, 70);
+                CustomTileLabel(cell, equipped == v.Id ? "Equipped" : v.Name,
+                    equipped == v.Id ? UIFactory.Gold : (owned ? UIFactory.Text : UIFactory.Muted));
             }
         }
         private void OnVfxTap(VfxInfo v, RectTransform swatch)

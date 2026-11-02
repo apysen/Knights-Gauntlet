@@ -13,6 +13,15 @@ namespace KnightsGauntlet.View
         public Color Color;
         public int Price;          // shop skins only
         public SkinSource Source;
+        public int Fx;             // shader finish (SkinFx), 0 = plain colour tint
+        public Color Glow;         // player glow colour; alpha 0 = use Color
+    }
+
+    // Shader finishes, mirrored by the KG_SKIN_* ids in PieceSkinFX.hlsl. They retexture
+    // whichever piece the player is, so they carry through every Battle transformation.
+    public static class SkinFx
+    {
+        public const int None = 0, StainedGlass = 1, Phantom = 2, Gilded = 3, Queensbane = 4, Nightfall = 5, Starforged = 6;
     }
 
     // Single source of truth for skin ids → colours, used by GetSkinTint, the
@@ -45,15 +54,21 @@ namespace KnightsGauntlet.View
             new SkinInfo { Id = "coral",  Name = "Coral",  Color = Hex("#FF7A5C"), Price = 5000, Source = SkinSource.Shop },
             new SkinInfo { Id = "indigo", Name = "Indigo", Color = Hex("#6C5CE7"), Price = 6000, Source = SkinSource.Shop },
             new SkinInfo { Id = "silver", Name = "Silver", Color = Hex("#C9D2E0"), Price = 7500, Source = SkinSource.Shop },
+            // Premium finishes: full retextures rather than colour tints.
+            new SkinInfo { Id = "stainedglass", Name = "Stained Glass", Color = Hex("#3F6BFF"), Glow = Hex("#FFC66B"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.StainedGlass },
+            new SkinInfo { Id = "phantom",      Name = "Phantom",       Color = Hex("#9FF3FF"), Glow = Hex("#7FF5FF"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Phantom },
+            new SkinInfo { Id = "gilded",       Name = "Golden Gilded", Color = Hex("#FFD36B"), Glow = Hex("#FFC94A"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Gilded },
+            new SkinInfo { Id = "queensbane",   Name = "Queensbane",    Color = Hex("#D9DEE6"), Glow = Hex("#FF3A2A"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Queensbane },
+            new SkinInfo { Id = "starforged",   Name = "Starforged",    Color = Hex("#7B5CFF"), Glow = Hex("#8A7CFF"), Price = 10000, Source = SkinSource.Shop, Fx = SkinFx.Starforged },
         };
 
         // Secret "Mastery" reward: a black knight with a red glowing eye. Unlocks only
         // when every Adventure level has a 3-star clear (see HasMasteredAllLevels), and is
-        // shown as a mystery (???) in Customization until then. Placeholder look: a near
-        // black tint plus a red glow (GlowOf). Drop the real black-knight-with-red-eye
-        // sprite into this skin's GameTheme slot (overrideSprite) to replace the placeholder.
+        // shown as a mystery (???) in Customization until then. Fully black armor with
+        // glowing red eyes, drawn by the Nightfall shader finish on every form.
         public static readonly SkinInfo Secret =
-            new SkinInfo { Id = "nightfall", Name = "Nightfall", Color = Hex("#141418"), Source = SkinSource.Mastery };
+            new SkinInfo { Id = "nightfall", Name = "Nightfall", Color = Hex("#141418"), Glow = Hex("#FF2A2A"),
+                Source = SkinSource.Mastery, Fx = SkinFx.Nightfall };
 
         public static IEnumerable<SkinInfo> All()
         {
@@ -72,9 +87,16 @@ namespace KnightsGauntlet.View
             return true;
         }
 
-        // The player's radial-glow colour: the skin tint, except the secret black knight
-        // whose eye glows red so it reads as more than a flat dark silhouette.
-        public static Color GlowOf(string id) => id == Secret.Id ? Hex("#FF2A2A") : ColorOf(id);
+        // The player's radial-glow colour: the skin tint, unless the skin names its own
+        // glow (the black Nightfall knight glows red, Stained Glass glows warm, ...).
+        public static Color GlowOf(string id)
+        {
+            var s = Find(id);
+            return s.Glow.a > 0f ? s.Glow : s.Color;
+        }
+
+        // Shader finish for this skin, 0 for plain colour skins.
+        public static int FxOf(string id) => string.IsNullOrEmpty(id) ? SkinFx.None : Find(id).Fx;
 
         public static SkinInfo Find(string id)
         {

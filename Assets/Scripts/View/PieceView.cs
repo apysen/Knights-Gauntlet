@@ -15,7 +15,7 @@ namespace KnightsGauntlet.View
     //   └─ Backing  (SpriteRenderer)         <- optional translucent square
     //   └─ Glyph    (TextMeshPro)            <- optional, for the no-sprite fallback
     [RequireComponent(typeof(SpriteRenderer))]
-    public class PieceView : MonoBehaviour
+    public partial class PieceView : MonoBehaviour
     {
         public SpriteRenderer spriteRenderer;
         public SpriteRenderer backing;   // optional
@@ -59,6 +59,10 @@ namespace KnightsGauntlet.View
         }
         private readonly Dictionary<string, CachedModel> _models = new Dictionary<string, CachedModel>();
         private MaterialPropertyBlock _accentProperties;
+        // Shop skin shader finish (Skins.FxOf) on this piece's model, and the pattern scale
+        // last sent to the shader (1 / transform scale, so patterns keep one size).
+        private int _skinFx;
+        private float _skinScaleSent;
         private bool _modelIsCeramic, _aCeramic;
         private bool _modelIsPorcelain, _aPorcelain;
         private static readonly Dictionary<EntityId, Material> ModelMaterials = new Dictionary<EntityId, Material>();
@@ -85,7 +89,7 @@ namespace KnightsGauntlet.View
         public float BaseDiameter => _aType == PieceType.Trap ? .64f : (_modelIsCeramic || _modelIsPorcelain) ? .68f : ReferenceHeight(_aType) * .45f;
 
         private void OnEnable() { if (!ActivePieces.Contains(this)) ActivePieces.Add(this); }
-        private void OnDisable() { ActivePieces.Remove(this); }
+        private void OnDisable() { ActivePieces.Remove(this); HideSkinTrail(); }
 
         // Soft projected pedestal shadows work with the project's 2D renderer.
         public static int WriteBoardShadows(Vector4[] destination)
@@ -191,6 +195,7 @@ namespace KnightsGauntlet.View
             _hopDuration = duration;
             _hopActive = true;
             _modelRoot.localPosition = _modelRestPosition + fromOffset;
+            SpawnSkinTrail(fromOffset);
         }
 
         private void LateUpdate()
@@ -198,6 +203,18 @@ namespace KnightsGauntlet.View
             if (UsesPixelKnight && Camera.main != null)
                 _pixelKnight.transform.rotation = Camera.main.transform.rotation;
             if (_modelRoot == null) return;
+            UpdateSkinTrail(Time.unscaledDeltaTime);
+            // Keep skin patterns one size if the piece is rescaled after Apply.
+            if (_skinFx != SkinFx.None && _modelRenderers != null && _accentProperties != null)
+            {
+                float scale = 1f / Mathf.Max(.0001f, transform.lossyScale.x);
+                if (!Mathf.Approximately(scale, _skinScaleSent))
+                {
+                    _skinScaleSent = scale;
+                    _accentProperties.SetFloat("_SkinScale", scale);
+                    foreach (var renderer in _modelRenderers) renderer.SetPropertyBlock(_accentProperties);
+                }
+            }
             Vector3 hop = Vector3.zero;
             bool wasHopping = _hopActive;
             if (_hopActive)
@@ -327,6 +344,8 @@ namespace KnightsGauntlet.View
             _pose = ComicPose.Idle;
 
             if (_pixelKnight != null) _pixelKnight.SetActive(false);
+            _skinFx = SkinFx.None;
+            HideSkinTrail();
             if (isPlayer && theme.comicStyle && PlayerPrefs.GetInt("kg_pixel_knight_preview", 0) != 0 &&
                 (type == PieceType.Knight || type == PieceType.Nightrider))
             {
@@ -354,10 +373,17 @@ namespace KnightsGauntlet.View
             if (theme.comicStyle && !forceSprite && ConfigureModel(type, boss, theme.ceramicPiecePrototype, theme.inkPorcelainPieces))
             {
                 var properties = _accentProperties ?? (_accentProperties = new MaterialPropertyBlock());
-                bool skinAccent = isPlayer && !string.IsNullOrEmpty(skinId) && skinId != "gold";
+                // Shop finishes (Stained Glass, Phantom, ...) retexture the whole piece
+                // in the shader, so they replace the colour accent.
+                _skinFx = isPlayer ? Skins.FxOf(skinId) : SkinFx.None;
+                bool skinAccent = isPlayer && !string.IsNullOrEmpty(skinId) && skinId != "gold" && _skinFx == SkinFx.None;
                 properties.SetFloat("_AccentStrength", skinAccent ? 1f : 0f);
                 var accent = skinAccent ? tint : Color.white;
                 properties.SetColor("_AccentColor", accent);
+                _skinScaleSent = 1f / Mathf.Max(.0001f, transform.lossyScale.x);
+                properties.SetFloat("_SkinFX", _skinFx);
+                properties.SetFloat("_SkinFade", 1f);
+                properties.SetFloat("_SkinScale", _skinScaleSent);
                 foreach (var renderer in _modelRenderers) renderer.SetPropertyBlock(properties);
                 spriteRenderer.enabled = false;
                 if (glyphLabel != null) glyphLabel.enabled = false;
@@ -602,6 +628,7 @@ namespace KnightsGauntlet.View
                     else if (ceramic)
                     {
                         replacement.SetFloat("_SkinRegion", source.name.Contains("UnglazedFoot") || source.name.Contains("Eye") ? 0 : 1);
+                        replacement.SetFloat("_SkinEye", source.name.Contains("Eye") ? 1f : 0f);
                         Color clay = source.name.Contains("UnglazedFoot") ? new Color32(0xD8,0xCD,0xB3,255) :
                             source.name.Contains("Eye") ? new Color32(0x26,0x34,0x48,255) :
                             modelName == "knight" ? new Color32(0x50,0x79,0xB6,255) :
