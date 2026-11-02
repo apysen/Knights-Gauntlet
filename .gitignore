@@ -87,6 +87,9 @@ desktop.ini
 # Unity Version Control (Plastic) local workspace metadata
 .plastic/
 
+# Generated iOS Xcode export (Unity build output, rebuilt on every iOS build)
+/ios-export/
+
 # BEGIN unity vcs doctor
 # Unity ignore rules kept current by `unity vcs doctor --fix`. Managed block: edits here are overwritten. To opt out of a rule, negate it below this block (for example `!*.log`).
 *.blend1
