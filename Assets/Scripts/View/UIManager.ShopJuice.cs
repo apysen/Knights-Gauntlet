@@ -65,7 +65,8 @@ namespace KnightsGauntlet.View
             bool runOn = _runOptions != null && _runOptions.activeSelf && !LegacyStyle;
             bool customOn = _custom != null && _custom.activeSelf && !LegacyStyle;
             bool settingsOn = _settings != null && _settings.activeSelf && !LegacyStyle;
-            if (!marketOn && !treasuryOn && !menuOn && !runOn && !customOn && !settingsOn) return;
+            bool levelsOn = _levelSelect != null && _levelSelect.activeSelf && !LegacyStyle;
+            if (!marketOn && !treasuryOn && !menuOn && !runOn && !customOn && !settingsOn && !levelsOn) return;
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _shopTime += dt;
             bool reduced = SaveData.IsReducedEffects();

@@ -132,6 +132,7 @@ namespace KnightsGauntlet.View
         private LevelData _advNextLevel;
         private GameObject _advResult;
         private GameObject _advIntro, _levelSelect;
+        private RectTransform _lsNextBtn;
         private RectTransform _levelRow;
         private TMP_Text _levelPageLabel;
         private string[] _advWorlds;
@@ -189,6 +190,7 @@ namespace KnightsGauntlet.View
             UpdateRunOptionsJuice();
             UpdateCustomJuice();
             UpdateSettingsJuice();
+            UpdateLevelSelectJuice();
             if (_hud != null && _hud.activeSelf && _scoreText != null && _gm.Score != _lastScoreShown)
             {
                 _lastScoreShown = _gm.Score;
@@ -1380,6 +1382,21 @@ namespace KnightsGauntlet.View
             var stars = new List<RectTransform>();
             for (int i = 0; i < 3; i++)
             {
+                if (!LegacyStyle)
+                {
+                    // Modern look: the shared 3D gold star (StarIcon3D), a touch larger than
+                    // the slot since the render leaves a margin around the points.
+                    var sgo = new GameObject(i < earned ? "Star" : "StarDim", typeof(RectTransform), typeof(RawImage));
+                    sgo.transform.SetParent(row, false);
+                    var sle = sgo.AddComponent<LayoutElement>(); sle.preferredWidth = size; sle.preferredHeight = size;
+                    ((RectTransform)sgo.transform).sizeDelta = new Vector2(size, size);
+                    if (StarIcon3D.Apply(sgo.GetComponent<RawImage>(), i < earned))
+                    {
+                        stars.Add((RectTransform)sgo.transform);
+                        continue;
+                    }
+                    Destroy(sgo); // stage failed: fall back to the flat star below
+                }
                 var go = new GameObject("Star", typeof(RectTransform), typeof(Image));
                 go.transform.SetParent(row, false);
                 var le = go.AddComponent<LayoutElement>(); le.preferredWidth = size; le.preferredHeight = size;
@@ -1590,12 +1607,12 @@ namespace KnightsGauntlet.View
             _levelSelect = canvas.gameObject;
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
             var col = _ui.Column(screen.transform, 16f);
-            _ui.Label(col, "Adventure", 30, UIFactory.Gold, FontStyles.Normal);
+            var lsTitle = _ui.Label(col, "Adventure", 30, UIFactory.Gold, FontStyles.Normal);
             _levelPageLabel = _ui.Label(col, "", 16, UIFactory.Muted);
             _levelRow = _ui.Column(col, 10f); // holds two rows of level icons (1-3 / 4-6)
             var nav = _ui.Row(col, 12f);
             _ui.Button(nav, "\u2039 Prev", () => AdvPageFlip(-1), UIFactory.Panel, UIFactory.Gold, 120, 44, 15);
-            _ui.Button(nav, "Next \u203A", () => AdvPageFlip(1), UIFactory.Panel, UIFactory.Gold, 120, 44, 15);
+            _lsNextBtn = (RectTransform)_ui.Button(nav, "Next \u203A", () => AdvPageFlip(1), UIFactory.Panel, UIFactory.Gold, 120, 44, 15).transform;
             _ui.Button(col, "Back", () => ShowMenu(), UIFactory.Panel, UIFactory.Gold, 200, 46, 15);
 
             var worlds = new List<string>();
@@ -1605,6 +1622,7 @@ namespace KnightsGauntlet.View
                 if (!worlds.Contains(w)) worlds.Add(w);
             }
             _advWorlds = worlds.ToArray();
+            SetupLevelSelectJuice(screen.transform, lsTitle);
             _levelSelect.SetActive(false);
         }
         public void ShowLevelSelect() { HideAll(); RenderLevelSelect(); _levelSelect.SetActive(true); _gm.SetBanner(true); }
@@ -1616,10 +1634,12 @@ namespace KnightsGauntlet.View
             if (next >= UnlockedWorldCount())
             {
                 ShowToast("Earn a star on every level here to unlock the next world.");
+                LevelSelectDenied(_lsNextBtn);
                 return;
             }
+            if (next < 0) return;
             _advPage = next;
-            RenderLevelSelect();
+            RenderLevelSelect(d);
         }
         // Highest world available to play. All seven worlds now ship; lower this to gate
         // later worlds again (e.g. for a closed beta). Worlds still unlock strictly in
@@ -1665,7 +1685,7 @@ namespace KnightsGauntlet.View
             }
             return Mathf.Max(1, count);
         }
-        private void RenderLevelSelect()
+        private void RenderLevelSelect(int flipDir = 0)
         {
             if (_advWorlds == null || _advWorlds.Length == 0) return;
             int unlockedWorlds = UnlockedWorldCount();
@@ -1682,11 +1702,14 @@ namespace KnightsGauntlet.View
                 if (lvl.Id.Split('-')[0] == world) levels.Add(lvl);
 
             RectTransform gridRow = null;
+            LevelData nextToPlay = null; // first unlocked level without a star: it gets a glow
             for (int i = 0; i < levels.Count; i++)
             {
                 if (i % 3 == 0) gridRow = _ui.Row(_levelRow, 14f);
                 var lvl = levels[i];
                 var cell = _ui.Column(gridRow, 6f);
+                cell.name = "Lvl_" + lvl.Id;
+                if (nextToPlay == null && IsLevelUnlocked(lvl) && SaveData.GetStars(lvl.Id) == 0) nextToPlay = lvl;
                 if (IsLevelUnlocked(lvl))
                 {
                     // The queen-boss level shows "<world>-♔" (crown glyph, like the leaderboard).
@@ -1697,12 +1720,14 @@ namespace KnightsGauntlet.View
                 else
                 {
                     // Locked: a dimmed, non-interactive tile showing a padlock.
-                    var btn = _ui.Button(cell, "", () => ShowToast("Clear the previous level to unlock this one."),
+                    var lockedCell = cell;
+                    var btn = _ui.Button(cell, "", () => { ShowToast("Clear the previous level to unlock this one."); LevelSelectDenied(lockedCell); },
                         new Color(0.12f, 0.13f, 0.20f, 1f), UIFactory.Muted, 84, 84, 22);
                     AddIconChild(btn.gameObject, UISprites.Lock(), UIFactory.Muted, 34);
                     StarRow(cell, 0, 22f); // spacer so locked/unlocked tiles line up
                 }
             }
+            LevelSelectRendered(flipDir, nextToPlay);
         }
 
         // ── Direct-purchase marketplace ──────────────────────────────────────
