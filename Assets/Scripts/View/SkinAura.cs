@@ -69,6 +69,10 @@ namespace KnightsGauntlet.View
             return rt;
         }
 
+        // Fades the whole aura: every bit's colour is multiplied by this. The menu
+        // knight's tap burst drives it in and out; the showcase leaves it at 1.
+        public float Alpha { get => _alpha; set => _alpha = value; }
+
         private void OnDestroy()
         {
             if (_front != null) Destroy(_front.gameObject);
@@ -176,7 +180,7 @@ namespace KnightsGauntlet.View
             var raw = (RawImage)b.g;
             if (_knight != null) { raw.texture = _knight.texture; raw.uvRect = _knight.uvRect; }
             float u = Mathf.Repeat(t / 1.5f + b.i / 3f, 1f);
-            float k = _knight != null ? _knight.rectTransform.sizeDelta.x / _size : .9f;
+            float k = _knight != null ? _knight.rectTransform.rect.width / _size : .9f;
             bool night = _fx == SkinFx.Nightfall;
             float a = (1f - u) * (night ? .7f : .55f);
             if (_knight != null) a *= Mathf.Max(_knight.color.a, .5f); // locked knights are faded

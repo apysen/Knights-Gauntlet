@@ -25,6 +25,13 @@ namespace KnightsGauntlet.View
         private PressSquash _menuPlaySquash;
         private BalanceView _menuBalance;
         private float _menuTime, _knightPunch, _menuLastBalance = -1f;
+        private SkinAura _menuKnightAura;
+        private float _menuAuraT;
+        // Tap burst envelope for the equipped skin's aura, in seconds.
+        private const float MenuAuraIn = .22f, MenuAuraHold = 3.2f, MenuAuraOut = .8f;
+        // Spread of the aura around the 158-unit portrait, and how big its bits are
+        // within that spread. Same proportions as the Customization showcase.
+        private const float MenuAuraSize = 256f, MenuAuraBitScale = .58f;
         private bool _menuEntrancePending = true;
         private static Texture2D _checkerTex;
 
@@ -134,8 +141,40 @@ namespace KnightsGauntlet.View
                 FlashAt(_menuFx, _menuHero.position, new Color(1f, .85f, .45f, .6f), 190f);
             }
             _spinBoost = Mathf.Max(_spinBoost, .6f);
+            ShowMenuKnightAura();
             Haptics.Play(Haptics.Purchase, Haptics.PurchaseAmp);
             OnKnightTapAudio();
+        }
+
+        // Plays the equipped skin's trail around the menu portrait for a few seconds, so
+        // tapping the knight shows off what a premium skin does. Plain colour skins have
+        // no trail and SkinAura.Attach returns null, so the tap keeps just its sparks.
+        // Re-tapping restarts the burst rather than stacking a second aura.
+        private void ShowMenuKnightAura()
+        {
+            if (_menuHero == null || _menuKnightArt == null) return;
+            ClearMenuKnightAura();
+            _menuKnightAura = SkinAura.Attach(_menuHero, _menuKnightArt.GetComponent<RawImage>(),
+                SaveData.GetSkin(), MenuAuraSize, 0f, MenuAuraBitScale);
+            _menuAuraT = 0f;
+        }
+
+        private void ClearMenuKnightAura()
+        {
+            if (_menuKnightAura != null) Destroy(_menuKnightAura.gameObject);
+            _menuKnightAura = null;
+        }
+
+        // Fades the burst in, holds, fades it out, then drops it.
+        private void UpdateMenuKnightAura(float dt)
+        {
+            if (_menuKnightAura == null) return;
+            _menuAuraT += dt;
+            if (_menuAuraT >= MenuAuraIn + MenuAuraHold + MenuAuraOut) { ClearMenuKnightAura(); return; }
+            _menuKnightAura.Alpha =
+                _menuAuraT < MenuAuraIn ? _menuAuraT / MenuAuraIn :
+                _menuAuraT < MenuAuraIn + MenuAuraHold ? 1f :
+                1f - (_menuAuraT - MenuAuraIn - MenuAuraHold) / MenuAuraOut;
         }
 
         // Audio hook points for the menu (implemented by the audio pass).
@@ -176,14 +215,17 @@ namespace KnightsGauntlet.View
             if (_menuRays != null) _menuRays.gameObject.SetActive(false);
             if (_menuKnightArt != null) { _menuKnightArt.localScale = Vector3.one; _menuKnightArt.localRotation = Quaternion.identity; }
             if (_menuPlayRt != null) _menuPlayRt.localScale = Vector3.one;
+            // The reveal reparents the hero; an aura hanging off it would ride along.
+            ClearMenuKnightAura();
         }
 
         private void UpdateMenuJuice()
         {
-            if (_menu == null || !_menu.activeSelf) return;
+            if (_menu == null || !_menu.activeSelf) { ClearMenuKnightAura(); return; }
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
             _menuTime += dt;
-            if (_menuReveal != null) return; // the Play reveal is animating the knight
+            if (_menuReveal != null) { ClearMenuKnightAura(); return; } // the Play reveal is animating the knight
+            UpdateMenuKnightAura(dt);
             bool reduced = SaveData.IsReducedEffects();
 
             // 3. The chessboard drifts diagonally.
