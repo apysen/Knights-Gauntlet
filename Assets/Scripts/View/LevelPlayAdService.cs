@@ -50,14 +50,6 @@ namespace KnightsGauntlet.View
 
             ApplyPrivacy();            // COPPA/GDPR flags, set before Init
             RequestTrackingIfNeeded(); // iOS App Tracking Transparency (no-op elsewhere)
-
-            // The mediation Test Suite refuses to launch unless this flag is set BEFORE the
-            // SDK initializes - it is the only on-device way to see each network's adapter
-            // status and test-load its instances. Safe to set here because the package's
-            // own auto-init is disabled (LevelPlayMediationSettings.EnableIronsourceSDKInitAPI
-            // is off), so the Init below is the first and only one.
-            // TODO: drop this and re-gate LaunchTestSuite before shipping to production.
-            LevelPlay.SetMetaData("is_test_suite", "enable");
             LevelPlay.OnInitSuccess += _ => _pump.Post(OnReady);
             LevelPlay.OnInitFailed  += err => _pump.Post(() => Debug.LogWarning("[Ads] LevelPlay init failed: " + err));
             Debug.Log("[Ads] LevelPlay init starting (app key " + _appKey + ").");

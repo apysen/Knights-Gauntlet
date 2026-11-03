@@ -82,11 +82,7 @@ namespace KnightsGauntlet.View
             SettingAction(help, "Tutorials", ShowTutorialPick);
             SettingAction(help, "Achievements", ShowAchievements);
             SettingAction(help, "Report a Bug", ShowBugReport);
-            // Reachable in release builds while we diagnose banner fill: the Test Suite
-            // reports each network's adapter status and test-loads its instances, which is
-            // the only way to tell a missing adapter from genuine no-fill on device.
-            // Re-gate behind Debug.isDebugBuild before shipping to production.
-            SettingAction(help, "Ad Test Suite", () => _gm.LaunchAdTestSuite());
+            if (Debug.isDebugBuild) SettingAction(help, "Ad Test Suite", () => _gm.LaunchAdTestSuite());
             SetupSettingsJuice(content);
         }
 
