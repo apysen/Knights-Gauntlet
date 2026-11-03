@@ -51,6 +51,9 @@ All clips below were processed with ffmpeg before import: downmixed to mono, lea
 | Menu Entrance Whoosh.wav | MenuEntrance (main menu entrance swell) | | | | synthesized in `build_warhorn.py` (swept band noise, reverb), no recording |
 | Menu Title Tinks.wav | MenuTitleTinks (one tink per 3D title letter) | | | | synthesized in `build_warhorn.py` (inharmonic sine partials on a D minor pentatonic), no recording |
 | Knight Clank 1-3.wav | KnightTap (tapping the menu knight, round robin) | | | | synthesized in `build_warhorn.py` (inharmonic plate partials, noise click, low body), no recording |
+| UI Tap 1-4.wav | TabSelect (default click of every button, plus the difficulty, leaderboard and customization tabs; round robin) | | | | synthesized in `MusicBuild/build_ui_clicks.py` (fast-decaying wood modes, noise contact, low body, faint brass glint), no recording |
+| Page Turn 1-3.wav | PageTurn (How to Play next and previous; round robin) | | | | synthesized in `build_ui_clicks.py` (band-noise parchment swish, crinkle clicks, low flap), no recording |
+| Play Select 1-2.wav | PlaySelect (Play button, picking an adventure level; round robin) | | | | synthesized in `build_ui_clicks.py` (low wood double knock, small bell partials on a rising D-A fifth), no recording |
 
 ## Processing
 

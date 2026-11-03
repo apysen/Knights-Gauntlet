@@ -150,7 +150,7 @@ namespace KnightsGauntlet.View
         // The pixel argument selects the themed button sprite; false uses
         // the plain panel for compact icon and customization cells.
         // clickSfx: the sound played when the button is pressed. Defaults to the UI
-        // "click" (Cursor 1) so every button is audible; pass a different Sfx for
+        // click (UI Tap, a soft wooden tock) so every button is audible; pass a different Sfx for
         // special buttons (Play, adventure level, page turns) or null for silence.
         public Button Button(Transform parent, string text, Action onClick,
                              Color? fill = null, Color? textColor = null,

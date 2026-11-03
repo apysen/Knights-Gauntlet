@@ -116,6 +116,10 @@ namespace KnightsGauntlet.View
             { Sfx.MenuEntrance,    "SFX/Menu Entrance Whoosh" },
             { Sfx.MenuTitleTinks,  "SFX/Menu Title Tinks" },
             { Sfx.KnightTap,       "SFX/Knight Clank" },    // Knight Clank 1-3, round robin
+            // UI clicks (synthesized, MusicBuild/build_ui_clicks.py), round robin on the UI voice.
+            { Sfx.TabSelect,       "SFX/UI Tap" },          // UI Tap 1-4: every button and tab
+            { Sfx.PageTurn,        "SFX/Page Turn" },       // Page Turn 1-3: How to Play pages
+            { Sfx.PlaySelect,      "SFX/Play Select" },     // Play Select 1-2: Play, level pick
         };
 
         // Per-sound trim (dB) on top of the file's own level, plus a minimum gap so a
@@ -169,15 +173,10 @@ namespace KnightsGauntlet.View
             set { PlayerPrefs.SetFloat("kg_sfx_vol", Mathf.Clamp(value, 0f, MaxSfxVolume)); PlayerPrefs.Save(); }
         }
 
-        // Resources path for each sound (no file extension). Drop the matching audio
-        // files into Assets/Resources/SFX/ with exactly these names. Two events reuse
-        // the same base pack family but different variants, so each has its own file.
+        // Single clips (Resources path, no extension) for sounds without a bank above.
         private static readonly Dictionary<Sfx, string> Files = new Dictionary<Sfx, string>
         {
-            { Sfx.PlaySelect,      "SFX/JDSherbert - Pixel UI SFX Pack - Select 5 (Square)" },
             { Sfx.PieceCapture,    "SFX/Capture Slash" },
-            { Sfx.TabSelect,       "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 1 (Square)" },
-            { Sfx.PageTurn,        "SFX/JDSherbert - Pixel UI SFX Pack - Cursor 12 (Square)" },
         };
 
         // Global mute, backed by a pref so a future Settings toggle can flip it.
