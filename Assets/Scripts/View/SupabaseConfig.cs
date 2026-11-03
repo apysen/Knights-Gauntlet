@@ -2,12 +2,12 @@ using UnityEngine;
 
 namespace KnightsGauntlet.View
 {
-    // Holds the Supabase URL + anon key OUTSIDE any committed script or scene, so
-    // the file can be gitignored. Create the asset at
+    // Holds the Supabase URL + publishable key in
     //   Assets/Resources/SupabaseConfig.asset
-    // (Create > Knight's Gauntlet > Supabase Config), fill it in, then gitignore
-    // it. A fresh clone without this file just runs with the online leaderboard
-    // disabled (personal scores still work).
+    // (Create > Knight's Gauntlet > Supabase Config). The asset IS committed: the iOS
+    // build is made on a separate Mac from the repo, and without this file that build
+    // silently runs with the online leaderboard off. The key is public by design (it
+    // ships inside every build anyway); the data is protected by Row Level Security.
     [CreateAssetMenu(fileName = "SupabaseConfig", menuName = "Knight's Gauntlet/Supabase Config")]
     public class SupabaseConfig : ScriptableObject
     {
