@@ -32,7 +32,7 @@ namespace KnightsGauntlet.View
         public static string Badge(int place)
         {
             var p = For(place);
-            string s = "+" + p.Shillings;
+            string s = "+" + UIFactory.Number(p.Shillings);
             if (p.Powerups > 0)
                 s += "\n<size=65%><color=#8A8FA3>+" + p.Powerups + (p.Powerups == 1 ? " powerup" : " powerups") + "</color></size>";
             return s;

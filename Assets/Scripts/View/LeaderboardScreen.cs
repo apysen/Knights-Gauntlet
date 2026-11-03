@@ -310,15 +310,16 @@ namespace KnightsGauntlet.View
                 AnchorLeft(crown.rectTransform, LeftPad, 30);
             }
 
+            // Row text uses the same font as the buttons (UIFactory.BodyFont).
             // rank + name, stretched between gutters, left-aligned
-            var name = Glyph(go.transform, rank + ". " + row.name, 17, rowColor, _ui.Font,
+            var name = Glyph(go.transform, rank + ". " + row.name, 17, rowColor, UIFactory.BodyFont(),
                              TextAlignmentOptions.Left, top ? FontStyles.Normal : FontStyles.Normal);
             var nrt = name.rectTransform;
             nrt.anchorMin = new Vector2(0, 0); nrt.anchorMax = new Vector2(1, 1);
             nrt.offsetMin = new Vector2(NameLeft, 0); nrt.offsetMax = new Vector2(-(NameRight + shift), 0);
 
             // score, anchored from the right
-            var score = Glyph(go.transform, row.score.ToString(), 20, rowColor, _ui.Font,
+            var score = Glyph(go.transform, UIFactory.Number(row.score), 20, rowColor, UIFactory.BodyFont(),
                               TextAlignmentOptions.Right, FontStyles.Normal);
             AnchorRight(score.rectTransform, ScoreFromRight + shift, ScoreW);
 
@@ -366,7 +367,7 @@ namespace KnightsGauntlet.View
             // daily reward badge, far right
             if (!string.IsNullOrEmpty(reward))
             {
-                var rw = Glyph(go.transform, reward, 15, UIFactory.Gold, _ui.Font,
+                var rw = Glyph(go.transform, reward, 15, UIFactory.Gold, UIFactory.BodyFont(),
                                TextAlignmentOptions.Right, FontStyles.Normal);
                 AnchorRight(rw.rectTransform, 8f, RewardW);
             }

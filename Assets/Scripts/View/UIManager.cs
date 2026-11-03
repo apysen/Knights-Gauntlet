@@ -1657,7 +1657,7 @@ namespace KnightsGauntlet.View
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
             AddShopMotes(screen.transform, 14);
             var col = _ui.Column(screen.transform, 10f);
-            _ui.Label(col, "SHOP", 30, UIFactory.Gold, FontStyles.Normal);
+            _ui.Label(col, "SHOP", 30, UIFactory.Gold, FontStyles.Normal).font = UIFactory.BodyFont(); // button font
 
             // Wallet pill: the spinning shilling, the balance (tweens as you spend) and a
             // gold + that opens the Treasury.
@@ -1854,7 +1854,7 @@ namespace KnightsGauntlet.View
             var screen = _ui.Screen(canvas.transform, UIFactory.Bg);
             AddShopMotes(screen.transform, 22);
             var col = _ui.Column(screen.transform, 8f);
-            _ui.Label(col, "TREASURY", 30, UIFactory.Gold, FontStyles.Normal);
+            _ui.Label(col, "TREASURY", 30, UIFactory.Gold, FontStyles.Normal).font = UIFactory.BodyFont(); // button font
 
             // Hero: a big shilling over slowly turning rays. Flick it to spin it.
             var hero = new GameObject("Hero", typeof(RectTransform), typeof(LayoutElement));
@@ -1872,6 +1872,7 @@ namespace KnightsGauntlet.View
             _treasuryHeroCoin = heroCoin.rectTransform;
 
             _shillingsShopBalance = _ui.Label(col, "", 34, UIFactory.Gold, FontStyles.Normal, 300);
+            _shillingsShopBalance.font = UIFactory.BodyFont(); // button font, like the title
             _treasuryBalance = TrackBalance(_shillingsShopBalance, _shillingsShopBalance.rectTransform);
             _ui.Label(col, "SHILLINGS", 12, UIFactory.Muted, FontStyles.Normal, 300).characterSpacing = 4f;
             if (_gm.Iap is StubIapService)

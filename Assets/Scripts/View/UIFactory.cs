@@ -49,6 +49,10 @@ namespace KnightsGauntlet.View
         public Sprite ButtonBg() => ButtonSprite != null ? ButtonSprite : Fill();
 
         // Explicit theme font or the bundled display face.
+        // 1234567 -> "1,234,567". Invariant culture so it is always a comma, whatever the
+        // device's region (some locales would print "1.234.567" or "1 234 567").
+        public static string Number(long n) => n.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture);
+
         public TMP_FontAsset ResolveFont() => Font != null ? Font : ComicFont();
 
         // Smooth chess glyphs for small UI symbols and missing custom sprites.

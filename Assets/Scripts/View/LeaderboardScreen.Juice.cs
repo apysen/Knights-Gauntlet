@@ -35,7 +35,8 @@ namespace KnightsGauntlet.View
         private void BuildTitle(Transform col)
         {
             _titleIcon = null;
-            if (!Juicy) { _ui.Label(col, "Leaderboard", 30, UIFactory.Gold, FontStyles.Normal); return; }
+            // The title uses the button font (UIFactory.BodyFont), like the rest of this screen.
+            if (!Juicy) { _ui.Label(col, "Leaderboard", 30, UIFactory.Gold, FontStyles.Normal).font = UIFactory.BodyFont(); return; }
             var row = _ui.Row(col, 6f);
             var slot = new GameObject("TrophySlot", typeof(RectTransform), typeof(LayoutElement));
             slot.transform.SetParent(row, false);
@@ -46,6 +47,7 @@ namespace KnightsGauntlet.View
             if (icon.GetComponent<PowerupModelIcon>().InitializeModel("IconModels/NavScores")) _titleIcon = (RectTransform)slot.transform;
             else Destroy(slot);
             var title = _ui.Label(row, "Leaderboard", 30, UIFactory.Gold, FontStyles.Normal);
+            title.font = UIFactory.BodyFont(); // before measuring its width below
             // Fit the label to its text so the trophy sits right beside it; nudge the row
             // left by half the trophy so the words stay centred on screen.
             var tle = title.GetComponent<LayoutElement>();
@@ -155,7 +157,7 @@ namespace KnightsGauntlet.View
                 var tag = new GameObject("You", typeof(RectTransform), typeof(TextMeshProUGUI));
                 tag.transform.SetParent(body, false);
                 var t = tag.GetComponent<TextMeshProUGUI>();
-                if (_ui.Font) t.font = _ui.Font;
+                t.font = UIFactory.BodyFont();
                 t.text = "YOU"; t.fontSize = 10f; t.color = UIFactory.Gold; t.characterSpacing = 3f;
                 t.alignment = TextAlignmentOptions.Left; t.raycastTarget = false; t.textWrappingMode = TextWrappingModes.NoWrap;
                 var trt = t.rectTransform;
@@ -251,7 +253,7 @@ namespace KnightsGauntlet.View
                 {
                     float c = reduced ? 1f : Mathf.Clamp01((_rowsTime - a.delay - .1f) / .6f);
                     int v = Mathf.RoundToInt(a.target * (1f - Mathf.Pow(1f - c, 3f)));
-                    if (v != a.shown) { a.shown = v; a.score.text = v.ToString(); }
+                    if (v != a.shown) { a.shown = v; a.score.text = UIFactory.Number(v); }
                 }
                 if (!a.landed && u >= 1f)
                 {
