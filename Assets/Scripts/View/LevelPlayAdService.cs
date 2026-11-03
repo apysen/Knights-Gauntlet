@@ -23,6 +23,7 @@ namespace KnightsGauntlet.View
         private LevelPlayBannerAd _banner;
         private LevelPlayRewardedAd _rewarded;
         private bool _wantBanner, _bannerLoaded, _bannerRefreshPaused;
+        private bool _setupDone;
         private Action _onReward, _onUnavailable;
         private Pump _pump;
 
@@ -82,8 +83,19 @@ namespace KnightsGauntlet.View
         }
 
         // Runs on the main thread (posted by the pump).
+        //
+        // Guarded because OnInitSuccess must only ever drive setup once. It fired twice per
+        // launch while LevelPlayMediationSettings.EnableIronsourceSDKInitAPI was on, because
+        // LevelPlayAutoInitializer called LevelPlay.Init as well as we did and each
+        // completion raised the event - which built a second LevelPlayBannerAd for the same
+        // ad unit, overwrote _banner with it, and left the first object loading and
+        // auto-refreshing with nothing able to show or hide it. That setting is now off, so
+        // this is belt-and-braces against the event ever repeating.
         private void OnReady()
         {
+            if (_setupDone) return;
+            _setupDone = true;
+
             Debug.Log("[Ads] LevelPlay initialized.");
             // Rewarded first: it is the format players actively ask for, so nothing in the
             // banner setup below may ever get in its way.

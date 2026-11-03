@@ -77,13 +77,14 @@ namespace KnightsGauntlet.View
         private LeaderboardScreen _lbScreen;
         private StageCurtains _curtains;   // tablet side bars; part at the start of a run
         private AchievementTracker _ach;
-        // The iOS TestFlight build currently crashes inside Google's AdMob SDK during
-        // LevelPlay startup because this project has no AdMob application ID configured
-        // for the iOS Info.plist. Keep ads disabled on iOS until that ID is supplied and
-        // injected at build time. Android continues using the configured LevelPlay setup.
-#if UNITY_IOS
-        private IAdService _ads = new NoOpAdService();
-#else
+        // LevelPlay (ironSource) mediation on both platforms; LevelPlayAdService selects the
+        // per-platform app key and ad unit IDs itself. iOS was pinned to NoOpAdService while
+        // Google's AdMob SDK crashed at LevelPlay startup with no AdMob application ID in the
+        // Info.plist; IosBuildPostProcess now writes GADApplicationIdentifier on every build,
+        // so iOS runs the real service too.
+        //
+        // The banner never shows during play: UIManager.HideAll drops it on every screen
+        // switch and only the non-gameplay screens turn it back on (see SetBanner below).
         private IAdService _ads = new LevelPlayAdService(
             androidAppKey:     "271f04335",
             iosAppKey:         "271f07cbd",
@@ -91,7 +92,6 @@ namespace KnightsGauntlet.View
             iosBannerId:       "a084z73cm679qdqn",
             androidRewardedId: "kgkds0l2ryp0s481",
             iosRewardedId:     "x0cmcsjtmgf87urv");
-#endif
 
         // In-app purchases (consumable shilling bundles). Same pattern as ads: the game
         // talks only to IIapService. LIVE via UnityIapService against the real store
@@ -532,7 +532,8 @@ namespace KnightsGauntlet.View
         // and other non-gameplay screens (leaderboard, level select, settings, shop,
         // customize, achievements, tutorials, adventure result/fail, game
         // over) and is hidden during actual play. UIManager.HideAll turns it off; each
-        // non-gameplay Show* turns it back on. NoOp ad service makes this a no-op.
+        // non-gameplay Show* turns it back on. ShowHud (the play screen) goes through
+        // HideAll and never turns it back on, so no banner can sit over the board.
         public void SetBanner(bool show) { if (show) _ads.ShowBanner(); else _ads.HideBanner(); }
         public void LaunchAdTestSuite() => _ads.LaunchTestSuite();
 
