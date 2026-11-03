@@ -1420,7 +1420,6 @@ namespace KnightsGauntlet.View
             _view.DivineAura = auraState ? _divineRemaining : 0f;
             _view.FuryAura = auraState ? _furyRemaining : 0f;
             _view.Sync(_sim, showHints, Time.deltaTime, bestMove, advPath, true);
-            _ui.SetEnemyBar(_sim.Mode == GameMode.Battle && _state == State.Playing, _sim.EnemyMoveProgress);
         }
 
         private void HandleInput()

@@ -82,15 +82,6 @@ namespace KnightsGauntlet.View
             _furyBtn = MakePowerupButton(_hudFooter, Powerups.Berserker, out _furyBtnRt, out _furyCount, out _furyRadial);
             CompactPowerup(_divineBtn, _divineCount); CompactPowerup(_chronoBtn, _chronoCount); CompactPowerup(_pathBtn, _pathCount);
             CompactPowerup(_hornBtn, _hornCount); CompactPowerup(_furyBtn, _furyCount);
-            _enemyBarRt = HudRect(_hudFooter, "EnemyTimer", 0, 6, 300, 52);
-            _enemyBarRoot = _enemyBarRt.gameObject;
-            var timerLabel = HudText(_enemyBarRt, "TimerCaption", "NEXT ENEMY MOVE", 12, UIFactory.Muted, 0, 0, 300, 22);
-            StretchHudText(timerLabel);
-            var timerTrack = HudSurface(_enemyBarRt, "TimerTrack", UIFactory.Hex("#26354A"));
-            HudPlace(timerTrack, 0, 34, 300, 6); timerTrack.anchorMax = new Vector2(1, 1); timerTrack.sizeDelta = new Vector2(0, 6);
-            _enemyBarFill = HudSurface(timerTrack, "TimerFill", UIFactory.Gold);
-            UIFactory.Stretch(_enemyBarFill); _enemyBarFill.anchorMax = new Vector2(0, 1);
-            _enemyBarRoot.SetActive(false);
             BuildShillingCounter();
             BuildModernTallScroll();
             LayoutModernHud();
@@ -140,11 +131,11 @@ namespace KnightsGauntlet.View
             var outline = button.GetComponent<Outline>(); if (outline != null) outline.enabled = false;
             var fillet = button.transform.Find("GoldFillet"); if (fillet != null) fillet.gameObject.SetActive(false);
             var icon = (RectTransform)button.transform.Find("Icon");
-            if (icon != null) { icon.sizeDelta = new Vector2(32, 32); icon.anchoredPosition = new Vector2(-14, 0); }
-            count.font = UIFactory.BodyFont(); count.fontSize = 15;
+            if (icon != null) { icon.sizeDelta = new Vector2(40, 40); icon.anchoredPosition = new Vector2(-18, 0); }
+            count.font = UIFactory.BodyFont(); count.fontSize = 18;
             count.alignment = TextAlignmentOptions.Center;
             count.rectTransform.anchorMin = count.rectTransform.anchorMax = count.rectTransform.pivot = new Vector2(.5f, .5f);
-            count.rectTransform.sizeDelta = new Vector2(30, 28); count.rectTransform.anchoredPosition = new Vector2(18, 0);
+            count.rectTransform.sizeDelta = new Vector2(34, 32); count.rectTransform.anchoredPosition = new Vector2(23, 0);
         }
         private void BuildModernBoss(Transform parent)
         {
@@ -213,7 +204,7 @@ namespace KnightsGauntlet.View
             if (_tallScrollbar != null) ((RectTransform)_tallScrollbar.transform).anchoredPosition = new Vector2(-4 - sideBars * .5f, 0);
             _hudHeader.sizeDelta = new Vector2(_hudContentWidth, 104);
             _hudHeader.anchoredPosition = new Vector2(center, -TopOffsetCanvas() - 2);
-            const float footerHeight = 52;
+            const float footerHeight = 64;
             _hudFooter.sizeDelta = new Vector2(_hudContentWidth, footerHeight);
             _hudFooter.anchoredPosition = new Vector2(center, BottomBarCanvas() - footerHeight);
             float textWidth = _hudContentWidth - 132;
@@ -245,22 +236,18 @@ namespace KnightsGauntlet.View
                 segment.rectTransform.anchoredPosition = new Vector2(0, 2);
                 segment.rectTransform.sizeDelta = new Vector2(segment.rectTransform.sizeDelta.x, 10);
             }
-            float buttonHeight = Mathf.Min(44, footerHeight - 8);
+            float buttonHeight = Mathf.Min(56, footerHeight - 8);
             // Slots run right to left. Trap: Chronokinesis, Divine. Battle: Chronokinesis,
             // Berserker, War Horn (three buttons, so the row tightens a little).
             bool battle = _hornBtn != null && _hornBtn.gameObject.activeSelf;
-            float buttonWidth = battle ? 68 : 76, buttonStep = battle ? 74 : 84;
+            float buttonWidth = battle ? 84 : 92, buttonStep = battle ? 90 : 100;
+            float rowWidth = battle ? buttonWidth + 2 * buttonStep : buttonWidth + buttonStep;
             HudPlace(_chronoBtnRt, _hudContentWidth - buttonWidth, 4, buttonWidth, buttonHeight);
             HudPlace(_divineBtnRt, _hudContentWidth - buttonWidth - buttonStep, 4, buttonWidth, buttonHeight);
             HudPlace(_furyBtnRt, _hudContentWidth - buttonWidth - buttonStep, 4, buttonWidth, buttonHeight);
             HudPlace(_hornBtnRt, _hudContentWidth - buttonWidth - 2 * buttonStep, 4, buttonWidth, buttonHeight);
-            HudPlace(_pathBtnRt, _hudContentWidth - 76, 4, 76, buttonHeight);
-            float rowWidth = battle ? buttonWidth + 2 * buttonStep : 160;
-            _enemyBarRt.sizeDelta = new Vector2(_hudContentWidth - rowWidth - 28, footerHeight - 8);
-            _enemyBarRt.anchoredPosition = new Vector2(0, -4);
-            var timerTrack = (RectTransform)_enemyBarRt.Find("TimerTrack");
-            timerTrack.anchoredPosition = new Vector2(0, -(footerHeight - 18));
-            _biomeLabel.rectTransform.sizeDelta = new Vector2(_hudContentWidth - 188, footerHeight - 8);
+            HudPlace(_pathBtnRt, _hudContentWidth - 92, 4, 92, buttonHeight);
+            _biomeLabel.rectTransform.sizeDelta = new Vector2(_hudContentWidth - rowWidth - 28, footerHeight - 8);
             if (_hudBattleLayout)
             {
                 // Score, multiplier, form and navigation share one aligned row.

@@ -29,10 +29,7 @@ namespace KnightsGauntlet.View
         private TMP_Text _trappedVerdict, _trappedSub, _toastText;
         private RectTransform _howtoArt;
         private HowToArt _art;
-        private RectTransform _enemyBarFill;
-        private RectTransform _enemyBarRt;
         private Canvas _hudCanvas;
-        private GameObject _enemyBarRoot;
         private TMP_Text _howtoTitle, _howtoBody, _howtoPager;
         private TMP_InputField _nameInput;
         private TMP_InputField _goNameInput;
@@ -889,30 +886,6 @@ namespace KnightsGauntlet.View
             btn.interactable = owned > 0 && !active;
             if (btn.targetGraphic is Image img)
                 img.color = owned > 0 || active ? UIFactory.Panel : new Color(0.12f, 0.13f, 0.20f, 0.6f);
-        }
-
-        // Show/update the enemy-move timer. Called every frame from GameManager.
-        public void SetEnemyBar(bool show, float progress)
-        {
-            if (_enemyBarRoot == null) return;
-            if (_enemyBarRoot.activeSelf != show) _enemyBarRoot.SetActive(show);
-            if (!show || _enemyBarFill == null) return;
-            _enemyBarFill.anchorMax = new Vector2(Mathf.Clamp01(progress), 1);
-            var img = _enemyBarFill.GetComponent<Image>();
-            if (img != null) img.color = EnemyBarColor(progress);
-        }
-
-        // Green → gold → orange → red as the next enemy move approaches.
-        private static readonly Color EnemyGreen = new Color32(0x3C,0xDC,0x78,255);
-        private static readonly Color EnemyGold = new Color32(0xF0,0xC0,0x40,255);
-        private static readonly Color EnemyOrange = new Color32(0xFF,0x8A,0x3C,255);
-        private static readonly Color EnemyRed = new Color32(0xFF,0x40,0x40,255);
-        private static Color EnemyBarColor(float t)
-        {
-            t = Mathf.Clamp01(t);
-            if (t < 0.4f) return Color.Lerp(EnemyGreen, EnemyGold, t / 0.4f);
-            if (t < 0.75f) return Color.Lerp(EnemyGold, EnemyOrange, (t - 0.4f) / 0.35f);
-            return Color.Lerp(EnemyOrange, EnemyRed, (t - 0.75f) / 0.25f);
         }
 
         // ── Pause ────────────────────────────────────────────────────────────
