@@ -200,8 +200,34 @@ namespace KnightsGauntlet.View
             }
         }
 
-        // ── Daily challenge attempts (reset each calendar day) ───────────────
-        private static string TodayStamp() => DateTime.Now.ToString("yyyyMMdd");
+        // ── Daily challenge day (one global day for every player) ────────────
+        // The daily rolls over at the same instant worldwide, not at each player's local
+        // midnight, so everyone on a given "day" plays the same seed and lands on the same
+        // Supabase board and Game Center occurrence. 08:00 UTC is midnight Pacific Standard
+        // Time (1 AM during daylight saving). It must be a fixed UTC hour because the Game
+        // Center recurring board (lb.daily) resets at a fixed UTC time; if this changes,
+        // change that board's start time in App Store Connect to match.
+        public const int DailyResetHourUtc = 8;
+
+        // yyyyMMdd of the current daily. Used for the seed, attempts and board names.
+        public static string DailyStamp() => DateTime.UtcNow.AddHours(-DailyResetHourUtc).ToString("yyyyMMdd");
+
+        public static DateTime NextDailyResetUtc()
+            => DateTime.UtcNow.AddHours(-DailyResetHourUtc).Date.AddDays(1).AddHours(DailyResetHourUtc);
+
+        // "12:00 AM" (in the player's own time zone) for the daily intro text.
+        public static string DailyResetLocalTime()
+            => DateTime.SpecifyKind(NextDailyResetUtc(), DateTimeKind.Utc).ToLocalTime().ToString("h:mm tt");
+
+        // "3h 12m" until the next daily.
+        public static string TimeUntilDailyReset()
+        {
+            var left = NextDailyResetUtc() - DateTime.UtcNow;
+            if (left.TotalMinutes < 1) return "under a minute";
+            return left.Hours > 0 ? left.Hours + "h " + left.Minutes + "m" : left.Minutes + "m";
+        }
+
+        private static string TodayStamp() => DailyStamp();
 
         public static int DailyAttemptsLeft()
         {

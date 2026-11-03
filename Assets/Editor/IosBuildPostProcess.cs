@@ -61,6 +61,7 @@ namespace KnightsGauntlet.Editor
 
             PatchPodDeploymentTargets(pathToBuiltProject);
             EmbedDynamicPodFrameworks(pathToBuiltProject);
+            AddGameCenterCapability(pathToBuiltProject);
 
             string plistPath = Path.Combine(pathToBuiltProject, "Info.plist");
             if (!File.Exists(plistPath)) { Debug.LogWarning("[iOS] Info.plist not found at " + plistPath); return; }
@@ -91,6 +92,29 @@ namespace KnightsGauntlet.Editor
 
             plist.WriteToFile(plistPath);
             Debug.Log($"[iOS] Info.plist: tracking + encryption keys set, {added} new SKAdNetwork identifiers ({present.Count} total).");
+        }
+
+        // GameCenterService uses Unity's Social API, which links GameKit, but App Store
+        // Connect also requires the Game Center capability (entitlement) on the app target.
+        // Without it, sign-in silently fails on device and nothing is reported. Unity does
+        // not add it on its own and regenerates the Xcode project each build, so add it here.
+        private static void AddGameCenterCapability(string pathToBuiltProject)
+        {
+            string pbxPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
+            if (!File.Exists(pbxPath)) return;
+
+            var proj = new PBXProject();
+            proj.ReadFromFile(pbxPath);
+            string appTarget = proj.GetUnityMainTargetGuid();
+
+            // Reuse the target's entitlements file if another processor already made one.
+            string entitlements = proj.GetBuildPropertyForAnyConfig(appTarget, "CODE_SIGN_ENTITLEMENTS");
+            if (string.IsNullOrEmpty(entitlements)) entitlements = "Unity-iPhone/knightsgauntlet.entitlements";
+
+            var caps = new ProjectCapabilityManager(pbxPath, entitlements, null, appTarget);
+            caps.AddGameCenter();
+            caps.WriteToFile();
+            Debug.Log("[iOS] Game Center capability added (" + entitlements + ").");
         }
 
         // Most ad-SDK pods ship as static libraries, but at least one (AppLovinSDK) ships a

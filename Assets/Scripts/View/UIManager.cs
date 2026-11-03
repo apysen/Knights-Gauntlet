@@ -20,7 +20,7 @@ namespace KnightsGauntlet.View
         private GameObject _bugReport;
         private TMP_InputField _bugInput;
         private TMP_Text _scoreText, _gameOverScore, _savedName, _menuWarn, _speedLabel, _modeBadge;
-        private TMP_Text _nameSetLabel, _permWarn, _menuShillings, _marketBalance, _marketMsg, _goReward, _goBalance, _countdownText, _dailyIntroAttempts, _dailyRewardText;
+        private TMP_Text _nameSetLabel, _permWarn, _menuShillings, _marketBalance, _marketMsg, _goReward, _goBalance, _countdownText, _dailyIntroAttempts, _dailyIntroReset, _dailyRewardText;
         private Button _dailyBtn;
         private Button _profileSaveBtn;
         private TMP_Text _runSummaryLabel, _modeDescription;
@@ -1011,7 +1011,7 @@ namespace KnightsGauntlet.View
             var col = _ui.Column(screen.transform, 13f);
             _ui.Label(col, "Daily Challenge", 27, UIFactory.Gold, FontStyles.Normal);
             _ui.Label(col, "Everyone plays the SAME board each day, the exact same layout for every player.", 15, UIFactory.Text, FontStyles.Normal, 320);
-            _ui.Label(col, "You get 10 attempts per day. They reset at midnight, and there are no extra lives.", 15, UIFactory.Text, FontStyles.Normal, 320);
+            _dailyIntroReset = _ui.Label(col, "", 15, UIFactory.Text, FontStyles.Normal, 320);
             _ui.Label(col, "No powerups are allowed, everyone competes on equal footing.", 15, UIFactory.Text, FontStyles.Normal, 320);
             _ui.Label(col, "Finish in the daily top 5 to earn shillings.", 13, UIFactory.Muted, FontStyles.Normal, 320);
             _dailyIntroAttempts = _ui.Label(col, "", 15, UIFactory.Gold, FontStyles.Normal);
@@ -1025,6 +1025,10 @@ namespace KnightsGauntlet.View
             HideAll();
             if (_dailyIntroAttempts != null)
                 _dailyIntroAttempts.text = SaveData.DailyAttemptsLeft() + " attempts left today";
+            // Filled on open, not at build time, so it reflects the device's current time zone.
+            if (_dailyIntroReset != null)
+                _dailyIntroReset.text = "You get 10 attempts per day. A new daily starts every day at " +
+                                        SaveData.DailyResetLocalTime() + " your time, and there are no extra lives.";
             _dailyIntro.SetActive(true);
         }
 

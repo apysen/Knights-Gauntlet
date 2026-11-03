@@ -218,6 +218,7 @@ namespace KnightsGauntlet.View
             _ach = new AchievementTracker(_sim, OnAchievementUnlocked);
             _ads.Initialize();
             _iap.Initialize();
+            GameCenterService.Initialize();
 
             var lgo = new GameObject("Leaderboard"); lgo.transform.SetParent(transform, false);
             _lb = lgo.AddComponent<LeaderboardClient>();
@@ -301,7 +302,7 @@ namespace KnightsGauntlet.View
             _trapBestSeconds = PlayerPrefs.GetFloat("kg_daily_best_seconds", 0f);
             if (SaveData.DailyAttemptsLeft() <= 0)
             {
-                _ui.ShowToast("No daily attempts left. Resets tomorrow.");
+                _ui.ShowToast("No daily attempts left. New daily in " + SaveData.TimeUntilDailyReset() + ".");
                 _ui.ShowMenu();
                 return;
             }
@@ -426,7 +427,7 @@ namespace KnightsGauntlet.View
             // if they don't open the app again for several days.
             string day = PlayerPrefs.GetString("kg_daily_last_played", "");
             if (string.IsNullOrEmpty(day)) return;                                   // never played a daily
-            if (day == DateTime.Now.ToString("yyyyMMdd")) return;                    // today's board isn't settled yet
+            if (day == SaveData.DailyStamp()) return;                                // today's board isn't settled yet
             if (PlayerPrefs.GetString("kg_daily_reward_done", "") == day) return;    // already claimed
 
             string name = SaveData.GetName();
@@ -493,7 +494,7 @@ namespace KnightsGauntlet.View
                 PlayerPrefs.SetFloat(_daily ? "kg_daily_best_seconds" : "kg_trap_best_seconds_" + _sim.Difficulty, _trapBestSeconds);
                 PlayerPrefs.Save();
             }
-            string today = DateTime.Now.ToString("yyyyMMdd");
+            string today = SaveData.DailyStamp();
             string category = _daily
                 ? "daily-" + today
                 : _sim.Mode.ToString().ToLower() + "-" + _sim.Difficulty.ToString().ToLower();
@@ -501,6 +502,9 @@ namespace KnightsGauntlet.View
             bool hasName = !string.IsNullOrEmpty(name);
             if (hasName)
                 _lb.SubmitScore(category, name, _sim.Score, SaveData.GetSkin());
+            // Game Center uses the player's Apple account, so no in-game name is needed.
+            if (_daily) GameCenterService.SubmitDaily(_sim.Score);
+            else GameCenterService.ReportScore(_sim.Mode, _sim.Difficulty, _sim.Score);
             if (_sim.RunShillings > 0) SaveData.AddShillings(_sim.RunShillings);
             // Remember the day of the player's most recent daily run, so its
             // placement reward can be shown on a later launch (even days later).

@@ -222,7 +222,7 @@ namespace KnightsGauntlet.View
         // on a populated board (never a blank one).
         private static string DefaultCategoryFor(string src)
         {
-            if (src == "daily") return "daily-" + System.DateTime.Now.ToString("yyyyMMdd");
+            if (src == "daily") return "daily-" + SaveData.DailyStamp();
             if (src == "online") return "battle-hard";
             return "battle-easy"; // personal
         }
