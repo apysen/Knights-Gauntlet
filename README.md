@@ -8,9 +8,9 @@ Knight's Gauntlet is a chess-inspired arcade game built with Unity. Move your pi
 | --- | --- | --- |
 | <img src="screenshots/phone-screenshot-menu.png" alt="Knight's Gauntlet main menu" width="200"> | <img src="screenshots/phone-screenshot-trap.png" alt="Trap mode gameplay" width="200"> | <img src="screenshots/phone-screenshot-battle.png" alt="Battle mode gameplay" width="200"> |
 
-| Adventure mode | Transformation | Shop |
+| Adventure mode | Adventure enemies | Shop |
 | --- | --- | --- |
-| <img src="screenshots/phone-screenshot-adventure.png" alt="Adventure mode gameplay" width="200"> | <img src="screenshots/phone-screenshot-transform.png" alt="Player transformation gameplay" width="200"> | <img src="screenshots/phone-screenshot-shop.png" alt="In-game shop" width="200"> |
+| <img src="screenshots/phone-screenshot-adventure.png" alt="Adventure mode gameplay" width="200"> | <img src="screenshots/phone-screenshot-adventure-enemies.png" alt="Adventure level with enemy pieces to clear" width="200"> | <img src="screenshots/phone-screenshot-shop.png" alt="In-game shop" width="200"> |
 
 ## Game modes
 
